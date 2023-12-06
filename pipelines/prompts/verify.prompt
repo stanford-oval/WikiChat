@@ -1,0 +1,102 @@
+{% block instruction %}
+{{instruction_start}}For each claim, you search the internet to obtain articles that would support or refute that claim, and output one of "SUPPORTS", "REFUTES", or "NOT ENOUGH INFO".
+Only if the retrieved articles fully support the claim, output "SUPPORTS".
+Today's date is {{ today }}.
+{{instruction_end}}
+{% endblock %}{% block short_instruction %}Fact-check the claim given the paragraphs. Today's date is {{ today }}.{% endblock %}
+
+=====
+{{input_start}}You search the internet to fact-check the claim "Monica Lam's PhD advisor is John Hennessy."
+[You get these articles:
+    Title: Monica S. Lam
+    Article: American computer scientist Monica Sin-Ling Lam is an American computer scientist. She is a professor in the Computer Science Department at Stanford University. Professional biography. Monica Lam received a B.Sc. from University of British Columbia in 1980 and a Ph.D. in computer science from Carnegie Mellon University in 1987. Lam joined the faculty of Computer Science at Stanford University in 1988. She is working in natural language processing, and virtual assistants with an emphasis on privacy protection.
+
+    Title: Stanford DASH
+    Article: Stanford DASH was a cache coherent multiprocessor developed in the late 1980s by a group led by Anoop Gupta, John L. Hennessy, Mark Horowitz, and Monica S. Lam at Stanford University. The boards designed at Stanford implemented a directory-based cache coherence protocol allowing Stanford DASH to support distributed shared memory for up to 64 processors. Stanford DASH was also notable for both supporting and helping to formalize weak memory consistency models, including release consistency.
+
+]
+Fact-check the claim "Monica Lam's PhD advisor is John Hennessy". You think step by step:{{input_end}} {{output_start}}The first article says that Monica Lam received her PhD from Carnegie Mellon University and then became a faculty member at Stanford University. The second article mentions that Monica Lam and Hohn Hennessy were co-leading a project at Stanford, which must have happened when Monica Lam was a professor, not a PhD student. Given this, Monica Lam became a colleauge of John Hennessy only after she received her PhD. So John Hennessy could not have been Monica Lam's PhD advisor. So the fact-checking result is "REFUTES".{% if do_correct %}
+
+You rewrite your claim: Monica Lam's PhD advisor is not John Hennessy.{% endif %}{{output_end}}
+
+=====
+{{input_start}}You search the internet to fact-check the claim "The last eruption of Mauna Loa started on March 25, 1984."
+[You get these articles:
+    Title: 2022 eruption of Mauna Loa
+    Article: When active, Mauna Loa tends to produce "voluminous, fast-moving lava flows" of the Hawaiian or effusive eruption type rather than more explosive phreatic or Plinian eruptions, though it has produced explosive eruptions between 300 and 1,000 years ago. Before Nov 27, 2022, Mauna Loa had last erupted in March 1984, in a 22-day event similarly concentrated in the volcano's Northeast Rift Zone. The 2022 eruption was the volcano's 34th eruption since 1843, when volcanic activity at Mauna Loa began to be continuously recorded, but only the third eruption since 1950. The 38-year span between the 1984 and 2022 eruptions was Mauna Loa's longest period of quiescence on record.
+
+    Title: 1984 eruption of Mauna Loa
+    Article: The 1984 eruption of Mauna Loa was a Hawaiian eruption in the U.S. state of Hawaii that lasted from March 25 to April 15, 1984. It ended a 9-year period of quiescence at the volcano and continued for 22 days, during which time lava flows and lava fountains issued from the summit caldera and fissures along the northeast and southwest rift zones. Although the lava threatened Hilo, the flow stopped before reaching the outskirts of town.
+
+]
+Fact-check the claim "The last eruption of Mauna Loa started on March 25, 1984". You think step by step:{{input_end}} {{output_start}} Mauna Loa had an eruption on Nov 27, 2022, which is later than the claimed last eruption of March 25, 1984. So the last eruption of Mauna Loa was not on March 25, 1984. So the fact-checking result is "REFUTES".{% if do_correct %}
+
+You rewrite your claim: The last eruption of Mauna Loa started on Nov 27, 2022.{% endif %}{{output_end}}
+
+=====
+{{input_start}}You search the internet to fact-check the claim "The Eiffel Tower is made of iron."
+[You get these articles:
+    Title: Vladimir Tatlin
+    Article: The monument was to be a tall tower made of iron, glass and steel which would have dwarfed the Eiffel Tower in Paris (the Monument to the Third International was a third taller at 400 meters high). Inside the iron-and-steel structure of twin spirals, the design envisaged three building blocks, covered with glass windows, which would rotate at different speeds (the first one, a cube, once a year; the second one, a pyramid, once a month; the third one, a cylinder, once a day). The entire building was to house the executive and legislature of the Comintern, and be a central area for the creation and dissemination of propaganda. For financial and practical reasons, however, the tower was never built.
+
+    Title: Eiffel Tower
+    Article: Tower on the Champ de Mars in Paris, France The Eiffel Tower ( ; ] ()) is a wrought-iron lattice tower on the Champ de Mars in Paris, France. It is named after the engineer Gustave Eiffel, whose company designed and built the tower. Locally nicknamed "La dame de fer" (French for "Iron Lady"), it was constructed from 1887 to 1889 as the centerpiece of the 1889 World's Fair. Although initially criticised by some of France's leading artists and intellectuals for its design, it has since become a global cultural icon of France and one of the most recognisable structures in the world.
+
+]
+Fact-check the claim "The Eiffel Tower is made of iron". You think step by step:{{input_end}} {{output_start}}The Eiffel Tower is a wrought-iron lattice tower, so it is made of iron. So the fact-checking result is "SUPPORTS".{% if do_correct %}
+
+You rewrite your claim: The Eiffel Tower is made of iron.{% endif %}{{output_end}}
+
+=====
+{{input_start}}You search the internet to fact-check the claim "As of {{ today }}, there are 32,660 Starbucks locations in 79 countries."
+[You get these articles:
+    Title: Starbucks
+    Article: As of September 2020, Starbucks had already operating 32,660 locations spanning 79 countries and territories on six continents.
+
+    Title: Starbucks
+    Article: As of November 2021, the company had 33,833 stores in 80 countries, 15,444 of which were located in the United States.
+
+]
+Fact-check the claim "As of {{ today }}, there are 32,660 Starbucks locations in 79 countries". You think step by step:{{input_end}} {{output_start}}Today's date is {{ today }}. There were 33,833 Starbucks locations in 80 countries in 2021, so the 32,660 in the original response needs to be updated. So the fact-checking result is "REFUTES".{% if do_correct %}
+
+You rewrite your claim: As of November 2021, there were 33,833 Starbucks locations in 80 countries. I'm not sure about the number of starbucks locations worldwide as of {{ today }}.{% endif %}{{output_end}}
+
+=====
+{{input_start}}You search the internet to fact-check the claim "The Chinese New Year in 2020 was on February 10th"
+[You get these articles:
+    Title: Chinese government response to COVID-19
+    Article: 2020 Chinese New Year. The Wuhan government, which announced a number of new measures such as cancelling the Chinese New Year celebrations, in addition to measures such as checking the temperature of passengers at transport terminals first introduced on 14 January.  The leading group decided to extend the Spring Festival holiday to contain the outbreak.
+
+    Title: Chinese calendar
+    Article: Chinese New Year. The date of the Chinese New Year accords with the patterns of the lunisolar calendar and hence is variable from year to year. However, two general rules govern the date. Firstly, Chinese New Year transpires on the second new moon following the December solstice. If there is a leap month after the eleventh or twelfth month, then Chinese New Year falls on the third new moon after the December solstice.
+
+]
+Fact-check the claim "The Chinese New Year in 2020 was on February 10th". You think step by step:{{input_end}} {{output_start}}There is no information about the dates of Chinese New Year in 2020 in these articles. So the fact-checking result is "NOT ENOUGH INFO".{% if do_correct %}
+
+You rewrite your claim: I'm not sure when chinese new year was three years ago.{% endif %}{{output_end}}
+
+=====
+{{input_start}}You search the internet to fact-check the claim "King Charles III is 67 years old."
+[You get these articles:
+    Title: Pinky ring
+    Article: King Charles III wears the official signet of the Prince of Wales. The ring is nearly 175 years old and was last worn by Edward VIII when he was Prince of Wales.
+
+    Title: Charles III
+    Article: Charles III (Charles Philip Arthur George; born 14 November 1948) is King of the United Kingdom and the 14 other Commonwealth realms. He was the longest-serving heir apparent and Prince of Wales and, at age 73, became the oldest person to accede to the British throne following the death of his mother, Elizabeth II, on 8 September 2022. Charles was born in Buckingham Palace during the reign of his maternal grandfather, King George VI, and was three when his mother ascended the throne in 1952, making him the heir apparent.
+
+]
+Fact-check the claim "King Charles III is 67 years old.". You think step by step:{{input_end}} {{output_start}}Today's date is {{ today }}. The article says that King Charles III was born in 14 November 1948, so he is 75 years old. So the fact-checking result is "REFUTES".{% if do_correct %}
+
+You rewrite your claim: King Charles III is 75 years old as of {{ today }}.{% endif %}{{output_end}}
+
+=====
+{% block input %}
+{{input_start}}You search the internet to fact-check the claim "{{ claim }}"
+[You get these articles:
+{% for title in evidence_titles %}
+    Title: {{ title }}
+    Article: {{ evidence_texts[loop.index-1] | truncate(1000, False)}}{# truncate to avoid edge case where some paragraphs are extremely long #}
+
+{% endfor %}
+]
+Fact-check the claim "{{ claim }}". You think step by step:{{input_end}}{% endblock %}

@@ -1,0 +1,97 @@
+{% block instruction %}
+You are chatting with a user. Fact-check your response in the last turn of the conversation with a Google search. Do not fact-check opinions, or subjective personal experiences.
+Today's date is {{ today }}.
+What year do you want the search results to be? Enter "recent" if you are looking for the newest results. Enter "none" if the date is not important.
+{% endblock %}
+
+User: When was chinese new year this year?
+You: Chinese New Year was on February 5th this year.
+User: What about last year?
+You: It was on February 5th last year.
+The claims in your last response:
+- The Chinese New Year in 2022 was on February 5th. The year of the claim is "2022".
+=====
+User: Tell me about the Stanford Prison Experiment.
+You: It was conducted at Stanford University in 1971, by a research group led by psychology professor Philip Zimbardo using college students. In the study, volunteers were randomly assigned to be either guards or prisoners in a mock prison, with Zimbardo himself serving as the superintendent.
+User: How long did the experiment last?
+You: Zimbardo ended it on the sixth day.
+User: Do you know where the experiment was conducted?
+You: I'm not sure. I think it was conducted in the basement of Encina Hall, Stanford's psychology building.
+The claims in your last response:
+- The Stanford Prison Experiment was conducted in the basement of Encina Hall. The year of the claim is "1971".
+- Encina Hall is Stanford's psychology building. The year of the claim is "none".
+=====
+User: Hayao Miyazaki is a master of his craft.
+You: Absolutely! He is just incredible.
+The claims in your last response:
+Nothing.
+=====
+This conversation is about "2018 FIFA world cup"
+User: Right, but can you tell me which teams made it to the final phase of the 2018 World Cup?
+You: The qualification phase, which currently take place over the three years preceding the Finals, is used to determine which teams qualify for the Finals.
+User: Yes, I understand that. But which teams made it to the final phase of the 2018 World Cup specifically?
+You: The current format of the Finals involves 32 teams competing for the title, at venues within the host nation (or nations) over a period of about a month.
+The claims in your last response:
+- The current format of the FIFA world cup Finals involves 32 teams competing for the title. The year of the claims is "recent"
+- The current format of the FIFA world cup Finals takes place at venues within the host nation(s) and takes about a month.
+=====
+This conversation is about "Cats".
+User: Do you like cats?
+You: I have two cats named Cookie and Panter. I really love them.
+The claims in your last response:
+Nothing.
+=====
+User: Do you know about Queen Elizabeth II? I was just reading about her.
+You: Queen Elizabeth II is the current monarch of the United Kingdom and the Commonwealth realms. She was born in 1926 and became queen in 1952.
+The claims in your last response:
+- Queen Elizabeth II is the current monarch of the United Kingdom and the Commonwealth realms as of {{ today }}. The year of the results is "recent".
+- Queen Elizabeth II was born in 1926. The year of the claim is "1926".
+- Queen Elizabeth II became queen in 1952. The year of the claim is "1952".
+=====
+User: What new discoveries from James Webb Space telescope can I tell my 9 year old about?
+You: Your 9-year old would be fascinated to hear that the James Webb Space Telescope has discovered farthest galaxies ever found. It has found galaxies so far away that it took 13.4 billion years for their lights to reach the telescope. That is light that started its journey just 300 million years after the Big Bang!
+The claims in your last response:
+- The James Webb Space Telescope has discovered farthest galaxies ever found. The year of the claim is "recent".
+- The James Webb Space Telescope discovered galaxies whose light took 13.4 billion years to reach the telescope, which is light that started its journey just 300 million years after the Big Bang. The year of the claim is "none".
+=====
+User: I really liked the House of the Dragon.
+You: Yeah! It was an American fantasy drama television series created by George R. R. Martin and Ryan Condal for HBO.
+User: What do you think is the best TV drama of 2022?
+You: That's a tough question! It's hard to pick just one, but some of the most popular TV dramas of 2022 were The Crown, The Boys, and The Queen's Gambit.
+The claims in your last response:
+- "The Crown" is a popular TV drama of 2022. The year of the claim is "2022".
+- "The Boys" is a popular TV drama of 2022. The year of the claim is "2022".
+- "The Queen's Gambit" is a popular TV drama of 2022. The year of the claim is "2022".
+=====
+This conversation is about "Everything Everywhere All at Once".
+User: Do you know about everything everywhere all at once?
+You: Yes, I have heard about "Everything Everywhere All at Once". It is a 2022 American absurdist comedy-drama film directed by the Daniels and produced by Anthony and Joe Russo. The movie stars Michelle Yeoh as a Chinese-American immigrant who must connect with parallel universe versions of herself to prevent a powerful being from destroying the multiverse. The film received critical acclaim for its imagination, visual effects, humor, direction, editing, acting, and handling of themes such as existentialism, nihilism, and Asian-American identity.
+The claims in your last response:
+- "Everything Everywhere All at Once" is a 2022 American absurdist comedy-drama film. The year of the claim is "2022".
+- "Everything Everywhere All at Once" is directed by the Daniels. The year of the claim is "2022".
+- "Everything Everywhere All at Once" is produced by Anthony and Joe Russo. The year of the claim is "2022".
+- Michelle Yeoh plays the role of a Chinese-American immigrant in "Everything Everywhere All at Once". The year of the claim is "2022".
+- "Everything Everywhere All at Once" received critical acclaim. The year of the claim is "2022".
+=====
+This conversation is about "Christiano Ronaldo".
+User: I see. Do you think his success is also due to his mentality and mindset?
+You: Absolutely! Ronaldo is known for his strong mental attitude and determination to succeed, as well as his dedication to improvement on the training pitch. He is very competitive, confident, focused, and disciplined.
+The claims in your last response:
+- Christiano Ronaldo is known for his strong mental attitude and determination to succeed.
+- Christiano Ronaldo is known for his dedication to improvement on the training pitch.
+- Christiano Ronaldo is very competitive, confident, focused, and disciplined.
+=====
+{# The history of the conversation so far. User starts first. Only the last two turns are given, because longer conversations confuse the LLM, and are not needed for fact-checking. #}
+{% block input %}
+This conversation is about "{{ dialog_topic }}".
+{% for dlg_turn in dlg[-1:] %}
+    {% if dlg_turn.user_utterance is not none %}
+        User: {{ dlg_turn.user_utterance }}
+    {% endif %}
+    {% if dlg_turn.agent_utterance is not none %}
+        You: {{ dlg_turn.agent_utterance }}
+    {% endif %}
+{% endfor %}
+User: {{ new_user_utterance }}
+You: {{ current_agent_utterance }}
+The claims in your last response:{% endblock %}

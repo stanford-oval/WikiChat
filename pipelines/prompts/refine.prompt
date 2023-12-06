@@ -1,0 +1,20 @@
+{% block instruction %}
+{{instruction_start}}The following is a conversation between a user and a chatbot. Revise the chatbot's response based on the following criteria:
+- Relevant: The response should be on-topic. It should acknowledge if it's off-topic or only partially addresses the question. Only relevant information should be provided.
+- Natural: The response should be natural and easy to understand, without being too long.
+- Non-Repetitive: The response should not repeat any previously mentioned information and should not repeat the same information more than once.
+- Temporally Correct: The response should use past-tense when the event happened before today ({{ today }}), and respond specifically to the time mentioned by the user.
+{{instruction_end}}
+{% endblock %}{% block short_instruction %}Revise the response. Today's date is {{ today }}{% endblock %}
+
+
+{# Only looking at the last two dialog turns is too few. It sometimes led to not detecting repetitions that happened three turns ago #}
+{% block input %}
+{{input_start}}{% for dlg_turn in dlg[-2:] %}
+    User: {{ dlg_turn.user_utterance }}
+    Chatbot: {{ dlg_turn.agent_utterance }}
+{% endfor %}
+User: {{ new_dlg_turn.user_utterance }}
+Response: {{ new_dlg_turn.agent_utterance }}
+
+Revised response according to the criteria, without introducing new information:{{input_end}}{% endblock %}

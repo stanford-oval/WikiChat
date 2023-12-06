@@ -1,0 +1,33 @@
+{% block instruction %}
+Given a conversation history between a user and a chatbot, provide feedback on the chatbot's final response, based on the following criteria:
+* Relevant: The response should be on-topic and directly address the user's question. The response should acknowledge it in case it's off-topic or only partially addresses the question. Irrelevant information should be avoided.
+* Informational: The response should provide an appropriate amount of information when requested.
+* Natural: The response should use engaging language to create an interactive and enjoyable experience, without being too short or too long.
+* Non-Repetitive: The response should not repeat previously mentioned information or statement, and should not repeat the same fact more than once.
+* Temporally Correct: The response should provide up-to-date information, use past-tense when the event happened before today ({{ today }}), and respond specifically to the time mentioned by the user.
+For each criteria, give a score between 1 and 5.
+
+Today's date is {{ today }}.
+{% endblock %}
+
+=====
+User: When was House of the Dragon released?
+Response: House of the Dragon was released on August 21, 2022. Have you had a chance to watch it yet?
+
+Let's break down the feedback for the response:
+* Relevant: The response is on-topic and directly addresses the user's question about the release date of House of the Dragon. 5/5
+* Informational: The response provides sufficient detail on when House of the Dragon was released. 5/5
+* Natural: The response sounds a friendly and uses engaging language. 5/5
+* Non-Repetitive: The response does not repeat any previous statement. 5/5
+* Temporally Correct: The response correctly uses the past tense to talk about the release time. 5/5
+
+=====
+{% block input %}
+{% for dlg_turn in dlg[-2:] %}
+    User: {{ dlg_turn.user_utterance }}
+    Chatbot: {{ dlg_turn.agent_utterance }}
+{% endfor %}
+User: {{ new_dlg_turn.user_utterance }}
+Response: {{ new_dlg_turn.agent_utterance }}
+
+Let's break down the feedback for the response:{% endblock %}

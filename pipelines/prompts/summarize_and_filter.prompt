@@ -1,0 +1,88 @@
+{% block instruction %}
+{{instruction_start}}You Google different search queries and then Break down the relevant parts of the articles you find. Today's date is {{ today }}.{{instruction_end}}
+{% endblock %}{% block short_instruction %}Break down the relevant parts of the articles you find or say None if the article is unrelated. Today's date is {{ today }}.{% endblock %}
+
+=====
+{{input_start}}Query: "worst earthquake ever"
+Title: January 1934 earthquake in India and Nepal 
+Article: The 1934 Nepal\u2013India earthquake or 1934 Bihar\u2013Nepal earthquake was one of the worst earthquakes in India's history. The towns of Munger and Muzaffarpur were completely destroyed. This 8.0 magnitude earthquake occurred on 15 January 1934 at around 2:13\u00a0pm IST (08:43 UTC) and caused widespread damage in northern Bihar and in Nepal. Earthquake. The epicentre for this event was located in eastern Nepal about south of Mount Everest. The areas where the most damage to life and property occurred extended from Purnea in the east to Champaran in the west (a distance of nearly ), and from Kathmandu in the north to Munger in the south (a distance of nearly )."
+
+Break down verbatum part(s) of this article that are related to the search query "worst earthquake ever" or say None if the article is unrelated:{{input_end}}
+{{output_start}}- The 1934 Nepal-India earthquake, also known as the 1934 Bihar-Nepal earthquake, was one of the worst earthquakes in India's history.
+- The 1934 Nepal-India earthquake had a magnitude of 8.0 and occurred on 15 January 1934.
+- As a result of the 1934 Nepal-India earthquake, the towns of Munger and Muzaffarpur were completely destroyed.
+- As a result of the 1934 Nepal-India earthquake, widespread damage occurred in northern Bihar and Nepal, with the most damage extending from Purnea in the east to Champaran in the west, and from Kathmandu in the north to Munger in the south.{{output_end}}
+
+=====
+{{input_start}}Query: "current monarch of the UK"
+Title: Monarchies in Europe
+Article: It was briefly interrupted by the English Interregnum, with the Commonwealth of England existing in its stead from 30 January 1649 until 15 December 1653 and from 26 May 1659 until 25 May 1660 and the Protectorate taking its place from 16 December 1653 until 25 May 1659. The current monarch is Charles III, son of Queen Elizabeth II.
+
+Break down verbatum part(s) of this article that are related to the search query "current monarch of the UK" or say None if the article is unrelated:{{input_end}}
+{{output_start}}- The current monarch of the UK is Charles III, the son of Queen Elizabeth II.{{output_end}}
+
+=====
+{{input_start}}Query: "Oscar winners 2022"
+Title: 95th Academy Awards
+Article: On June 21, 2022, the Academy announced its winners of the 13th annual Governors Awards ceremony. It was held on November 19, 2022, and during the event, the Academy Honorary Awards and the Jean Hersholt Humanitarian Award were presented to the following recipients: Presenters and performers. The following presented awards and performed musical numbers. Ceremony information.
+
+Break down verbatum part(s) of this article that are related to the search query "Oscar winners 2022" or say None if the article is unrelated:{{input_end}}
+{{output_start}}None{{output_end}}
+
+=====
+{{input_start}}Query: "who won the most recent Super Bowl and who were they playing against?"
+Title: Super Bowl XXVIII
+Article: The Buffalo Bills became the only team to both play and lose four consecutive Super Bowls (XXV, XXVI, XXVII, XXVIII) for a 0-4 franchise Super Bowl record, and as of 2023, remains the team's most recent Super Bowl appearance. The game was played on January 30, 1994, at the Georgia Dome in Atlanta, Georgia. Since the 1993 regular season was conducted over 18 weeks (two byes per team), the traditional bye week between the conference championship games and the Super Bowl was not employed; the last time this had happened was before Super Bowl XXV.
+
+Break down verbatum part(s) of this article that are related to the search query "who won the most recent Super Bowl and who were they playing against?" or say None if the article is unrelated:{{input_end}}
+{{output_start}}The most recent Super Bowl for Buffalo Bills as of 2023 was Super Bowl XXVIII, played on January 30, 1994.{{output_end}}
+
+=====
+{{input_start}}Query: "age of Bruce Willis"
+Title: Matt Willis
+Article: In April 2005, aged 21, Willis stayed for three weeks at London's Priory Hospital for the treatment of alcoholism. In July 2006, aged 23, he was admitted again for a few days for drug abuse, because he was addicted to cannabis from the age of 13. He began to have problems from the drug-taking including physiological and memory problems. In June 2008, aged 25, Willis entered a rehab centre in Bournemouth after a marriage ultimatum. It was reported that a night out with close friend Amy Winehouse pushed Willis too far. Willis took the full five week course in drugs and alcohol.
+
+Break down verbatum part(s) of this article that are related to the search query "age of Bruce Willis" or say None if the article is unrelated:{{input_end}}
+{{output_start}}None{{output_end}}
+
+=====
+{{input_start}}Query: "Djokovic Australian Open win"
+Title: 2021 Australian Open \u2013 Men's singles
+Article: Tennis championship Two-time defending champion Novak Djokovic defeated Daniil Medvedev in the final, 7\u20135, 6\u20132, 6\u20132 to win the men's singles tennis title at the 2021 Australian Open. It was his record-extending ninth Australian Open title and his 18th major title overall. With his fourth round win against Milos Raonic, Djokovic joined Roger Federer as only the second man with 300 or more match wins in major singles competitions. This marked the first major main-draw appearance for future world No. 1 Carlos Alcaraz; he lost to Mikael Ymer in the second round.
+
+Break down verbatum part(s) of this article that are related to the search query "Djokovic Australian Open win" or say None if the article is unrelated:{{input_end}}
+{{output_start}}- Novak Djokovic defeated Daniil Medvedev in the final of the 2021 Australian Open, winning 7-5, 6-2, 6-2.
+- Novak Djokovic's victory in the 2021 Australian Open final was his record-extending ninth Australian Open title.
+- Novak Djokovic's 2021 Australian Open win was his 18th major title overall.{{output_end}}
+
+=====
+{{input_start}}Query: "age of Bruce Willis"
+Title: Bruce Willis
+Article: American actor (born 1955) Walter Bruce Willis (born March 19, 1955) is a retired American actor. He achieved fame with a leading role on the comedy-drama series "Moonlighting" (1985–1989) and appeared in over a hundred films, gaining recognition as an action hero after his portrayal of John McClane in the "Die Hard" franchise (1988–2013) and other roles. In the later years of his career, Willis starred in many low-budget direct-to-video films, which were poorly received.
+
+Break down verbatum part(s) of this article that are related to the search query "age of Bruce Willis" or say None if the article is unrelated:{{input_end}}
+{{output_start}}- Bruce Willis is a retired American actor, born on March 19, 1955.{{output_end}}
+
+=====
+{{input_start}}Query: "PhD advisor of Monica Lam"
+Title: Monica Webb Hooper
+Article: Webb Hooper's dissertation was titled "Do Expectancies Influence Outcomes for Tailored Smoking Cessation Messages? A Placebo Tailoring Experiment". Her doctoral advisor was Thomas H. Brandon. She completed an internship in medical psychology at the University of Florida Health Sciences Center. Career. Webb Hooper is a translational behavioral scientist and clinical health psychologist. She was also associate director for cancer disparities research and director of the Office of Cancer Disparities Research in the Case Comprehensive Cancer Center.
+
+Break down verbatum part(s) of this article that are related to the search query "PhD advisor of Monica Lam" or say None if the article is unrelated:{{input_end}}
+{{output_start}}None{{output_end}}
+
+=====
+{{input_start}}Query: where was Haruki Murakami born
+Title: Haruki Murakami
+Article: Growing up in Kobe before moving to Tokyo to attend Waseda University, he published his first novel "Hear the Wind Sing" (1979) after working as the owner of a small jazz bar for seven years. His notable works include the novels "Norwegian Wood" (1987), "The Wind-Up Bird Chronicle" (1994–95), "Kafka on the Shore" (2002), and "1Q84" (2009–10), with "1Q84" ranked as the best work of Japan's Heisei era (1989–2019) by the national newspaper "Asahi Shimbun"'s survey of literary experts.
+
+Break down verbatum part(s) of this article that are related to the search query "where was Haruki Murakami born" or say None if the article is unrelated:{{input_end}}
+{{output_start}}- Haruki Murakami grew up in Kobe, Japan.{{output_end}}
+
+=====
+{% block input %}
+{{input_start}}Query: "{{ query }}"
+Title: {{ title }}
+Article: {{ article  | truncate(1000, False)}}{# truncate to avoid edge case where some paragraphs are extremely long #}
+
+Break down verbatum part(s) of this article that are related to the search query "{{ query }}" or say None if the article is unrelated:{{input_end}}{% endblock %}

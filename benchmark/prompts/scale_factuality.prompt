@@ -1,0 +1,14 @@
+<strong style="color:green;">User</strong>: {{ user_utterance }}
+<strong style="color:blue;">Chatbot's claim to fact-check</strong>: <strong style="font-size:16px;  background-color:powderblue;"">
+{{ claim }}
+</strong>
+
+******
+
+<h3>Passages for fact-checking:</h3>
+
+{% for title in evidence_titles %}
+    <b>Title: {{ title }}</b>
+    {{ evidence_texts[loop.index-1] }}
+
+{% endfor %}

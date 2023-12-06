@@ -1,0 +1,50 @@
+name: wikichat
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.8
+  - faiss-gpu # The GPU version is needed for indexing, but search is set to be done on CPU
+  - pip=21.0
+  - pytorch=1.13.1
+  - torchaudio=0.13.1
+  - torchvision=0.14.1
+  - cudatoolkit-dev=11.3
+  - gcc=9.4.0
+  - gxx=9.4.0
+  - make
+  - redis # Redis is used to persist Flask's rate limit data to disk. This installs redis-server
+  - pip:
+    - bitarray
+    - datasets
+    - evaluate
+    - sacrebleu
+    - gitpython
+    - jupyter
+    - jupyterlab
+    - ninja
+    - scipy
+    - spacy
+    - tqdm
+    - transformers
+    - huggingface-hub # Needed for downloading the Wikipedia index from the HuggingFace Hub
+    - ujson
+    - bs4
+    - nltk
+    - boto3
+    - openai==0.28.1 # After this version, the API changed and the code needs to be updated
+    - Flask
+    - flask_restful
+    - flask-cors
+    - Flask-Limiter[redis] # Redis is used to persist Flask's rate limit data to disk. This installs Redis client
+    - gunicorn
+    - pymongo
+    - tenacity
+    - python-dateutil
+    - text-generation
+    - matplotlib
+    - together # Used for API access to open-source models via Together.ai
+    - pygments # Used for syntax-highlighting conversation logs in the terminal
+    - pyyaml # Used for loading the config file

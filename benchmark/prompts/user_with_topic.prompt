@@ -1,0 +1,16 @@
+{% block instruction %}
+{{instruction_start}}The current year is {{ current_year }}. The following is a conversation between you and a chatbot. Start by asking "{{ topic }}", then continue the conversation from there.
+- Do not assume that the chatbot is able to have physical experiences, like watching a movie.
+{{ user_character }}
+- Continue the conversation for 15 turns.{{instruction_end}}
+{% endblock %}
+
+{# The first two turns don't have any content and won't be sent to the Chatbot. They are just meant to specify the format. #}
+You: {{output_start}}Hi!{{output_end}}
+Chatbot: {{input_start}}Hi, how can I assist you today?{{input_end}}
+{% block input %}
+{% for dlg_turn in dlg %}
+    You: {{output_start}}{{ dlg_turn.user_utterance }}{{output_end}}
+    Chatbot: {{input_start}}{{ dlg_turn.agent_utterance }}{{input_end}}
+{% endfor %}
+You:{% endblock %}

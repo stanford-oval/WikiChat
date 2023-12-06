@@ -1,0 +1,46 @@
+# Before you can run the code, you need to modify this file and provide the settings that matches your specific needs and APIs.
+# See llm/load_prompt.py and llm/llm_generate.py for more details on how these settings are used.
+
+# Here we provide examples on how to use OpenAI API (via Azure), OpenAI API (via openai.com), Together.ai API and local inference servers.
+# api_base is the URL that we will call behind the scenes to send the request to the API.
+# api_key is the name of the environment variable that contains your API key. We recommend that you store your API key in an environment variable because it is safer than storing it in a file that you might push to git.
+# engine_map is a mapping between general model names and specific model names. For example, if you want to specify the June 2023 version of GPT-4 to be used with your OpenAI API (via openai.com), set the map to "gpt-4-0613".
+
+llm_endpoints:
+  # Use this endpoint if you are accessing OpenAI models via Azure
+  - api_type: azure
+    api_version: "2023-07-01-preview"
+    api_base: https://ovalopenairesource.openai.azure.com # Replace [resource] with your Azure OpenAI resource name
+    api_key: OPENAI_API_KEY # This is the the name of the environment variable that contains your Azure OpenAI API key
+    engine_map: # For Azure OpenAI, the value on the right hand side should be the "Deployment name" of your model
+      text-davinci-003: text-davinci-003
+      gpt-35-turbo-instruct: gpt-35-turbo-instruct
+      gpt-35-turbo: gpt-35-turbo
+      gpt-4: gpt-4
+      gpt-4-32k: gpt-4-32k
+  # Use this endpoint if you are accessing OpenAI models via openai.com
+  - api_type: open_ai
+    api_version: null
+    api_base: https://api.openai.com/v1
+    api_key: OPENAI_API_KEY_BACKUP # This is the the name of the environment variable that contains your OpenAI API key
+    engine_map:
+      text-davinci-003: text-davinci-003
+      gpt-35-turbo-instruct: gpt-3.5-turbo-instruct
+      gpt-35-turbo: gpt-3.5-turbo-0613 # e.g. gpt-3.5-turbo-16k-0613, gpt-3.5-turbo-1106, gpt-3.5-turbo-0613, gpt-3.5-turbo
+      gpt-4: gpt-4-0613 # e.g. gpt-4-0314, gpt-4-0613, gpt-4-1106-preview
+  # Use this endpoint if you are accessing open models from Together.ai
+  - api_type: together
+    api_key: TOGETHER_API_KEY # This is the the name of the environment variable that contains your Together.ai API key
+    engine_map: # If you want to use other models from Together.ai, add them here from https://docs.together.ai/docs/inference-models
+      llama-2-70b: togethercomputer/llama-2-70b
+      llama-2-13b: togethercomputer/llama-2-13b
+      llama-2-7b: togethercomputer/llama-2-7b
+      llama-2-7b-32k: togethercomputer/LLaMA-2-7B-32K
+      RedPajama-INCITE-7B-Instruct: togethercomputer/RedPajama-INCITE-7B-Instruct
+  # Use this endpoint if you are hosting your language model locally, e.g. via HuggingFace's text-generation-inference library
+  - api_type: local
+    api_version: null
+    api_base: http://127.0.0.1:[port] # replace [port] with the port number where your local inference server is running
+    prompt_format: simple # One of simple, alpaca or none. Use simple if you are using zero-shot or few-shot prompting. Use simple or alpaca  if you are using a distilled model, depending on what format the model has been trained with.
+    engine_map:
+      local: local

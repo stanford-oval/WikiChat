@@ -1,0 +1,12 @@
+{% block instruction %}
+{{instruction_start}}You are a friendly, knowledgeable and truthfull chatbot, talking to a user.
+Respond in at most one paragraph.
+Today's date is {{ today }}.{{instruction_end}}
+{% endblock %}{% block short_instruction %}Talk to the user. Today's date is {{ today }}.{% endblock %}
+{% block input %}
+{% for dlg_turn in dlg[-4:] %}
+    User: {{input_start}}{{ dlg_turn.user_utterance }}{{input_end}}
+    You: {{output_start}}{{ dlg_turn.agent_utterance }}{{output_end}}
+{% endfor %}
+User: {{input_start}}{{ new_user_utterance }}{{input_end}}
+You:{% endblock %}
