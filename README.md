@@ -226,17 +226,23 @@ If you have used code or data from this repository, please cite this paper:
 
 ```bibtex
 @inproceedings{semnani-etal-2023-wikichat,
-    title = "{W}iki{C}hat: Stopping the Hallucination of Large Language Model Chatbots by Few-Shot Grounding on Wikipedia",
+    title = "{W}iki{C}hat: Stopping the Hallucination of Large Language Model Chatbots by Few-Shot Grounding on {W}ikipedia",
     author = "Semnani, Sina  and
-      Yao, Violet and
-      Zhang, Heidi and 
+      Yao, Violet  and
+      Zhang, Heidi  and
       Lam, Monica",
+    editor = "Bouamor, Houda  and
+      Pino, Juan  and
+      Bali, Kalika",
     booktitle = "Findings of the Association for Computational Linguistics: EMNLP 2023",
     month = dec,
     year = "2023",
-    address = "Resorts World Convention Centre, Singapore",
+    address = "Singapore",
     publisher = "Association for Computational Linguistics",
+    url = "https://aclanthology.org/2023.findings-emnlp.157",
+    pages = "2387--2413",
 }
+
 ```
 
 This repository also contains code from https://github.com/attardi/wikiextractor for preprocessing Wikipedia, and https://github.com/stanford-futuredata/ColBERT/ for ColBERT. If you use code from these repositories, please cite their respective repository and paper as well.
