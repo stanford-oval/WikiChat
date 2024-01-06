@@ -73,7 +73,7 @@ MMake sure this environment is activated whenever you run any of the following c
 
 ## Set up the LLM endpoint:
 
-WikiChat is compatible with various LLMs, but we recommend using OpenAI models, via either openai.com or Azure. Addtionally, you can use Together.ai, or host your own model locally, but these often result in lower quality outputs.
+WikiChat is compatible with various LLMs, but we recommend using OpenAI models, via either openai.com or Azure. Additionally, you can use Together.ai, or host your own model locally, but these often result in lower quality outputs.
 
 Fill out the appropriate fields in `llm_config.yaml`.
 
