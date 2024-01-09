@@ -43,8 +43,8 @@ dependencies:
     - pymongo
     - tenacity
     - python-dateutil
-    - text-generation
+    - text-generation==0.6.0 # version 0.6.1 prints Pydantic warnings in terminal
     - matplotlib
-    - together # Used for API access to open-source models via Together.ai
+    - together>=0.2.6 # Used for API access to open-source models via Together.ai
     - pygments # Used for syntax-highlighting conversation logs in the terminal
     - pyyaml # Used for loading the config file
