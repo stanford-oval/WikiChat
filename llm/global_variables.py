@@ -70,7 +70,7 @@ def set_debug_mode():
 thread_lock = threading.Lock()
 
 local_model_list = ["local"]
-together_model_list = ["RedPajama-INCITE-7B-Instruct", "llama-2-70b", "llama-2-13b", "llama-2-7b", "llama-2-7b-32k"]
+together_model_list = ["RedPajama-INCITE-7B-Instruct", "llama-2-70b", "llama-2-13b", "llama-2-7b", "llama-2-7b-32k", "mixtral-8-7b", "mistral-7b"]
 openai_chat_model_list = ["gpt-35-turbo", "gpt-4-32k", "gpt-4"]
 openai_nonchat_model_list = [
     "gpt-35-turbo-instruct",
@@ -94,6 +94,8 @@ inference_cost_per_1000_tokens = {
     "llama-2-7b": (0.0002, 0.0002),
     "llama-2-7b-32k": (0.0002, 0.0002),
     "RedPajama-INCITE-7B-Instruct": (0.0002, 0.0002),
+    "mixtral-8-7b": (0.0006, 0.0006),
+    "mistral-7b": (0.0002, 0.0002),
 }  # (prompt, completion)
 
 total_cost = 0  # in USD
