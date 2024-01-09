@@ -48,6 +48,12 @@ def add_pipeline_arguments(parser):
     )
 
     parser.add_argument(
+        "--fuse_claim_splitting",
+        action="store_true",
+        help="If True, The first claim splitting stage of early_combine pipeline will be fused with the generate stage. Only useful for distilled models that have been trained to do this.",
+    )
+
+    parser.add_argument(
         "--colbert_endpoint",
         type=str,
         default="http://127.0.0.1:5000/search",
@@ -158,10 +164,3 @@ def check_pipeline_arguments(args):
             raise ValueError(
                 "When using ATLAS, both `engine` and `pipeline` input arguments should be set to 'atlas'."
             )
-
-    if args.generate_engine is None:
-        # default to args.engine
-        args.generate_engine = args.engine
-    if args.draft_engine is None:
-        # default to args.engine
-        args.draft_engine = args.engine

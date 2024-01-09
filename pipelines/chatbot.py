@@ -41,6 +41,7 @@ class Chatbot:
         self.generate_engine = args.generate_engine
         self.draft_engine = args.draft_engine
         self.do_refine=args.do_refine
+        self.fuse_claim_splitting = args.fuse_claim_splitting
 
     def generate_next_turn(
         self,
@@ -59,12 +60,20 @@ class Chatbot:
                 "engine",
                 "generate_engine",
                 "draft_engine",
+                "fuse_claim_splitting",
                 "do_refine",
             ], f"Unsupported system_parameter key: {key}"
 
         engine = system_parameters.get("engine", self.engine)
         generate_engine = system_parameters.get("generate_engine", self.generate_engine)
+        if generate_engine is None:
+            # this means that the default `generate_engine` was not provided via commandline, and system_parameters is not override it either.
+            # So default to `engine`
+            generate_engine = engine
         draft_engine = system_parameters.get("draft_engine", self.draft_engine)
+        if draft_engine is None:
+            draft_engine = engine
+        fuse_claim_splitting = system_parameters.get("fuse_claim_splitting", self.fuse_claim_splitting)
         engine_dict = {"default": engine, "generate": generate_engine, "draft": draft_engine}
         do_refine = system_parameters.get("do_refine", self.do_refine)
 
@@ -103,6 +112,7 @@ class Chatbot:
                 object_dlg_history,
                 new_user_utterance=new_user_utterance,
                 engine_dict=engine_dict,
+                fuse_claim_splitting=fuse_claim_splitting
             )
         else:
             raise ValueError
@@ -229,15 +239,9 @@ class Chatbot:
         object_dlg_history: List[DialogueTurn],
         new_user_utterance: str,
         engine_dict: str,
+        fuse_claim_splitting: bool
     ):
         new_dlg_turn = DialogueTurn(user_utterance=new_user_utterance)
-        original_reply = self._generate_only(
-            "generate.prompt",
-            object_dlg_history,
-            new_user_utterance,
-            engine_dict=engine_dict,
-        )
-        new_dlg_turn.llm_utterance = original_reply
 
         # gather evidence from two routs in parallel
         with ThreadPoolExecutor(2) as executor:
@@ -249,12 +253,12 @@ class Chatbot:
                 engine_dict=engine_dict,
             )
             supported_claims = executor.submit(
-                self._split_and_fact_check,
+                self._generate_split_and_fact_check,
                 object_dlg_history,
                 new_user_utterance,
-                original_reply,
                 new_dlg_turn,
                 engine_dict=engine_dict,
+                fuse_claim_splitting=fuse_claim_splitting
             )
         search_summary = search_summary.result()
         supported_claims = supported_claims.result()
@@ -271,7 +275,6 @@ class Chatbot:
         #         new_dlg_turn.combined_utterance = "Sorry, I'm not sure." # will become more conversational after refinement
         # else:
         new_dlg_turn.combined_utterance = self._reply_using_combined_evidence(
-            original_reply,
             object_dlg_history,
             new_user_utterance,
             combined_evi,
@@ -484,21 +487,35 @@ class Chatbot:
         )
         return new_dlg_turn.initial_search_bullets
 
-    def _split_and_fact_check(
+    def _generate_split_and_fact_check(
         self,
         object_dlg_history: List[DialogueTurn],
         new_user_utterance: str,
-        original_reply: str,
         new_dlg_turn: DialogueTurn,
         engine_dict: dict,
+        fuse_claim_splitting: bool
     ):
+        original_reply = self._generate_only(
+            "generate.prompt",
+            object_dlg_history,
+            new_user_utterance,
+            engine_dict=engine_dict,
+        )
+        if not fuse_claim_splitting:
+            new_dlg_turn.llm_utterance = original_reply
+            claims_output = None
+        else:
+            new_dlg_turn.llm_utterance = None
+            claims_output = original_reply
+
+
         claims = self.claim_splitter.split_claim(
             dialog_history=object_dlg_history,
             new_user_utterance=new_user_utterance,
             current_agent_utterance=original_reply,
             engine_dict=engine_dict,
+            claims_output=claims_output
         )
-        claims = ClaimSplitter.remove_claims_from_previous_turns(claims, object_dlg_history)
 
         new_dlg_turn.claims = claims
         if not claims:
@@ -682,7 +699,6 @@ class Chatbot:
 
     def _reply_using_combined_evidence(
         self,
-        original_reply,
         object_dlg_history,
         last_user_utterance,
         evidences,
@@ -693,7 +709,6 @@ class Chatbot:
             prompt_parameter_values={
                 "dlg": object_dlg_history,
                 "last_user_utterance": last_user_utterance,
-                "original_reply": original_reply,
                 "evidences": evidences,
             },
             engine=engine_dict["draft"],

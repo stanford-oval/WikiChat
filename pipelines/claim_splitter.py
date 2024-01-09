@@ -16,27 +16,31 @@ class ClaimSplitter:
         current_agent_utterance: str,
         engine_dict: dict,
         dialog_topic: str = None,
+        claims_output=None
     ):
         """
         dialog_topic: used for splitting claims of a simulated dialog we want to evaluate
+        claims_output: If provided, won't run LLM again and will use this output instead
         """
-        claims_output = llm_generate(
-            template_file=self.prompt_template_file,
-            prompt_parameter_values={
-                "dlg": dialog_history,
-                "new_user_utterance": new_user_utterance,
-                "current_agent_utterance": current_agent_utterance,
-                "dialog_topic": dialog_topic,
-            },
-            engine=engine_dict["default"],
-            max_tokens=300,
-            temperature=0,
-            stop_tokens=["====="],
-            postprocess=False,
-        )
+        if not claims_output:
+            assert current_agent_utterance is not None, "current_agent_utterance must be provided when `split_claim` is not fused with `generate`"
+            claims_output = llm_generate(
+                template_file=self.prompt_template_file,
+                prompt_parameter_values={
+                    "dlg": dialog_history,
+                    "new_user_utterance": new_user_utterance,
+                    "current_agent_utterance": current_agent_utterance,
+                    "dialog_topic": dialog_topic,
+                },
+                engine=engine_dict["default"],
+                max_tokens=300,
+                temperature=0,
+                stop_tokens=["====="],
+                postprocess=False,
+            )
 
         if claims_output.startswith("Yes. "):
-            # necessary for distilled models
+            # necessary for some versions of distilled models
             claims_output = claims_output[5:]
         all_claims = self._format_output(claims_output)
 

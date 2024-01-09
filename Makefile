@@ -9,6 +9,7 @@ evi_num ?= 2# num evi for each subclaim verification
 retrieval_num ?= 3# for initial retrieval
 reranking_method ?= date# none or date
 skip_verification ?= false
+fuse_claim_splitting ?= false
 do_refine ?= true
 refinement_prompt ?= refine_w_feedback.prompt
 
@@ -36,20 +37,18 @@ endif
 
 ifeq ($(do_refine), true)
 	PIPELINE_FLAGS := $(PIPELINE_FLAGS) --do_refine
-else
-	PIPELINE_FLAGS := $(PIPELINE_FLAGS)
 endif
 
 ifeq ($(skip_verification), true)
 	PIPELINE_FLAGS := $(PIPELINE_FLAGS) --skip_verification
-else
-	PIPELINE_FLAGS := $(PIPELINE_FLAGS)
+endif
+
+ifeq ($(fuse_claim_splitting), true)
+	PIPELINE_FLAGS := $(PIPELINE_FLAGS) --fuse_claim_splitting
 endif
 
 ifeq ($(debug_mode), true)
 	PIPELINE_FLAGS := $(PIPELINE_FLAGS) --debug_mode
-else
-	PIPELINE_FLAGS := $(PIPELINE_FLAGS)
 endif
 
 .PHONY: demo simulate-users start-colbert start-backend start-colbert-gunicorn start-backend-gunicorn download-and-index-wiki download-latest-wiki extract-wiki split-wiki index-wiki db-to-file run-tests
