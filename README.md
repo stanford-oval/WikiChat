@@ -45,7 +45,7 @@ Check out our paper for more details:
 Sina J. Semnani, Violet Z. Yao*, Heidi C. Zhang*, and Monica S. Lam. 2023. [WikiChat: Stopping the Hallucination of Large Language Model Chatbots by Few-Shot Grounding on Wikipedia](https://arxiv.org/abs/2305.14292). In Findings of the Association for Computational Linguistics: EMNLP 2023, Singapore. Association for Computational Linguistics.
 
 ## 🚨 **Announcements** 
-- (January 8, 2023) Distilled LLaMA-2 models are released. You can run these models locally for a cheaper and faster alternative to paid APIs.
+- (January 8, 2024) Distilled LLaMA-2 models are released. You can run these models locally for a cheaper and faster alternative to paid APIs.
 - (December 8, 2023) We present our work at EMNLP 2023.
 - (October 27, 2023) The camera-ready version of our paper is now available on arXiv.
 - (October 06, 2023) Our paper is accepted to the Findings of EMNLP 2023.
