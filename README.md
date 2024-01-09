@@ -45,7 +45,8 @@ Check out our paper for more details:
 Sina J. Semnani, Violet Z. Yao*, Heidi C. Zhang*, and Monica S. Lam. 2023. [WikiChat: Stopping the Hallucination of Large Language Model Chatbots by Few-Shot Grounding on Wikipedia](https://arxiv.org/abs/2305.14292). In Findings of the Association for Computational Linguistics: EMNLP 2023, Singapore. Association for Computational Linguistics.
 
 ## 🚨 **Announcements** 
-- (December 10, 2023) We present our work at EMNLP 2023.
+- (January 8, 2023) Distilled LLaMA-2 models are released. You can run these models locally for a cheaper and faster alternative to paid APIs.
+- (December 8, 2023) We present our work at EMNLP 2023.
 - (October 27, 2023) The camera-ready version of our paper is now available on arXiv.
 - (October 06, 2023) Our paper is accepted to the Findings of EMNLP 2023.
 
@@ -133,8 +134,22 @@ make demo pipeline=early_combine do_refine=false engine=gpt-35-turbo-instruct dr
 See pipelines/pipeline_arguements.py for more details on the different pipeline configurations.
 
 
-## Run a distilled LLaMA model for lower latency and cost
-Coming soon!
+## Run a distilled model for lower latency and cost
+First, make sure to set the `api_base` field in `llm_config.yaml`, and note the `ip` address and `port` number.
+
+Then start the inference server in a separate terminal using [HuggingFace's text-generation-inference library](https://github.com/huggingface/text-generation-inference/).
+We recommend using their provided Docker image given its ease of use. Download one of the available models, then run `docker run --gpus all --shm-size 1g -p <port>:80 -v ./:/data ghcr.io/huggingface/text-generation-inference:1.3.4 --model-id /data/<path-to-model-directory> --hostname <ip> --num-shard <number-of-gpus>`.
+When the inference server is running on an NVIDIA A100 GPU, each chatbot response should take just a few seconds, plus the time needed for retrieval via ColBERT.
+
+The following models are available on the HuggingFace Hub.
+
+- [stanford-oval/Llama-2-7b-WikiChat](https://huggingface.co/stanford-oval/Llama-2-7b-WikiChat): A slightly improved version of the distilled LLaMA model described in our paper. Similar to the paper, stages 6 (draft) and 7 (refine) are fused together. The differences from the paper are:
+1. In addition to fine-tuning on simulated conversations about Wikipedia topics, we also include several less knowledge-intensive (i.e. more chit-chat) simulated conversations to prevent failure modes.
+1. We fine-tune `LLaMA-2-7B` instead of `LLaMA-7B`.
+Run `make demo engine=local do_refine=false` if you are using this model.
+
+- [stanford-oval/Llama-2-7b-WikiChat-fused](https://huggingface.co/stanford-oval/Llama-2-7b-WikiChat-fused): Similar to the previous model, except that stages 3 (generate) and 4 (extract claim) are also fused together. Therefore, this model is almost twice as fast.
+Run `make demo engine=local do_refine=false fuse_claim_splitting=true` if you are using this model.
 
 
 ## Run user simulator
