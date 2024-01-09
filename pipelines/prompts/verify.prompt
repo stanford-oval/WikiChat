@@ -99,4 +99,4 @@ You rewrite your claim: King Charles III is 75 years old as of {{ today }}.{% en
 
 {% endfor %}
 ]
-Fact-check the claim "{{ claim }}". You think step by step:{{input_end}}{% endblock %}
+Fact-check the claim "{{ claim }}".{% endblock %} You think step by step:{{input_end}} {# Outside the input block because distilled models don't think step-by-step. #}

@@ -34,7 +34,7 @@ for a in all_llm_endpoints:
         a["api_key"] = os.getenv(a["api_key"])
 
 all_llm_endpoints = [
-    a for a in all_llm_endpoints if "api_key" not in a or a["api_key"] is not None
+    a for a in all_llm_endpoints if "api_key" not in a or (a["api_key"] is not None and len(a["api_key"]) > 0)
 ]  # remove resources for which we don't have a key
 # print("all_llm_endpoints = ", all_llm_endpoints)
 

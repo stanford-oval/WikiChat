@@ -10,8 +10,8 @@ llm_endpoints:
   # Use this endpoint if you are accessing OpenAI models via Azure
   - api_type: azure
     api_version: "2023-07-01-preview"
-    api_base: https://ovalopenairesource.openai.azure.com # Replace [resource] with your Azure OpenAI resource name
-    api_key: OPENAI_API_KEY # This is the the name of the environment variable that contains your Azure OpenAI API key
+    api_base: https://[resource].openai.azure.com # Replace [resource] with your Azure OpenAI resource name
+    api_key: AZURE_OPENAI_API_KEY # This is the the name of the environment variable that contains your Azure OpenAI API key
     engine_map: # For Azure OpenAI, the value on the right hand side should be the "Deployment name" of your model
       text-davinci-003: text-davinci-003
       gpt-35-turbo-instruct: gpt-35-turbo-instruct
@@ -22,7 +22,7 @@ llm_endpoints:
   - api_type: open_ai
     api_version: null
     api_base: https://api.openai.com/v1
-    api_key: OPENAI_API_KEY_BACKUP # This is the the name of the environment variable that contains your OpenAI API key
+    api_key: OPENAI_API_KEY # This is the the name of the environment variable that contains your OpenAI API key
     engine_map:
       text-davinci-003: text-davinci-003
       gpt-35-turbo-instruct: gpt-3.5-turbo-instruct
@@ -40,7 +40,7 @@ llm_endpoints:
   # Use this endpoint if you are hosting your language model locally, e.g. via HuggingFace's text-generation-inference library
   - api_type: local
     api_version: null
-    api_base: http://127.0.0.1:[port] # replace [port] with the port number where your local inference server is running
+    api_base: http://[ip]:[port] # replace [ip] and [port] with the ip and port number where your inference server is running. You can use 0.0.0.0 for the IP address if your inference server is running on this machine.
     prompt_format: simple # One of simple, alpaca or none. Use simple if you are using zero-shot or few-shot prompting. Use simple or alpaca  if you are using a distilled model, depending on what format the model has been trained with.
     engine_map:
       local: local
