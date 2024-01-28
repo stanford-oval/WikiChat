@@ -107,7 +107,7 @@ make start-colbert-gunicorn wiki_date=11_06_2023 language=en
 ```
 No GPU is needed to use ColBERT as it is set to use CPU. The entire index will be loaded to RAM, which requires about 100GB of RAM. If you don't have that much RAM, you can enable memory mapping by adding `colbert_memory_map=true` to this command. This will reduce the RAM usage to about 35GB, but will make retrieval slower.
 
-By default, the server listens on port 5000. You can test this server by running a curl command like this:
+You need to keep this process running so that the chatbot can communicate with the ColBERT index. For that, either keep this terminal open, or use [tmux](https://github.com/tmux/tmux/wiki)/[screen](https://www.gnu.org/software/screen/). By default, the server listens on port 5000. You can test this server by running a curl command like this in a new terminal:
 ```bash
 curl http://127.0.0.1:5000/search -d '{"query": "who is the current monarch of the united kingdom?", "evi_num": 1}' -X GET -H 'Content-Type: application/json'
 ```
