@@ -43,6 +43,6 @@ llm_endpoints:
   - api_type: local
     api_version: null
     api_base: http://[ip]:[port] # replace [ip] and [port] with the ip address and the port number where your inference server is running. You can use 0.0.0.0 for the IP address if your inference server is running on this machine.
-    prompt_format: simple # One of simple, alpaca or none. Use simple if you are using zero-shot or few-shot prompting. Use simple or alpaca  if you are using a distilled model, depending on what format the model has been trained with.
+    prompt_format: simple # One of simple, alpaca or none. Use none if you are using zero-shot or few-shot prompting. Use simple or alpaca  if you are using a distilled model, depending on what format the model has been trained with.
     engine_map:
       local: local
