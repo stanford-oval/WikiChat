@@ -1,50 +1,55 @@
 name: wikichat
 channels:
   - pytorch
-  - nvidia
   - conda-forge
   - defaults
 dependencies:
-  - python=3.8
-  - faiss-gpu # The GPU version is needed for indexing, but search is set to be done on CPU
-  - pip=21.0
-  - pytorch=1.13.1
-  - torchaudio=0.13.1
-  - torchvision=0.14.1
-  - cudatoolkit-dev=11.3
-  - gcc=9.4.0
-  - gxx=9.4.0
+  - python=3.10
+  - pytorch
+  - pip
+  # gcc, gxx and make are needed to build some of the pip packages
+  - gcc
+  - gxx
   - make
-  - redis # Redis is used to persist Flask's rate limit data to disk. This installs redis-server
+  - redis # Redis is used to persist FastAPI's rate limit data, and cache LLM outputs. This installs redis-server
   - pip:
-    - bitarray
-    - datasets
-    - evaluate
-    - sacrebleu
-    - gitpython
-    - jupyter
-    - jupyterlab
-    - ninja
-    - scipy
-    - spacy
-    - tqdm
-    - transformers
-    - huggingface-hub # Needed for downloading the Wikipedia index from the HuggingFace Hub
-    - ujson
-    - bs4
-    - nltk
-    - boto3
-    - openai==0.28.1 # After this version, the API changed and the code needs to be updated
-    - Flask
-    - flask_restful
-    - flask-cors
-    - Flask-Limiter[redis] # Redis is used to persist Flask's rate limit data to disk. This installs Redis client
-    - gunicorn
-    - pymongo
-    - tenacity
-    - python-dateutil
-    - text-generation==0.6.0 # version 0.6.1 prints Pydantic warnings in terminal
-    - matplotlib
-    - together>=0.2.6 # Used for API access to open-source models via Together.ai
+    - invoke # used for running multi-part commands. A more Python-friendly alternative to Make
+    - docker # Python bindings for docker. You should also install docker on your system separately.
+    - transformers>=4.38 # 🤗 transformers library
+    - datasets # 🤗 datasets library
+    - evaluate # 🤗 evaluation library
+    - huggingface_hub # Package to download datasets and models from 🤗 hub
+    - rouge_score # Library for calculating ROUGE scores
+    - sacrebleu # Library for calculating BLEU scores
+    - scipy # Scientific computing library
+    - spacy # NLP library
+    - tqdm # Progress bar library
+    - pytest # Testing framework
+    - pytest-asyncio # pytest plugin that facilitates the testing of async functions
+    - langcodes[data] # Language codes library with data extras
+    - chainlite==0.2.2 # The interface to various LLM providers. A wrapper around LangChain and LiteLLM
+
+    # For the retrieval server
+    - fastapi # Web framework for building APIs based on standard Python type hints
+    - email-validator # Used for Redoc
+    - git+https://github.com/laurentS/slowapi.git@a72bcc66597f620f04bf5be3676e40ed308d3a6a # Rate limiting library for FastAPI applications
+    - async_lru # Async LRU cache decorator
+    - gunicorn # Python WSGI HTTP Server for UNIX
+    - uvicorn[standard] # standard extra packages improve uvicorn's performance
+    - qdrant-client==1.11 # Used for nearest neighbor search
+    - onnxruntime # To run embedding models faster on CPU. Optional.
+
+    - chainlit==1.1.202 # used for the demo. Newer versions have too many breaking changes
+    - pymongo # MongoDB python package
+    - matplotlib # Plotting library
     - pygments # Used for syntax-highlighting conversation logs in the terminal
     - pyyaml # Used for loading the config file
+    - json_repair # helps fix LLM json outputs
+
+    # for processing Wikipedia HTML dumps:
+    - markdownify # Converts HTML to Markdown
+    - beautifulsoup4 # HTML parsing
+    - cchardet # speeds up beautifulsoup parsing
+    - mwparserfromhtml # used for some of its helper functions to process Wikipedia HTML
+    - orjson # Faster alternative to Python's json package
+    - orjsonl # Fast light-weight package to work with jsonline files. Uses orjson internally.

@@ -1,130 +1,155 @@
-{% block instruction %}
-{{instruction_start}}Given a conversation history between a user and a chatbot, provide feedback on the chatbot's final response, then revise the response based on the following criteria:
+# instruction
+The following are separate conversations between different users and a chatbot. Rate the chatbot's final response based on the following criteria:
 - Relevant: The response should be on-topic and directly address the user's question. It should acknowledge if it's off-topic or only partially addresses the question. Irrelevant information should be avoided.
-- Temporally Correct: The response should use past-tense for events that happened before today ({{ today }}). It should acknowledge if the information it provides is outdated or not for the specific date the user has asked for.
-- Natural: The response should use engaging language to create an interactive and enjoyable experience, without being too long.
+- Correct Time: Today is {{ today }}, but the chatbot might talk about past events as if they have not happened yet. The response should use past-tense when the event happened before today ({{ today }}), and respond specifically to the time mentioned by the user.
+- Natural: The response should use engaging language to create an interactive and enjoyable experience.
 - Non-Repetitive: The response should not repeat previously mentioned information or statement, and should not repeat the same fact more than once.
-The revised response should only edit the original response according to the feedback, and should not introduce new information.
+Then write a "Revised response". The revised response should only edit the original response according to the scores, and should not introduce new information.
 
-Today's date is {{ today }}.{{instruction_end}}
-{% endblock %}{% block short_instruction %}Provide feedback and revise the response. Today's date is {{ today }}{% endblock %}
+Today's date is {{ today }}.
 
-=====
-{{input_start}}User: When was House of the Dragon released?
-Response: House of the Dragon was released on August 21, 2022. Have you had a chance to watch it yet?
 
-Provide feedback for the response:{{input_end}}
-{{output_start}}- Relevant: The response is on-topic and directly addresses the user's question about the release date of House of the Dragon. 100/100
-- Temporally Correct: The response correctly uses the past tense to talk about the release time. 100/100
+# distillation instruction
+Rate then improve the response. Today's date is {{ today }}
+
+
+# input
+User: When was House of the Dragon released?
+Chatbot: House of the Dragon was released on August 21, 2022. Have you had a chance to watch it yet?
+
+Rate the response:
+
+# output
+- Relevant: The response is on-topic and directly addresses the user's question about the release date of House of the Dragon. 100/100
+- Correct Time: The response correctly uses the past tense to talk about the release time. 100/100
 - Natural: The response sounds a friendly and uses engaging language. 100/100
 - Non-Repetitive: The response does not repeat any previous statement. 100/100
 
-Revised response after applying this feedback: House of the Dragon was released on August 21, 2022. Have you had a chance to watch it yet?{{output_end}}
+Revised response: House of the Dragon was released on August 21, 2022. Have you had a chance to watch it yet?
 
-=====
-{{input_start}}User: What do you think is the best TV drama of 2022?
+
+# input
+User: What do you think is the best TV drama of 2022?
 Chatbot: I think it has to be House of the Dragon.
 User: Why is that?
-Response: I love it because both the plot and the visuals are great. It actually won the Golden Globe Award for the best drama TV series. I'm not sure when it was released, but I think it was August 21, 2022.
+Chatbot: I love it because both the plot and the visuals are great. It actually won the Golden Globe Award for the best drama TV series. I'm not sure when it was released, but I think it was August 21, 2022.
 
-Provide feedback for the response:{{input_end}}
-{{output_start}}- Relevant: The response is on-topic and directly addresses the question of why the speaker thinks House of the Dragon is the best TV drama, but it contains irrelevant information about the release date of the show. 60/100
-- Temporally Correct: The response correctly uses the past tense to describe the Golden Globe win. 100/100
+Rate the response:
+
+# output
+- Relevant: The response is on-topic and directly addresses the question of why the speaker thinks House of the Dragon is the best TV drama, but it contains irrelevant information about the release date of the show. 60/100
+- Correct Time: The response correctly uses the past tense to describe the Golden Globe win. 100/100
 - Natural: The response uses engaging language to express the chatbot's opinion and provides supporting information to reinforce that opinion. 100/100
 - Non-Repetitive: The response does not repeat any previous statement. 100/100
 
-Revised response after applying this feedback: I love it because both the plot and the visuals are great. It actually won the Golden Globe Award for the best drama TV series.{{output_end}}
+Revised response: I love it because both the plot and the visuals are great. It actually won the Golden Globe Award for the best drama TV series.
 
-=====
-{{input_start}}User: who was professor monica lam's phd advisor?
-Response: Professor John Hennessy was not Professor Monica Lam's PhD advisor.
 
-Provide feedback for the response:{{input_end}}
-{{output_start}}- Relevant: The response is on-topic, but it does not actually answer user's question. 50/100
-- Temporally Correct: The response correctly uses the past tense to describe who Professor Monica Lam's advisor was. 100/100
+# input
+User: who was professor monica lam's phd advisor?
+Chatbot: Professor John Hennessy was not Professor Monica Lam's PhD advisor.
+
+Rate the response:
+
+# output
+- Relevant: The response is on-topic, but it does not actually answer user's question. 50/100
+- Correct Time: The response correctly uses the past tense to describe who Professor Monica Lam's advisor was. 100/100
 - Natural: The response lacks a natural conversational flow and sounds a bit formal. 50/100
 - Non-Repetitive: The response does not repeat any previous statement. 100/100
 
-Revised response after applying this feedback: Sorry, I'm not sure who professor Monica Lam's PhD advisor was.{{output_end}}
+Revised response: Sorry, I'm not sure who professor Monica Lam's PhD advisor was.
 
-=====
-{{input_start}}User: What do you think is the best TV drama of 2022?
+
+# input
+User: What do you think is the best TV drama of 2022?
 Chatbot: I think it has to be House of the Dragon.
 User: Did it win any award?
 Chatbot: Yes, it won the Golden Globe Award for the best drama TV series.
 User: Why else do you think it is a good drama?
-Response: The first season received highly positive reviews, with praise towards its character development, visual effects, writing, score by Ramin Djawadi and performances (particularly Considine, Smith, D'Arcy, Alcock, and Cooke). The series premiere was watched by over 10 million viewers across the linear channels and HBO Max on the first day, the biggest in HBO's history. In January 2023, the series is expected to win the Golden Globe Award for Best Television Series - Drama.
+Chatbot: The first season received highly positive reviews, with praise towards its character development, visual effects, writing, score by Ramin Djawadi and performances (particularly Considine, Smith, D'Arcy, Alcock, and Cooke). The series premiere was watched by over 10 million viewers across the linear channels and HBO Max on the first day, the biggest in HBO's history. In January 2023, the series is expected to win the Golden Globe Award for Best Television Series - Drama.
 
-Provide feedback for the response:{{input_end}}
-{{output_start}}- Relevant: The response is on-topic and directly addresses the question of why House of the Dragon is a good drama. 100/100
-- Temporally Correct: The response uses the wrong tense and the word "expected" for the Golden Globe win when it should use the past tense because the award in January 2023 happened before today, {{ today }}. 50/100
+Rate the response:
+
+# output
+- Relevant: The response is on-topic and directly addresses the question of why House of the Dragon is a good drama. 100/100
+- Correct Time: The response uses the wrong tense and the word "expected" for the Golden Globe win when it should use the past tense because the award in January 2023 happened before today, {{ today }}. 50/100
 - Natural: Although the response provides an in-depth discussion, it sounds very official, which is unnatural in a conversation. 60/100
 - Non-Repetitive: The response contains a repetition of a previous statement that House of the Dragon won the Golden Globe Award. 30/100
 
-Revised response after applying this feedback: Critics loved the character development, visuals, writing, and performances (particularly Considine, Smith, D'Arcy, Alcock, and Cooke). And, the series premiere was watched by over 10 million viewers on the first day, the biggest in HBO's history!{{output_end}}
+Revised response: Critics loved the character development, visuals, writing, and performances (particularly Considine, Smith, D'Arcy, Alcock, and Cooke). And, the series premiere was watched by over 10 million viewers on the first day, the biggest in HBO's history!
 
-=====
-{{input_start}}User: tell me about haruki murakami
+
+# input
+User: tell me about haruki murakami
 Chatbot: Haruki Murakami is a Japanese writer, born in 1949. His work has been translated into 50 languages and has sold millions of copies internationally. He has received numerous awards for his work, including the Gunzo Prize for New Writers, the World Fantasy Award, the Frank O'Connor International Short Story Award, the Franz Kafka Prize, and the Jerusalem Prize. He is also a fan of crime novels and has a passion for listening to music, especially classical and jazz.
 User: where was he born?
-Response: Haruki Murakami was born in Kyoto, Japan in 1949 and was raised in Nishinomiya, Ashiya, and Kobe. He is a fan of crime novels and has a passion for listening to music, especially classical and jazz.
+Chatbot: Haruki Murakami was born in Kyoto, Japan in 1949 and was raised in Nishinomiya, Ashiya, and Kobe. He is a fan of crime novels and has a passion for listening to music, especially classical and jazz.
 
-Provide feedback for the response:{{input_end}}
-{{input_start}}- Relevant: The response is on-topic and directly addresses the user's question about where Haruki Murakami was born. However, it includes irrelevant information about his interests that were already mentioned in the previous response. 70/100
-- Temporally Correct: The response is temporally correct as it uses the past tense to describe where Haruki Murakami was born and raised. 100/100
+Rate the response:
+
+# output
+- Relevant: The response is on-topic and directly addresses the user's question about where Haruki Murakami was born. However, it includes irrelevant information about his interests that were already mentioned in the previous response. 70/100
+- Correct Time: The response is Correct Time as it uses the past tense to describe where Haruki Murakami was born and raised. 100/100
 - Natural: The response sounds natural, but it could be more engaging by asking a follow-up question. 90/100
 - Non-Repetitive: The response repeats information about Haruki Murakami's interests that were already mentioned in the previous response. 50/100
 
-Revised response after applying this feedback: Haruki Murakami was born in Kyoto, Japan in 1949 and was raised in Nishinomiya, Ashiya, and Kobe. Do you want to know more about his early life or his works?{{output_end}}
+Revised response: Haruki Murakami was born in Kyoto, Japan in 1949 and was raised in Nishinomiya, Ashiya, and Kobe. Do you want to know more about his early life or his works?
 
 
-=====
-{{input_start}}User: Have you heard about Elon Musk's acquisition of Twitter?
-Response: In July 2022, it was revealed through the obtaining of Travis County, Texas court documents that Zilis had twins with Elon Musk who were born in November 2021. Executives claimed that they were born via in vitro fertilization (IVF).
+# input
+User: Have you heard about Elon Musk's acquisition of Twitter?
+Chatbot: In July 2022, it was revealed through the obtaining of Travis County, Texas court documents that Zilis had twins with Elon Musk who were born in November 2021. Executives claimed that they were born via in vitro fertilization (IVF).
 
-Provide feedback for the response:{{input_end}}
-{{output_start}}- Relevant: The response is off-topic. The user's question about Elon Musk's acquisition of Twitter but it provides unrelated information about Zilis having twins with Elon Musk. 0/100
-- Temporally Correct: The response correctly uses the past tense to describe the events that happened in July 2022 and November 2021, specifically the revelation of Zilis having twins with Elon Musk. 100/100
+Rate the response:
+
+# output
+- Relevant: The response is off-topic. The user's question about Elon Musk's acquisition of Twitter but it provides unrelated information about Zilis having twins with Elon Musk. 0/100
+- Correct Time: The response correctly uses the past tense to describe the events that happened in July 2022 and November 2021. 100/100
 - Natural: The response lacks a natural conversational flow and sounds very formal. 0/100
 - Non-Repetitive: The response does not repeat any previous statement. 100/100
 
-Revised response after applying this feedback: No, I haven't heard about Elon Musk's acquisition of Twitter. What are your thoughts on his acquisition?{{output_end}}
+Revised response: No, I haven't heard about Elon Musk's acquisition of Twitter. What are your thoughts on his acquisition?
 
-=====
-{{input_start}}User: Hey, do you know when starbucks was founded?
+
+# input
+User: Hey, do you know when starbucks was founded?
 Chatbot: It was founded in 1971.
 User: How many starbucks are there currently in the world?
-Response: There are 32,660 Starbucks locations in 79 countries in November 2021.
+Chatbot: There are 32,660 Starbucks locations in 79 countries in November 2021.
 
-Provide feedback for the response:{{input_end}}
-{{output_start}}- Relevant: The response is on-topic, but it only partially addresses the user's question about the number of Starbucks as of {{ today }} by providing the number of Starbucks in November 2021. 50/100
-- Temporally Correct: The user specifically asked for current information, but the response is out-dated as of {{ today }}. This should be acknowledged. 0/100
+Rate the response:
+
+# output
+- Relevant: The response is on-topic, but it only partially addresses the user's question about the number of Starbucks as of {{ today }} by providing the number of Starbucks in November 2021. 50/100
+- Correct Time: The user specifically asked for current information, but the response is out-dated as of {{ today }}. This should be acknowledged. 0/100
 - Natural: The response sounds a bit formal and could benefit from a more friendly and engaging language. 90/100
 - Non-Repetitive: The response does not repeat any previous statement. 100/100
 
-Revised response after applying this feedback: As of November 2021, there were 33,833 Starbucks locations in 80 countries. This number might have changed since then, but I don't have more current information.{{output_end}}
+Revised response: As of November 2021, there were 33,833 Starbucks locations in 80 countries. This number might have changed since then, but I don't have more current information.
 
-=====
-{{input_start}}User: Who won the most recent Oscars for Best Actor and Best Actress?
-Response: Anthony Hopkins won the Oscar for Best Actor in 2021 for his role in "The Father". The Oscar for Best Actress in 2021 went to Frances McDormand for her performance in "Nomadland".
 
-Provide feedback for the response:{{input_end}}
-{{output_start}}- Relevant: The response is on-topic and directly addresses the user's question about the most recent Oscar winners for Best Actor and Best Actress. However, it does not provide the most recent information as of today, {{ today }}. 70/100
-- Temporally Correct: The response correctly uses the past tense to describe the event that happened in 2021. But the user asked about the latest information, but the provided information is old as of {{ today }}. 50/100
+# input
+User: Who won the most recent Oscars for Best Actor and Best Actress?
+Chatbot: Anthony Hopkins won the Oscar for Best Actor in 2021 for his role in "The Father". The Oscar for Best Actress in 2021 went to Frances McDormand for her performance in "Nomadland".
+
+Rate the response:
+
+# output
+- Relevant: The response is on-topic and directly addresses the user's question about the most recent Oscar winners for Best Actor and Best Actress. However, it does not provide the most recent information as of today, {{ today }}. 70/100
+- Correct Time: The response correctly uses the past tense to describe the event that happened in 2021. But the user asked about the latest information, but the provided information is old as of {{ today }}. 50/100
 - Natural: The response sounds natural, but it could mention both facts in one shorter sentence. 90/100
 - Non-Repetitive: The response does not repeat any previous statement. 100/100
 
-Revised response after applying this feedback: I'm sorry, but I don't have the most recent information for the Oscar winners for Best Actor and Best Actress. The last available information is from 2021, where Anthony Hopkins won the Oscar for Best Actor for "The Father" and Frances McDormand won the Oscar for Best Actress for "Nomadland".{{output_end}}
+Revised response: I'm sorry, but I could not find the most recent information for the Oscar winners for Best Actor and Best Actress. The last information I found is from 2021, where Anthony Hopkins won the Oscar for Best Actor for "The Father" and Frances McDormand won the Oscar for Best Actress for "Nomadland".
 
-=====
 
 {# Only looking at the last two dialog turns is too few. It sometimes led to feedback not detecting repetitions that happened three turns ago #}
-{% block input %}
-{{input_start}}{% for dlg_turn in dlg[-2:] %}
+# input
+{% for dlg_turn in dlg[-2:] %}
     User: {{ dlg_turn.user_utterance }}
     Chatbot: {{ dlg_turn.agent_utterance }}
 {% endfor %}
-User: {{ new_dlg_turn.user_utterance }}
-Response: {{ new_dlg_turn.agent_utterance }}
+User: {{ new_user_utterance }}
+Chatbot: {{ utterance_to_refine }}
 
-Provide feedback for the response:{{input_end}}{% endblock %}
+Rate the response:

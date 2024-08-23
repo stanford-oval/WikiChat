@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="./images/wikipedia.png" width="100px" alt="Wikipedia" />
+    <img src="./public/logo_light.png" width="100px" alt="WikiChat Logo" style="display: block; margin: 0 auto;" />
     <h1 align="center">
         <b>WikiChat</b>
         <br>
@@ -12,12 +12,12 @@
     </h1>
 </p>
 <p align="center">
-    Stopping the Hallucination of Large Language Model Chatbots by Few-Shot Grounding on Wikipedia
+    Stopping the Hallucination of Large Language Models
 </p>
 <p align="center">
-    <!-- <a href="https://stanford.edu" target="_blank"> -->
-        <!-- <img src="./images/stanford.png" width="140px" alt="Stanford University" /> -->
-    <!-- </a> -->
+    <!-- <a href="https://stanford.edu" target="_blank">
+        <img src="./public/stanford.png" width="140px" alt="Stanford University" />
+    </a> -->
 </p>
 <p align="center">
     Online demo:
@@ -30,35 +30,58 @@
 <!-- <hr /> -->
 
 
-
-## Introduction
+# Introduction
 
 Large language model (LLM) chatbots like ChatGPT and GPT-4 get things wrong a lot, especially if the information you are looking for is recent ("Tell me about the 2024 Super Bowl.") or about less popular topics ("What are some good movies to watch from [insert your favorite foreign director]?").
 WikiChat uses Wikipedia and the following 7-stage pipeline to makes sure its responses are factual.
 
 
 <p align="center">
-    <img src="./images/pipeline.svg" width="700px" alt="WikiChat Pipeline" />
+    <img src="./public/pipeline.svg" width="700px" alt="WikiChat Pipeline" />
 </p>
 
 Check out our paper for more details:
 Sina J. Semnani, Violet Z. Yao*, Heidi C. Zhang*, and Monica S. Lam. 2023. [WikiChat: Stopping the Hallucination of Large Language Model Chatbots by Few-Shot Grounding on Wikipedia](https://arxiv.org/abs/2305.14292). In Findings of the Association for Computational Linguistics: EMNLP 2023, Singapore. Association for Computational Linguistics.
 
 ## 🚨 **Announcements** 
+- (August 22, 2024) WikiChat 2.0 is now available! Highlights:
+    - WikiChat now supports retrieval from structured data like tables, infoboxes and lists, in addition to text.
+    - WikiChat is now multilingual. By default, it retrieves information from 10 Wikipedias ( :us: English, 🇨🇳 Chinese, 🇪🇸 Spanish, 🇵🇹 Portuguese, 🇷🇺 Russian, 🇩🇪 German, 🇮🇷 Farsi, 🇯🇵 Japanese, 🇫🇷 French, 🇮🇹 Italian)
+    - Supports 100+ LLMs through a unified interface, thanks to [LiteLLM](https://github.com/BerriAI/litellm).
+    - Uses the state-of-the-art multilingual retrieval model [BGE-M3](https://huggingface.co/BAAI/bge-m3).
+    - Uses [Qdrant](https://github.com/qdrant/qdrant) for scalable vector search. We also provide a high-quality free (but rate-limited) search API for access to 10 Wikipedias, over 250M vector embeddings.
+    - Option for faster and cheaper pipeline by merging the "generate" and "extract claim" stages.
+    - Has the highest quality public Wikipedia preprocessing scripts (event better than what is used to pre-train LLMs, see below).
+    - Uses and is compatible with LangChain 🦜️🔗.
+    - Uses [RankGPT](https://github.com/sunnweiwei/RankGPT) for more relevant results.
+    - Lots more!
 - (June 20, 2024) WikiChat won the 2024 Wikimedia Research Award!
   <blockquote class="twitter-tweet"><p lang="en" dir="ltr">The <a href="https://twitter.com/Wikimedia?ref_src=twsrc%5Etfw">@Wikimedia</a> Research Award of the Year 2024 goes to &quot;WikiChat: Stopping the hallucination of large language model chatbots by few-shot grounding on Wikipedia&quot; ⚡<br><br>📜 <a href="https://t.co/d2M8Qrarkw">https://t.co/d2M8Qrarkw</a> <a href="https://t.co/P2Sh47vkyi">pic.twitter.com/P2Sh47vkyi</a></p>&mdash; Wiki Workshop 2024 (@wikiworkshop) <a href="https://twitter.com/wikiworkshop/status/1803793163665977481?ref_src=twsrc%5Etfw">June 20, 2024</a></blockquote>
   
-- (May 16, 2024) Our follow-up paper _"SPAGHETTI: Open-Domain Question Answering from Heterogeneous Data Sources with Retrieval and Semantic Parsing"_ is accepted to the Findings of ACL 2024. Its code will be released here soon!
+- (May 16, 2024) Our follow-up paper _"🍝 SPAGHETTI: Open-Domain Question Answering from Heterogeneous Data Sources with Retrieval and Semantic Parsing"_ is accepted to the Findings of ACL 2024. This paper adds support for structured data like tables, infoboxes and lists.
 - (January 8, 2024) Distilled LLaMA-2 models are released. You can run these models locally for a cheaper and faster alternative to paid APIs.
 - (December 8, 2023) We present our work at EMNLP 2023.
 - (October 27, 2023) The camera-ready version of our paper is now available on arXiv.
 - (October 06, 2023) Our paper is accepted to the Findings of EMNLP 2023.
 
-## Installation
 
-Everything has been tested using Python 3.8 on Ubuntu 20.04, but should run on other Linux distributions as well.
-If you want to use this on Windows or Mac, or with a newer Python version, expect to do some troubleshooting in a few of the installation steps.
-We recommend using the conda environment in `conda_env.yaml`.
+# Installation
+
+Installing WikiChat involves the following steps:
+
+1. Install dependencies
+2. Configure the LLM of your choice. WikiChat supports over 100 LLMs, including models from OpenAI, Azure, Anthropic, Mistral, HuggingFace, Together.ai, and Groq.
+3. Select an information retrieval source. This can be any HTTP endpoint that conforms to the interface defined in `retrieval/retriever_server.py`. We provide instructions and scripts for the following options:
+    1. Use our free, rate-limited API for Wikipedia in 10 languages.
+    1. Download and host our provided Wikipedia index yourself.
+    1. Create and run a new custom index from your own documents.
+4. Run WikiChat with your desired configuration.
+5. [Optional] Deploy WikiChat for multi-user access. We provide code to deploy a simple front-end and backend, as well as instructions to connect to an Azure Cosmos DB database for storing conversations.
+
+This project has been tested using Python 3.10 on Ubuntu Focal 20.04 (LTS), but should run on most recent Linux distributions.
+If you want to use this on Windows WSL or Mac, or with a different Python version, expect to do some troubleshooting in some of the installation steps.
+
+## Install Dependencies
 
 Clone the repo:
 ```
@@ -66,182 +89,149 @@ git clone https://github.com/stanford-oval/WikiChat.git
 cd WikiChat
 ```
 
-Create and activate the Python environment:
 
-```
+We recommend using the conda environment in `conda_env.yaml`. This will create a conda environment with [Python 3.10](https://docs.python.org/3.10/), and install [pip](https://pip.pypa.io/en/stable/), [gcc](https://gcc.gnu.org/onlinedocs/), [g++](https://gcc.gnu.org/onlinedocs/gcc-11.2.0/libstdc++/manual/), [make](https://www.gnu.org/software/make/manual/make.html), [Redis](https://redis.io/documentation), and all required Python packages.
+
+Make sure you have one of [Conda](https://docs.conda.io/en/latest/), [Anaconda](https://docs.anaconda.com/) or [Miniconda](https://docs.conda.io/en/latest/miniconda.html) installed.
+
+Create and activate the conda environment by running:
+
+```bash
 conda env create --file conda_env.yml
 conda activate wikichat
-python -m spacy download en_core_web_sm
+python -m spacy download en_core_web_sm # Spacy is only needed for certain configurations of WikiChat
 ```
-MMake sure this environment is activated whenever you run any of the following commands.
+Make sure this environment is activated whenever you run any of the following commands.
+
+Install Docker for your operating system by following the instructions at https://docs.docker.com/engine/install/. This project uses Docker primarily for creating and serving vector databases for retrieval, specifically [🤗 Text Embedding Inference](https://github.com/huggingface/text-embeddings-inference) and [Qdrant](https://github.com/qdrant/qdrant). If you are using a recent Ubuntu, you can try running `inv install-docker`
+
+WikiChat uses `invoke` (https://www.pyinvoke.org/) to add custom commands to WikiChat for various purposes.
+You can run `invoke --list`, or the shorthand `inv -l` to list all available commands and a short description of what they do. You can also run `inv [command name] --help` to see more details about each of the available commands.
+These commands are implemented in the `tasks/` folder.
 
 
-## Set up the LLM endpoint:
+## Configure the LLM of Your Choice
 
-WikiChat is compatible with various LLMs, but we recommend using OpenAI models, via either openai.com or Azure. Additionally, you can use Together.ai, or host your own model locally, but these often result in lower quality outputs.
+WikiChat is compatible with various LLMs including models from OpenAI, Azure, Anthropic, Mistral, Together.ai, and Groq.
+You can also use WikiChat with many locally hosted models via HuggingFace.
+To configure the LLM you want to use, fill out the appropriate fields in `llm_config.yaml`.
 
-Fill out the appropriate fields in `llm_config.yaml`.
+Then create a file named `API_KEYS` (which is included in `.gitignore`), and set the API key for the LLM endpoint you want to use.
+The name of the API key in this file should match the name you provide in `llm_config.yaml` under `api_key`.
+For example, if you are using OpenAI models via openai.com and Mistral endpoints in your code, your `API_KEYS` file might look like this:
 
-Then create a file named `API_KEYS` (which is included in `.gitignore`), copy the following into it and fill out the fields for the LLM endpoint you want to use:
 ```bash
 # Fill in the following values with your own keys for the API you are using. Make sure there is not extra space after the key.
 # Changes to this file are ignored by git, so that you can safely store your keys here during development.
-export AZURE_OPENAI_API_KEY=[Your Azure OpenAI API key from "Keys and Endpoint" section of your deployment]
-export OPENAI_API_KEY=[Your OpenAI API key from https://platform.openai.com/api-keys]
-export TOGETHER_API_KEY=[Your Together.ai API key from https://api.together.xyz/settings/api-keys]
-
-# Fill in this value if you are using COSMOS DB to store user data via a front end.
-export COSMOS_CONNECTION_STRING=[Your COSMOS connection string]
+OPENAI_API_KEY=[Your OpenAI API key from https://platform.openai.com/api-keys]
+MISTRAL_API_KEY=[Your Mistral API key from https://console.mistral.ai/api-keys/]
 ```
 
-## Set up the retrieval index
-To retrieve reliable information, WikiChat uses [ColBERT](https://github.com/stanford-futuredata/ColBERT/) to retrieve from a text corpus. You can use our pre-built Wikipedia index, or create your own index using your own data (see [below](#create-your-own-retrieval-index)).
-Following most prior work on Wikipedia, we discard tables and lists (including bullet points) when indexing Wikipedia.
+Note that locally hosted models do NOT need an api key, but you need to provide an OpenAI-compatible endpoint in `api_base`. The code has been tested with [🤗 Text Generation Inference](https://github.com/huggingface/text-generation-inference/) endpoints, but you can try other similar endpoints like [vLLM](https://github.com/vllm-project/vllm), [SGLang](https://github.com/sgl-project/sglang), etc.
 
-Download the English [Wikipedia index](https://huggingface.co/datasets/stanford-oval/wikipedia_colbert_index) from the HuggingFace Hub:
 
+## Configure an Information Retrieval Source
+
+### Option 1 (default): Use our free rate-limited Wikipedia search API
+By default, WikiChat retrieves information from 10 Wikipedias via the endpoint at https://wikichat.genie.stanford.edu/search/. If you want to just try WikiChat, you do not need to modify anything.
+
+### Option 2: Download and host our Wikipedia index
+Run `inv download-wikipedia-index --workdir ./workdir` to download the index from [stanford-oval/wikipedia_10-languages_bge-m3_qdrant_index](🤗 Hub) and extract it.
+
+Note that this index contains ~180M vector embeddings and therefore requires a at least 800 GB of empty disk space. It uses [Qdrant's binary quantization](https://qdrant.tech/articles/binary-quantization/) to reduce RAM requirements to 55 GB without sacrificing accuracy or latency.
+
+This command will start a FastAPI server similar to option 1 that responds to HTTP POST requests. Note that this server and even its embedding model runs on CPU, and does not require GPU. For better performance, on compatible systems you can add `--user-onnx` to use the ONNX version of the embedding model, for lower latency.
+`inv start-retriever --embedding-model BAAI/bge-m3 --use-onnx --retriever-port <port number>`
+
+### Option 3: Build your own index using your own Documents
+The following command will download, preprocess, and index the latest HTML dump of the [Kurdish Wikipedia](ku.wikipedia.org), which we use in this example for its relatively small size.
+
+`inv index-wikipedia-dump  --embedding-model BAAI/bge-m3 --workdir ./workdir --language ku`
+
+For indexing a different set of documents, you need to preprocess your data into a [JSON Lines](https://jsonlines.org/) file (with .jsonl or .jsonl.gz file extension) where each line  has the following fields:
+```json
+{"content_string": "string", "article_title": "string", "full_section_title": "string", "block_type": "string", "language": "string", "last_edit_date": "string (optional)", "num_tokens": "integer (optional)"}
+```
+`content_string` should be the chunked text of your documents. We recommend chunking to less than 500 tokens of the embedding model's tokenizer. See [this](https://python.langchain.com/v0.1/docs/modules/data_connection/document_transformers/) for an overview on chunking methods.
+`block_type` and `language` are only used to provide filtering on search results. If you do not need them, you can simply set them to `block_type=text` and `language=en`.
+The script will feed `full_section_title` and `content_string` to the embedding model to create embedding vectors.
+
+See `wikipedia_preprocessing/preprocess_html_dump.py` for details on how this is implemented for Wikipedia HTML dumps.
+
+Then run `inv index-collection --collection-path <path to your preprocessed JSONL collection file> --collection-name `
+
+
+
+## Run WikiChat in Terminal
+
+You can run different configurations of WikiChat using commands like these:
+
+```
+inv demo --engine gpt-4o # engine can be any value configured in llm_config, for example, mistral-large, claude-sonnet-35, local
+inv demo --pipeline generate_and_correct # available pipelines are early_combine, generate_and_correct and retrieve_and_generate
+inv demo --temperature 0.9 # changes the temperature of the user-facing stages like refinement
+```
+
+For a full list of all available options, you can run `inv demo --help`
+
+## [Optional] Deploy WikiChat for Multi-user Access
+This repository provides code to deploy a web-based chat interface via [Chainlit](https://github.com/Chainlit/chainlit), and store user conversations to a [Cosmos DB](https://azure.microsoft.com/en-us/products/cosmos-db) database.
+These are implemented in `backend_server.py` and `database.py` respectively. If you want to use other databases or front-ends, you need to modify these files. For development, it should be straightforward to remove the dependency on Cosmos DB and simply store conversations in memory.
+You can also configure chatbot parameters defined in `backend_server.py`, for example to use a different LLM or add/remove stages of WikiChat.
+
+### Set up Cosmos DB
+After creating an instance via Azure, obtain the connection string and add this value in `API_KEYS`.
 ```bash
-make download-colbert-index language=en wiki_date=11_06_2023
+COSMOS_CONNECTION_STRING=[Your Cosmos DB connection string]
 ```
 
-Start a ColBERT inference server that accepts HTTP requests:
+Running this will start the backend and front-end servers. You can then access the front-end at the specified port (5001 by default).
+`inv chainlit --backend-port 5001`
 
-```bash
-make start-colbert-gunicorn wiki_date=11_06_2023 language=en
-```
-No GPU is needed to use ColBERT as it is set to use CPU. The entire index will be loaded to RAM, which requires about 100GB of RAM. If you don't have that much RAM, you can enable memory mapping by adding `colbert_memory_map=true` to this command. This will reduce the RAM usage to about 35GB, but will make retrieval slower.
 
-You need to keep this process running so that the chatbot can communicate with the ColBERT index. For that, either keep this terminal open, or use [tmux](https://github.com/tmux/tmux/wiki)/[screen](https://www.gnu.org/software/screen/). By default, the server listens on port 5000. You can test this server by running a curl command like this in a new terminal:
-```bash
-curl http://127.0.0.1:5000/search -d '{"query": "who is the current monarch of the united kingdom?", "evi_num": 1}' -X GET -H 'Content-Type: application/json'
-```
 
-## Interactive Chat via Command Line
+# Other Commands
 
-You can run different versions of the WikiChat pipeline. Here are a few configurations:
+## Using the free Rate-limited Wikipedia search API
+See https://wikichat.genie.stanford.edu/search/redoc
 
-```bash
-make demo pipeline=early_combine do_refine=true engine=gpt-4 # the WikiChat_G4 pipeline from the paper
-make demo pipeline=early_combine do_refine=true engine=text-davinci-003 # the WikiChat_G3.5 pipeline from the paper
-make demo pipeline=early_combine do_refine=false engine=local # the WikiChat_L pipeline from the paper, when used in conjunction with our distilled LLaMA-7B model
-make demo pipeline=generate do_refine=false engine=... # the baseline, only LLM generation (Stage 3 of the pipeline)
-make demo pipeline=generate_and_correct do_refine=false engine=... # only fact-check the LLM's output (Stages 3, 4, 5, 6 of the pipeline)
-make demo pipeline=retrieve_and_generate do_refine=false engine=... # Stages 1, 2, 6 of the pipeline
-make demo pipeline=retrieve_only do_refine=false engine=... # Stage 1 of the pipeline
+## Simulate User
 
-make demo pipeline=early_combine do_refine=true engine=gpt-35-turbo-instruct # a faster version of WikiChat (not in the paper)
-make demo pipeline=early_combine do_refine=false engine=gpt-35-turbo-instruct draft_engine=gpt-4 # a balanced version of WikiChat, hallucinates less than the full gpt-35-turbo-instruct version, and has about the same latency (not in the paper)
-```
 
-`engine` can be any value on the left hand side of an `engine_map` in `llm_config.yaml`.
 
-See pipelines/pipeline_arguements.py for more details on the different pipeline configurations.
+## Upload an Index
+Split the index into smaller files:
+`tar -cvf - ./workdir/qdrant_index/ | pigz -p 14 | split --bytes=10GB --numeric-suffixes=0 --suffix-length=4 - /mnt/ephemeral_nvme/qdrant_index.tar.gz.part-`
+
+Then update the arguments in `retrieval/upload_to_hf_hub.py` and run it.
 
 
 ## Run a distilled model for lower latency and cost
-First, make sure to set the `api_base` field in `llm_config.yaml`, and note the `ip` address and `port` number.
+WikiChat 2.0 is not compatible with (fine-tuned LLaMA-2 checkpoints released)[https://huggingface.co/collections/stanford-oval/wikichat-v10-66c580bf15e26b87d622498c]. Please refer to v1.0 for now.
 
-Then start the inference server in a separate terminal using [HuggingFace's text-generation-inference library](https://github.com/huggingface/text-generation-inference/).
-We recommend using their provided Docker image given its ease of use. Download one of the available models, then run `docker run --gpus all --shm-size 1g -p <port>:80 -v ./:/data ghcr.io/huggingface/text-generation-inference:1.3.4 --model-id /data/<path-to-model-directory> --hostname <ip> --num-shard <number-of-gpus>`.
-When the inference server is running on an NVIDIA A100 GPU, each chatbot response should take just a few seconds, plus the time needed for retrieval via ColBERT.
-
-The following models are available on the HuggingFace Hub.
-
-- [stanford-oval/Llama-2-7b-WikiChat](https://huggingface.co/stanford-oval/Llama-2-7b-WikiChat): A slightly improved version of the distilled LLaMA model described in our paper. Similar to the paper, stages 6 (draft) and 7 (refine) are fused together. The differences from the paper are:
-1. In addition to fine-tuning on simulated conversations about Wikipedia topics, we also include several less knowledge-intensive (i.e. more chit-chat) simulated conversations to prevent failure modes.
-1. We fine-tune `LLaMA-2-7B` instead of `LLaMA-7B`.
-Run `make demo engine=local do_refine=false` if you are using this model.
-
-- [stanford-oval/Llama-2-7b-WikiChat-fused](https://huggingface.co/stanford-oval/Llama-2-7b-WikiChat-fused): Similar to the previous model, except that stages 3 (generate) and 4 (extract claim) are also fused together. Therefore, this model is almost twice as fast.
-Run `make demo engine=local do_refine=false fuse_claim_splitting=true` if you are using this model.
-
-
-## Run user simulator
-In order to evaluate a chatbot, you can simulate conversations with a user simulator. `subset` can be one of `head`, `tail`, or `recent`, corresponding to the three subsets introduced in the paper. This script will read the topic (i.e. a Wikipedia title and article) from the corresponding `benchmark/topics/$(subset)_articles.json.` file. `num_output_dialogs` is the number of simulated dialogs to generate, and `num_output_turns` is the number of turns in each dialog.
+## Simulate Conversations
+In order to evaluate a chatbot, you can simulate conversations with a user simulator. `subset` can be one of `head`, `tail`, or `recent`, corresponding to the three subsets introduced in the WikiChat paper. We have also added the option to specify the language of the user (WikiChat always replies in the language of the user).
+This script will read the topic (i.e. a Wikipedia title and article) from the corresponding `benchmark/topics/(subset)_articles_(language).json.` file. `--num-dialogs` is the number of simulated dialogs to generate, and `--num-turns` is the number of turns in each dialog.
 
 ```bash
-make simulate-users user_engine=gpt-4 user_temperature=1 subset=head num_output_dialogs=1 num_output_turns=2
+inv simulate-users --num-dialogs 1 --num-turns 2 --simulation-mode passage --language en --subset head
 ```
 Depending on the engine you are using, this might take some time. The simulated dialogs and the log file will be saved in `benchmark/simulated_dialogs/`.
 You can also provide any of the pipeline parameters from above.
-You can experiment with different user characteristics by modifying `user_characteristics` in `benchmark/scripts/user_simulator.py`.
-
-## Evaluate factuality and conversationality of any conversation
-Coming soon!
-
-## Interactive Chat via a Web Interface
-
-You can try out our online demo at wikichat.genie.stanford.edu, or host your own.
-The following code requires [Cosmos DB](https://azure.microsoft.com/en-us/products/cosmos-db) (Azure's offering of MongoDB) to store user data, but you can easily modify it to use a different database.
-
-Bring up the backend API:
-
-```bash
-make start-backend-gunicorn do_refine=true ssl_key_file=/path/to/privkey.pem ssl_certificate_file=/path/to/fullchain.pem
-```
-
-This script requires generating an SSL certificate. You can use a self-signed certificate for development or disable SSL by modifying the code.
-However, for production and if you are hosting the frontend and backend on separate machines, you should use a valid certificate. Otherwise, user inputs are transferred from the frontend to the backend API unencrypted. You can obtain a free certificate from [Let's Encrypt](https://letsencrypt.org/).
-
-Note that `engine` and `pipeline` are not important here, as the frontend will send the appropriate parameters to the backend.
-This brings up a gunicorn server (on port 5001) and a Redis server (on port 5003) to persis Flask's rate limit data to disk.
-To shut down the gunicorn server, simply press `ctrl + c`.
-To shut down the Redis server, run `redis-cli -p 5003 shutdown`.
-
-Run this `curl` command to test the backend:
-
-```bash
-curl http://127.0.0.1:5001/chat -d '{"experiment_id": "test_experiment", "dialog_id": "test_dialog", "turn_id": 0, "system_name": "early_combine", "new_user_utterance": "Who stars in the wandering earth 2?"}' -X POST -H 'Content-Type: application/json'
-```
-
-The frontend is located at https://github.com/stanford-oval/ovalchat, which you can deploy separately on another VM or via vercel.com. Follow the instructions there to set up the frontend.
+You can experiment with different user characteristics by modifying `user_characteristics` in `benchmark/user_simulator.py`.
 
 
-## Create your own retrieval index
-You can change the default values of the following parameters in `Makefile` if needed:
+# Wikipedia Preprocessing: Why is it difficult?
 
-```bash
-nbits ?= 1# encode each dimension with 2 bits
-max_block_words ?= 100# maximum number of words in each paragraph
-doc_maxlen ?= 140# number of "tokens", to account for (100 "words" + title) that we include in each wikipedia paragraph
-wiki_date ?= 11_06_2023# The date on which the Wikipedia dump was downloaded
-language ?= en# the English Wikipedia
-nranks ?= 8# number of GPUs to use for indexing
-```
 
-If you are supplying your own data, make sure you have a file named `collection_all.tsv` with the format `id \t title | passage` in each line, then skip to `make index-wiki` below.
+# License
+WikiChat code and models are released under Apache-2.0 license.
 
-Download latest English wikipedia dump:
-```bash
-make download-latest-wiki
-```
 
-Run wikiextractor:
-```bash
-make extract-wiki
-```
-This will extract the pages into a set of sharded files, which will be located in the `text/` directory. This step takes a few hours. 
 
-Run
-```bash
-make split-wiki
-```
-This script will split the Wikipedia documents into blocks, with each block containing up to `max_block_words` words. It will write these blocks into `collection_all.tsv` which is then used for making the ColBERT index.
+# Citation
 
-Run this command to start ColBERT indexing. This step should be run on GPUs:
-
-```bash
-make index-wiki
-```
-
-Optionally, you can merge all the smaller index files into a single file. This will enable you to use mempory mapping when loading the index, which will reduce the RAM usage at the cost of increasing the retrieval speed. This step requires enough RAM to load the entire index, about 100GB of RAM, but after that, the resulting index can be run on a machine with as little as 35GB of RAM.
-```bash
-make coalesce-index
-```
-
-## Citation
-
-If you have used code or data from this repository, please cite this paper:
+If you have used code or data from this repository, please cite the following papers:
 
 ```bibtex
 @inproceedings{semnani-etal-2023-wikichat,
@@ -262,6 +252,23 @@ If you have used code or data from this repository, please cite this paper:
     pages = "2387--2413",
 }
 
+@inproceedings{zhang-etal-2024-spaghetti,
+    title = "{SPAGHETTI}: Open-Domain Question Answering from Heterogeneous Data Sources with Retrieval and Semantic Parsing",
+    author = "Zhang, Heidi  and
+      Semnani, Sina  and
+      Ghassemi, Farhad  and
+      Xu, Jialiang  and
+      Liu, Shicheng  and
+      Lam, Monica",
+    editor = "Ku, Lun-Wei  and
+      Martins, Andre  and
+      Srikumar, Vivek",
+    booktitle = "Findings of the Association for Computational Linguistics ACL 2024",
+    month = aug,
+    year = "2024",
+    address = "Bangkok, Thailand and virtual meeting",
+    publisher = "Association for Computational Linguistics",
+    url = "https://aclanthology.org/2024.findings-acl.96",
+    pages = "1663--1678",
+}
 ```
-
-This repository also contains code from https://github.com/attardi/wikiextractor for preprocessing Wikipedia, and https://github.com/stanford-futuredata/ColBERT/ for ColBERT. If you use code from these repositories, please cite their respective repository and paper as well.

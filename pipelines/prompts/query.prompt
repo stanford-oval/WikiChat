@@ -1,66 +1,97 @@
-{% block instruction %}
-{{instruction_start}}You are chatting with a user. Use Google search to form a response. You are both located in {{ location[:-1] if location.endswith('.') else location }}.
-- What do you type in the search box?
+# instruction
+You are chatting with a person. Search Wikipedia for information to form your response. You are both located in {{ location[:-1] if location.endswith('.') else location }}.
+- What should the search query be?
 - What date do you want the search results to be? Enter "recent" if you are looking for the newest results. Enter "none" if the date is not important.
-Today's date is {{ today }}.{{instruction_end}}
-{% endblock %}{% block short_instruction %}What should you Google? Today's date is {{ today }}.{% endblock %}
+Today's date is {{ today }}.
+Here are a few examples:
+
+
+# distillation instruction
+What should you search? Today's date is {{ today }}.
+
 {# Note: "recent" means recent results are better. "2023" means the user specifically want the year to match 2023 #}
 {# we extract just the year for now. If needed, we can expand this to month and day as well. #}
 
-=====
-{{input_start}}You: Do you want to talk about sports?
-[Search needed? {{input_end}}{{output_start}}No.]{{output_end}}
 
-=====
-{{input_start}}User: do you know yoko ono?
-[Search needed? Yes. You Google "who is yoko ono?". The year of the results is "none".]
+# input
+Person: do you know yoko ono?
+Is it helpful to search Wikipedia? Yes. You search "who is yoko ono?". The year of the results is "none".
 You: Yes, I know who Yoko Ono is. She is a Japanese American musician who has released 14 studio albums and won a Grammy Award. She is also the 11th most successful dance club artist of all time, according to Billboard Magazine. Ono is best known for her work with the Plastic Ono Band and for her album Starpeace.
-User: was she related to the beatles?
-[Search needed? Yes. You Google "was Yoko Ono related to the Beatles?". The year of the results is "none".]
+Person: was she related to the beatles?
+Is it helpful to search Wikipedia? Yes. You search "was Yoko Ono related to the Beatles?". The year of the results is "none".
 You: Yes, she was married to John Lennon of the Beatles.
-User: really? why do people hate her so much?
-[Search needed? {{input_end}}{{output_start}}Yes. You Google "reasons people dislike Yoko Ono". The year of the results is "none".]{{output_end}}
+Person: really? why do people hate her so much?
+Is it helpful to search Wikipedia?
 
-=====
-{{input_start}}User: Did you see how Brock Purdy was was drafted to NFL last year?
-[Search needed? {{input_end}}{{output_start}}Yes. You Google "how was Brock Purdy was drafted to NFL in 2022?". The year of the results is "2022".]{{output_end}}
+# output
+Yes. You search "reasons people dislike Yoko Ono". The year of the results is "none".
 
-=====
-{{input_start}}You: Who made you?
-[Search needed? {{input_end}}{{output_start}}No.]{{output_end}}
 
-=====
-{{input_start}}User: Tell me about Murakami.
-[Search needed? Yes. You Google "who is Murakami?". The year of the results is "none".]
+# input
+Person: Did you see how Brock Purdy was was drafted to NFL last year?
+Is it helpful to search Wikipedia?
+
+# output
+Yes. You search "how was Brock Purdy was drafted to NFL in 2023?". The year of the results is "2023".
+
+
+# input
+Person: Who made you?
+Is it helpful to search Wikipedia?
+
+# output
+No.
+
+
+# input
+Person: Tell me about Murakami.
+Is it helpful to search Wikipedia? Yes. You search "who is Murakami?". The year of the results is "none".
 You: Murakami is a Japanese author. He is best known for his novels Norwegian Wood, The Wind-Up Bird Chronicle, Kafka on the Shore, and 1Q84.
-User: I meant the baseball player.
-[Search needed? {{input_end}}{{output_start}}Yes. You Google "who is Murakami the baseball player?". The year of the results is "none".]{{output_end}}
+Person: I meant the baseball player.
+Is it helpful to search Wikipedia?
 
-=====
-{{input_start}}User: Did you watch the 1998 movie Shakespeare in Love?
-[Search needed? Yes. You Google "the 1998 movie 'Shakespeare in Love'". The year of the results is "1998".]
-User: Did you like it?
-[Search needed? {{input_end}}{{output_start}}Yes. You Google "reviews for the 1998 movie 'Shakespeare in Love'". The year of the results is "none".]{{output_end}}
+# output
+Yes. You search "who is Murakami the baseball player?". The year of the results is "none".
 
-=====
-{{input_start}}User: What new discoveries from James Webb Space telescope can I tell my 9 year old about?
-[Search needed? Yes. You Google "new discoveries from James Webb Space telescope for kids". The year of the results is "recent".]
+
+# input
+Person: Did you watch the 1998 movie Shakespeare in Love?
+Is it helpful to search Wikipedia? Yes. You search "the 1998 movie 'Shakespeare in Love'". The year of the results is "1998".
+Person: Did you like it?
+Is it helpful to search Wikipedia?
+
+# output
+Yes. You search "reviews for the 1998 movie 'Shakespeare in Love'". The year of the results is "none".
+
+
+# input
+Person: What new discoveries from James Webb Space telescope can I tell my 9 year old about?
+Is it helpful to search Wikipedia? Yes. You search "new discoveries from James Webb Space telescope for kids". The year of the results is "recent".
 You: Your 9-year old would be fascinated to hear that the James Webb Space Telescope has discovered farthest galaxies ever found. It has found galaxies so far away that it took 13.4 billion years for their lights to reach the telescope. That is light that started its journey just 300 million years after the Big Bang!
-User: what is big bang?
-[Search needed? Yes. You Google "what is big bang of the universe?". The year of the results is "none".]
+Person: what is big bang?
+Is it helpful to search Wikipedia? Yes. You search "what is big bang of the universe?". The year of the results is "none".
 You: The Big Bang is the explosion that created our universe. The universe was filled with hot, dense, nearly homogeneous particles. As the universe expanded and cooled, particles, then nuclei, and finally atoms formed.
-User: what else can I tell my child about?
-[Search needed? Yes. You Google "things about James Webb Space telescope other than the discovery of galaxies". The year of the results is "none".]
+Person: what else can I tell my child about?
+Is it helpful to search Wikipedia? Yes. You search "things about James Webb Space telescope other than the discovery of galaxies". The year of the results is "none".
 You: The James Webb Space telescope is named after James E. Webb, who was the administrator of NASA from 1961 to 1968 during the Mercury, Gemini, and Apollo programs.
-User: what else did he do?
-[Search needed? {{input_end}}{{output_start}}Yes. You Google "what did James E. Webb do besides being the administrator of NASA?". The year of the results is "none".]{{output_end}}
+Person: what else did he do?
+Is it helpful to search Wikipedia?
 
-=====
+# output
+Yes. You search "what did James E. Webb do besides being the administrator of NASA?". The year of the results is "none".
+
+
 {# The history of the conversation excluding the current turn. User starts first. #}
-{% block input %}
-{{input_start}}{% for dlg_turn in dlg[-4:] %}
-    User: {{ dlg_turn.user_utterance }}
+# input
+{% for dlg_turn in dlg[-3:] %}
+    Person: {{ dlg_turn.user_utterance }}
+    {% if dlg_turn.initial_search_query is not none %}
+        Is it helpful to search Wikipedia? Yes. You search "{{ dlg_turn.initial_search_query.text }}". The year of the results is "{{ dlg_turn.initial_search_query.time }}".
+    {% else %}
+        {# including a "No" could bias subsequent turns to not search either. #}
+        {# Is it helpful to search? No. #}
+    {% endif %}
     You: {{ dlg_turn.agent_utterance }}
 {% endfor %}
-User: {{ new_user_utterance }}
-[Search needed? {{'Yes. ' if force_search}}{{input_end}}{% endblock %}
+Person: {{ new_user_utterance }}
+Is it helpful to search Wikipedia?{{' Yes. ' if force_search}}

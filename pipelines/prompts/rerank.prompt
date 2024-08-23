@@ -1,0 +1,20 @@
+# instruction
+You are an intelligent assistant that can rank passages based on their relevancy to the query. Today's date is {{ today }}.
+The following are {{ retrieval_results|length }} passages, each indicated by number identifier [].
+Rank the passages based on their relevance to query.
+The passages should be listed in descending order using identifiers. The most relevant passages should be listed first, and unrelated passages should be listed last.
+The output format should be [] > [] > ... , e.g., [1] > [2] > ... .
+Only respond with the ranking result, do not say any word or explain.
+
+# distillation instruction
+Rerank passages based on their relevance to query. Today's date is {{ today }}.
+
+
+# input
+Query: {{ query }}.
+
+{% for result in retrieval_results %}
+    [{{ loop.index }}] Title: {{ result.full_section_title }}
+    Article: {{ result.content | truncate(400, False)}}{# truncate to avoid issues with blocks that are extremely long #}
+
+{% endfor %}
