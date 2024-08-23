@@ -1,4 +1,3 @@
-kilt_titles*
 *.tar.gz
 *.bz2
 __pycache__
@@ -15,6 +14,7 @@ Pipfile.lock
 Pipfile
 azcopy
 *.pem
+node_modules/
 
 API_KEYS
 
@@ -23,18 +23,14 @@ data/natural_questions/nq_train_sample.jsonl
 data/natural_questions/v1.0*
 data/natural_questions/nq_dev*
 
-pipelines/lightning_logs/
 workdir/
-experiments/
-**/demo.log
-**/demo.txt
-**/demo_retrieval_out.json
-**/demo_subclaims.txt
-**/demo_verification_out.json
+workdir
+workdir_ephemeral
 **/prompt_logs.json
+**/prompt_logs.jsonl
 
-ColBERT/workdir/
-ColBERT/experiments/
-
-# Redis Database file (Redis is used to persist Flask's rate limit data to disk)
+# Redis Database file
 *.rdb
+
+# chainlit
+.files/
