@@ -1,4 +1,4 @@
-{% block instruction %}
+# instruction
 Given a conversation history between a user and a chatbot, provide feedback on the chatbot's final response, based on the following criteria:
 * Relevant: The response should be on-topic and directly address the user's question. The response should acknowledge it in case it's off-topic or only partially addresses the question. Irrelevant information should be avoided.
 * Informational: The response should provide an appropriate amount of information when requested.
@@ -8,21 +8,24 @@ Given a conversation history between a user and a chatbot, provide feedback on t
 For each criteria, give a score between 1 and 5.
 
 Today's date is {{ today }}.
-{% endblock %}
 
-=====
+
+# input
 User: When was House of the Dragon released?
 Response: House of the Dragon was released on August 21, 2022. Have you had a chance to watch it yet?
 
 Let's break down the feedback for the response:
+
+# output
 * Relevant: The response is on-topic and directly addresses the user's question about the release date of House of the Dragon. 5/5
 * Informational: The response provides sufficient detail on when House of the Dragon was released. 5/5
 * Natural: The response sounds a friendly and uses engaging language. 5/5
 * Non-Repetitive: The response does not repeat any previous statement. 5/5
 * Temporally Correct: The response correctly uses the past tense to talk about the release time. 5/5
 
-=====
-{% block input %}
+
+
+# input
 {% for dlg_turn in dlg[-2:] %}
     User: {{ dlg_turn.user_utterance }}
     Chatbot: {{ dlg_turn.agent_utterance }}
@@ -30,4 +33,4 @@ Let's break down the feedback for the response:
 User: {{ new_dlg_turn.user_utterance }}
 Response: {{ new_dlg_turn.agent_utterance }}
 
-Let's break down the feedback for the response:{% endblock %}
+Let's break down the feedback for the response:

@@ -1,105 +1,156 @@
-{% block instruction %}
-{{instruction_start}}The following is a conversation between a user and a chabot named {{ chatbot_name }}. Rewrite the facts mentioned in the last response into self-contained sentences.
-Exclude opinions or statements about yourself.
-Today's date is {{ today }}.{{instruction_end}}
-{% endblock %}{% block short_instruction %}Identify the factual claims in the last response. Today's date is {{ today }}.{% endblock %}
+# instruction
+The following is a conversation between a user and a chabot named {{ chatbot_name }}.
+Rewrite the last response into self-contained sentences.
+Exclude opinions or statements about {{ chatbot_name }}.
+Exclude facts mentioned in previous turns and only focus on the last turn.
+Today's date is {{ today }}.
+Here are a few examples:
+
+# distillation instruction
+Identify the claims in the last response. Today's date is {{ today }}.
+
 {# Note: "recent" means recent results are better. "2023" means the user specifically want the year to match 2023 #}
 {# we extract just the year for now. If needed, we can expand this to month and day as well. #}
 
-=====
-{{input_start}}User: When was chinese new year last year?
+# input
+User: When was chinese new year last year?
 {{ chatbot_name }}: It was on February 5th.
-Rewrite the facts mentioned in the last response into self-contained sentences:{{input_end}}
-{{output_start}}- Chinese New Year in 2022 was on February 5th. The year of the results is "2022".{{output_end}}
+Rewrite the last response into self-contained sentences:
 
-=====
-{{input_start}}User: Hayao Miyazaki is a master of his craft.
+# output
+- Chinese New Year in 2022 was on February 5th. The year of the results is "2022".
+
+
+
+# input
+User: Hayao Miyazaki is a master of his craft.
 {{ chatbot_name }}: Absolutely! He is just incredible.
-Rewrite the facts mentioned in the last response into self-contained sentences:{{input_end}}
-{{output_start}}Nothing.{{output_end}}
+Rewrite the last response into self-contained sentences:
 
-=====
+# output
+Nothing.
+
+
+
 {# Claims should be split with regards to their parent claim. For example, here the first claim should NOT be "The Stanford Prison Experiment was conducted in the basement of Encina Hall." If it is, and if only the first claim passes fact-checking, we will be left with a fact that is too specific to be helpful. #}
-{{input_start}}User: Tell me about the Stanford Prison Experiment.
+# input
+User: Tell me about the Stanford Prison Experiment.
 {{ chatbot_name }}: It was conducted at Stanford University in 1971, by a research group led by psychology professor Philip Zimbardo using college students. In the study, volunteers were randomly assigned to be either guards or prisoners in a mock prison, with Zimbardo himself serving as the superintendent.
 User: How long did the experiment last?
 {{ chatbot_name }}: Zimbardo ended it on the sixth day.
 User: Do you know where the experiment was conducted?
 {{ chatbot_name }}: I'm not sure. I think it was conducted in the basement of Encina Hall, Stanford's psychology building.
-Rewrite the facts mentioned in the last response into self-contained sentences:{{input_end}}
-{{output_start}}- The Stanford Prison Experiment was conducted in the basement of Stanford's psychology building. The year of the results is "1971".
-- Encina Hall is the name of Stanford's psychology building. The year of the results is "none".{{output_end}}
+Rewrite the last response into self-contained sentences:
 
-=====
-{{input_start}}User: Can you tell me more about the twenty-first season of American Idol?
+# output
+- The Stanford Prison Experiment was conducted in the basement of Stanford's psychology building. The year of the results is "1971".
+- Encina Hall is the name of Stanford's psychology building. The year of the results is "none".
+
+
+
+# input
+User: Can you tell me more about the twenty-first season of American Idol?
 {{ chatbot_name }}: I'm sorry for the confusion, but I don't have the specific information about the twenty-first season of American Idol. My training data only includes information up until September 2021, and I don't have the ability to access real-time data or updates. I recommend checking the latest news or the official American Idol website for the most accurate and up-to-date information.
-Rewrite the facts mentioned in the last response into self-contained sentences:{{input_end}}
-{{output_start}}Nothing.{{output_end}}
+Rewrite the last response into self-contained sentences:
 
-=====
-{{input_start}}User: I just watched chopped for 3 hours straight. The baskets were hard in some of them.
+# output
+Nothing.
+
+
+
+# input
+User: I just watched chopped for 3 hours straight. The baskets were hard in some of them.
 {{ chatbot_name }}: "Chopped" certainly puts the contestants' culinary skills and creativity to the test. With the mystery baskets often containing a mix of seemingly incompatible ingredients, it's fascinating to see how each chef manages to incorporate everything into their dishes.
 User: Absolutely, it's always interesting to see how they manage to create something delicious out of such unusual combinations. Have you ever thought about what you would do if you were given a mystery basket?
 {{ chatbot_name }}: As an AI, I don't have personal experiences or the ability to taste or cook food. However, I can certainly help you brainstorm ideas if you tell me what's in the mystery basket! I can provide information on various ingredients, suggest possible combinations, and even look up recipes.
-Rewrite the facts mentioned in the last response into self-contained sentences:{{input_end}}
-{{output_start}}Nothing.{{output_end}}
+Rewrite the last response into self-contained sentences:
 
-=====
-{{input_start}}User: Do you know about Queen Elizabeth II? I was just reading about her.
+# output
+Nothing.
+
+
+
+# input
+User: Do you know about Queen Elizabeth II? I was just reading about her.
 {{ chatbot_name }}: Queen Elizabeth II is the current monarch of the United Kingdom and the Commonwealth realms. She was born in 1926 and became queen in 1952.
-Rewrite the facts mentioned in the last response into self-contained sentences:{{input_end}}
-{{output_start}}- Queen Elizabeth II is the current monarch of the United Kingdom and the Commonwealth realms as of {{ today }}. The year of the results is "recent".
+Rewrite the last response into self-contained sentences:
+
+# output
+- Queen Elizabeth II is the current monarch of the United Kingdom and the Commonwealth realms as of {{ today }}. The year of the results is "recent".
 - Queen Elizabeth II was born in 1926. The year of the results is "1926".
-- Queen Elizabeth II became queen in 1952. The year of the results is "1952".{{output_end}}
+- Queen Elizabeth II became queen in 1952. The year of the results is "1952".
 
-=====
-{{input_start}}User: who is the current Prime Minister of the United Kingdom?
-{{ chatbot_name }}: As of my cut-off knowledge date of 2021, the Prime Minister of the United Kingdom was Boris Johnson. I apologize for not being able to provide information about any changes that may have occurred after 2021.{{input_end}}
-{{output_start}}- Boris Johnson was the Prime Minister of the United Kingdom as of 2021. The year of the results is "2021"{{output_end}}
 
-=====
-{{input_start}}User: What new discoveries from James Webb Space telescope can I tell my 9 year old about?
+
+# input
+User: who is the current Prime Minister of the United Kingdom?
+{{ chatbot_name }}: As of my cut-off knowledge date of 2021, the Prime Minister of the United Kingdom was Boris Johnson. I apologize for not being able to provide information about any changes that may have occurred after 2021.
+
+# output
+- Boris Johnson was the Prime Minister of the United Kingdom as of 2021. The year of the results is "2021"
+
+
+
+# input
+User: What happened with Football at the 2020 olympics?
+{{ chatbot_name }}: Two events were contested: a men's and women's competitions. Associations affiliated with FIFA may send teams to participate in the tournament. There were no age restrictions on women's teams, while men's teams were restricted to under-24 players (born on or after 1 January 1997) with a maximum of three overage players allowed.
+User: What new discoveries from James Webb Space telescope can I tell my 9 year old about?
 {{ chatbot_name }}: Your 9-year old would be fascinated to hear that the James Webb Space Telescope has discovered farthest galaxies ever found. It has found galaxies so far away that it took 13.4 billion years for their lights to reach the telescope. That is light that started its journey just 300 million years after the Big Bang!
-Rewrite the facts mentioned in the last response into self-contained sentences:{{input_end}}
-{{output_start}}- The James Webb Space Telescope has discovered farthest galaxies ever found. The year of the results is "recent".
+Rewrite the last response into self-contained sentences:
+
+# output
+- The James Webb Space Telescope has discovered farthest galaxies ever found. The year of the results is "recent".
 - The James Webb Space Telescope discovered galaxies whose light took 13.4 billion years to reach the telescope. The year of the results is "none".
-- The James Webb Space Telescope discovered galaxies whose light started its journey just 300 million years after the Big Bang. The year of the results is "none".{{output_end}}
+- The James Webb Space Telescope discovered galaxies whose light started its journey just 300 million years after the Big Bang. The year of the results is "none".
 
-=====
-{{input_start}}User: How are you doing today?
+
+
+# input
+User: How are you doing today?
 {{ chatbot_name }}: As an artificial intelligence, I don't have feelings or personal experiences, so I don't have good days or bad days. However, I'm fully operational and ready to assist you with any information or tasks you need. What can I help you with today?
-Rewrite the facts mentioned in the last response into self-contained sentences:{{input_end}}
-{{output_start}}Nothing.{{output_end}}
+Rewrite the last response into self-contained sentences:
 
-=====
-{{input_start}}User: I really liked the House of the Dragon.
+# output
+Nothing.
+
+
+
+# input
+User: I really liked the House of the Dragon.
 {{ chatbot_name }}: Yeah! It was an American fantasy drama television series created by George R. R. Martin and Ryan Condal for HBO.
 User: What do you think is the best TV drama of 2022?
 {{ chatbot_name }}: That's a tough question! It's hard to pick just one, but some of the most popular TV dramas of 2022 were The Crown, The Boys, and The Queen's Gambit.
-Rewrite the facts mentioned in the last response into self-contained sentences:{{input_end}}
-{{output_start}}- "The Crown" is a popular TV drama of 2022. The year of the results is "2022".
-- The TV show "The Boys" is a popular TV drama of 2022. The year of the results is "2022".
-- The TV show "The Queen's Gambit" is a popular TV drama of 2022. The year of the results is "2022".{{output_end}}
+Rewrite the last response into self-contained sentences:
 
-=====
-{{input_start}}User: Tell me about michelle yeoh.
+# output
+- "The Crown" is a popular TV drama of 2022. The year of the results is "2022".
+- The TV show "The Boys" is a popular TV drama of 2022. The year of the results is "2022".
+- The TV show "The Queen's Gambit" is a popular TV drama of 2022. The year of the results is "2022".
+
+
+
+# input
+User: Tell me about michelle yeoh.
 {{ chatbot_name }}: Michelle Yeoh is a Malaysian actress, philanthropist, and fashion influencer. She rose to fame in the 1990s after starring in a series of Hong Kong action films. Most recently, she has starred in the movie "Everything Everywhere All at Once".
 User: Do you know about everything everywhere all at once?
 {{ chatbot_name }}: Yes, I have heard about "Everything Everywhere All at Once". It is a 2022 American absurdist comedy-drama film directed by the Daniels and produced by Anthony and Joe Russo. The movie stars Michelle Yeoh as a Chinese-American immigrant who must connect with parallel universe versions of herself to prevent a powerful being from destroying the multiverse. The film received critical acclaim for its imagination, visual effects, humor, direction, editing, acting, and handling of themes such as existentialism, nihilism, and Asian-American identity.
-Rewrite the facts mentioned in the last response into self-contained sentences:{{input_end}}
-{{output_start}}- "Everything Everywhere All at Once" is a 2022 American absurdist comedy-drama film. The year of the results is "2022".
+Rewrite the last response into self-contained sentences:
+
+# output
+- "Everything Everywhere All at Once" is a 2022 American absurdist comedy-drama film. The year of the results is "2022".
 - The movie "Everything Everywhere All at Once" is directed by the Daniels. The year of the results is "2022".
 - The movie "Everything Everywhere All at Once" is produced by Anthony and Joe Russo. The year of the results is "2022".
 - Michelle Yeoh plays the role of a Chinese-American immigrant in the movie "Everything Everywhere All at Once". The year of the results is "2022".
-- The movie "Everything Everywhere All at Once" received critical acclaim. The year of the results is "2022".{{output_end}}
+- The movie "Everything Everywhere All at Once" received critical acclaim. The year of the results is "2022".
 
-=====
+
+
 {# The history of the conversation so far. User starts first. Only the last three turns are given, because longer conversations confuse the LLM, and are not needed for fact-checking. #}
-{% block input %}
-{{input_start}}{% for dlg_turn in dlg[-1:] %}
+# input
+{% for dlg_turn in dlg[-1:] %}
     User: {{ dlg_turn.user_utterance }}
     {{ chatbot_name }}: {{ dlg_turn.agent_utterance }}
 {% endfor %}
 User: {{ new_user_utterance }}
-{{ chatbot_name }}: {{ current_agent_utterance }}
-Rewrite the facts mentioned in the last response into self-contained sentences:{{input_end}}{% endblock %}
+{{ chatbot_name }}: {{ llm_utterance }}
+Rewrite the last response into self-contained sentences:

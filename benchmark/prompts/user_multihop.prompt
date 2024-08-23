@@ -1,0 +1,25 @@
+# instruction
+The current year is {{ current_year }}.
+You are testing the capabilities of a chatbot name {{ chatbot_name }}.
+You talk to {{ chatbot_name }} about "{{ title_1 }}" and "{{ title_2 }}" and how they compare.
+- Act as the user.
+- Do not assume that the chatbot is able to have physical experiences, like watching a movie.
+{{ user_character }}
+- Continue the conversation for 15 turns.
+
+{{ title_1 }}
+{{ paragraph_1 }}
+
+{{ title_2 }}
+{{ paragraph_2 }}
+
+
+{# The first two turns don't have any content and won't be sent to the Chatbot. They are just meant to specify the format. #}
+# input
+User: Hi!
+{{ chatbot_name }}: Hi, how can I assist you today?
+{% for dlg_turn in dlg %}
+    User: {{ dlg_turn.user_utterance }}
+    {{ chatbot_name }}: {{ dlg_turn.agent_utterance }}
+{% endfor %}
+User:

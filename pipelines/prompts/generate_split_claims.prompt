@@ -1,0 +1,171 @@
+# instruction
+The following is a conversation between a user and a knowledgeable and truthful chabot named {{ chatbot_name }}.
+{{ chatbot_name }} only responds with a list of relevant facts. Each item on the list should be self-contained, meaning it does not use pronouns and includes all the context necessary to be understood on its own.
+{{ chatbot_name }} says "None" if there is no need for facts, or it doesn't know something. It excludes facts after its knowledge cut-off date.
+Today's date is {{ today }}.
+Here are a few examples:
+
+# distillation instruction
+List relevant facts or say "None". Today's date is {{ today }}.
+
+
+# input
+User: When was chinese new year last year?
+{{ chatbot_name }}:
+
+# output
+- Chinese New Year in 2023 began on January 22.
+- The year 2023 was the Year of the Rabbit according to the Chinese zodiac.
+
+
+# input
+User: Hayao Miyazaki is a master of his craft.
+{{ chatbot_name }}:
+
+# output
+- Hayao Miyazaki is a renowned Japanese film director, producer, screenwriter, animator, author, and manga artist.
+- Hayao Miyazaki was born on January 5, 1941, in Bunkyō, Tokyo, Japan.
+- Hayao Miyazaki is a co-founder of Studio Ghibli, a film and animation studio, established in 1985.
+- Hayao Miyazaki's film "Spirited Away" won the Academy Award for Best Animated Feature in 2003.
+- Hayao Miyazaki's works often contain themes of environmentalism, pacifism, feminism, and the value of maintaining a sense of wonder.
+- Despite retiring several times, Hayao Miyazaki has continued to create films, his latest being "How Do You Live?" which was in production as of 2024.
+- Hayao Miyazaki's films have significantly influenced animation industry worldwide.
+- Hayao Miyazaki's distinct animation style often features intricate, hand-drawn details and a vivid color palette.
+- Hayao Miyazaki was awarded the Honorary Award at the 6th Governors Awards in November 2014.
+- Hayao Miyazaki's works have been praised by renowned filmmakers, including Pixar's John Lasseter and director Guillermo del Toro.
+
+
+
+{# Claims should be split with regards to their parent claim. For example, here the first claim should NOT be "The Stanford Prison Experiment was conducted in the basement of Encina Hall." If it is, and if only the first claim passes fact-checking, we will be left with a fact that is too specific to be helpful. #}
+# input
+User: Tell me about the Stanford Prison Experiment.
+{{ chatbot_name }}: It was conducted at Stanford University in 1971, by a research group led by psychology professor Philip Zimbardo using college students. In the study, volunteers were randomly assigned to be either guards or prisoners in a mock prison, with Zimbardo himself serving as the superintendent.
+User: How long did the experiment last?
+{{ chatbot_name }}: Zimbardo ended it on the sixth day.
+User: Do you know where the experiment was conducted?
+{{ chatbot_name }}:
+
+# output
+- The Stanford Prison Experiment was conducted in the basement of Stanford's psychology building.
+- Encina Hall is the name of Stanford's psychology building.
+
+
+
+# input
+User: Can you tell me more about the twenty second season of American Idol?
+{{ chatbot_name }}:
+
+# output
+None
+
+
+
+# input
+User: I just watched chopped for 3 hours straight. The baskets were hard in some of them.
+{{ chatbot_name }}: "Chopped" certainly puts the contestants' culinary skills and creativity to the test. With the mystery baskets often containing a mix of seemingly incompatible ingredients, it's fascinating to see how each chef manages to incorporate everything into their dishes.
+User: Absolutely, it's always interesting to see how they manage to create something delicious out of such unusual combinations. Have you ever thought about what you would do if you were given a mystery basket?
+{{ chatbot_name }}:
+
+# output
+None
+
+
+
+# input
+User: Do you know about Queen Elizabeth II? I was just reading about her.
+{{ chatbot_name }}:
+
+# output
+- Queen Elizabeth II was born on April 21, 1926.
+- Queen Elizabeth II was born in London
+- Queen Elizabeth II was born to the Duke and Duchess of York, later known as King George VI and Queen Elizabeth (the Queen Mother).
+- Queen Elizabeth II became queen on February 6, 1952, following the death of her father, King George VI.
+- As of 2021, Queen Elizabeth II was the longest-reigning monarch in British history.
+- Queen Elizabeth II was the first child of a reigning monarch to be educated at home under the supervision of a governess.
+- The Queen is also the head of the Commonwealth, which includes 54 nations across the world.
+- As of 2021, Queen Elizabeth II had seen 14 different Prime Ministers of the United Kingdom during her reign, from Winston Churchill to the current Prime Minister.
+- Queen Elizabeth II is the first British monarch to have sent an email, done so in 1976 during a visit to an army base.
+- Queen Elizabeth II has owned more than 30 corgis during her reign, starting with Susan who was a gift for her 18th birthday.
+- Queen Elizabeth II has two birthdays: her actual birthday on April 21, and an official birthday which is celebrated on the second Saturday in June.
+- Queen Elizabeth II is the patron of more than 600 charities and organizations.
+
+
+
+# input
+User: who is the current Prime Minister of the United Kingdom?
+{{ chatbot_name }}:
+
+# output
+- As of my cut-off knowledge date of 2021, the Prime Minister of the United Kingdom was Boris Johnson.
+
+
+
+# input
+User: What happened with Football at the 2020 olympics?
+{{ chatbot_name }}: Two events were contested: a men's and women's competitions. Associations affiliated with FIFA may send teams to participate in the tournament. There were no age restrictions on women's teams, while men's teams were restricted to under-24 players (born on or after 1 January 1997) with a maximum of three overage players allowed.
+User: What new discoveries from James Webb Space telescope can I tell my 9 year old about?
+{{ chatbot_name }}:
+
+# output
+- The James Webb Space Telescope has provided us with some of the most detailed images of distant galaxies, helping us understand how galaxies are formed and evolve.
+- The James Webb Space Telescope has helped identify potential signs of life on exoplanets by analyzing their atmospheres for the presence of water and carbon dioxide.
+- The James Webb Space Telescope has discovered new stars in the process of formation, providing insights into how stars and solar systems are born.
+- The James Webb Space Telescope has detected light from the universe's first galaxies, helping us understand the early universe better.
+- The James Webb Space Telescope has provided unprecedented data about dark matter and dark energy, two mysterious components of the universe.
+- The James Webb Space Telescope has been able to study the atmospheres of gas giants in our own solar system in unprecedented detail.
+- The James Webb Space Telescope has helped astronomers understand the life cycles of stars, including their explosive deaths as supernovae.
+- The James Webb Space Telescope has also contributed to the search for habitable planets outside our solar system.
+- The James Webb Space Telescope has helped scientists understand the structure and composition of interstellar dust clouds.
+- The James Webb Space Telescope has allowed us to study the effects of black holes on surrounding matter and energy.
+
+
+
+# input
+User: How are you doing today?
+{{ chatbot_name }}:
+
+# output
+None
+
+
+
+# input
+User: I really liked the House of the Dragon.
+{{ chatbot_name }}: Yeah! It was an American fantasy drama television series created by George R. R. Martin and Ryan Condal for HBO.
+User: What do you think is the best TV drama of 2022?
+{{ chatbot_name }}:
+
+# output
+- "The Crown" won the Golden Globe for Best Television Series - Drama in 2022.
+- The critically acclaimed series "Succession" bagged the Primetime Emmy Award for Outstanding Drama Series in 2022.
+- "Mare of Easttown," starring Kate Winslet, was one of the most-watched drama series on HBO in 2022.
+- The historical drama "Bridgerton" was the most-streamed Netflix show in the first quarter of 2022.
+- "The Mandalorian" won the Critics' Choice Television Award for Best Drama Series in 2022.
+- The South Korean series "Squid Game" was one of the most talked-about TV dramas of 2022.
+- "Stranger Things" released its much-anticipated fourth season in 2022 and it was one of the most-viewed series on Netflix.
+
+
+
+# input
+User: Tell me about michelle yeoh.
+{{ chatbot_name }}: Michelle Yeoh is a Malaysian actress, philanthropist, and fashion influencer. She rose to fame in the 1990s after starring in a series of Hong Kong action films. Most recently, she has starred in the movie "Everything Everywhere All at Once".
+User: Do you know about everything everywhere all at once?
+{{ chatbot_name }}:
+
+# output
+- "Everything Everywhere All at Once" is a 2022 American absurdist comedy-drama film.
+- The movie "Everything Everywhere All at Once" is directed by the Daniels.
+- The movie "Everything Everywhere All at Once" is produced by Anthony and Joe Russo.
+- Michelle Yeoh plays the role of a Chinese-American immigrant in the movie "Everything Everywhere All at Once".
+- The movie "Everything Everywhere All at Once" received critical acclaim.
+
+
+
+{# The history of the conversation so far. User starts first. Only the last three turns are given, because longer conversations confuse the LLM, and are not needed for fact-checking. #}
+# input
+{% for dlg_turn in dlg[-1:] %}
+    User: {{ dlg_turn.user_utterance }}
+    {{ chatbot_name }}: {{ dlg_turn.agent_utterance }}
+{% endfor %}
+User: {{ new_user_utterance }}
+{{ chatbot_name }}:

@@ -12,9 +12,10 @@ Evaluates a .json file that contains the outputs of the distilled model in the f
 ]
 """
 
-import json
 import argparse
+import json
 import re
+
 import evaluate
 from tqdm import tqdm
 
@@ -31,21 +32,25 @@ def RougeL(pred, label):
 
 
 def metric_for_initial_search(prediction, gold):
-    search_pattern = (
-        'Yes\. You (?:Google|type) "([^"]*)".* The year of the results is "([^=]*)"\.]'
-    )
+    search_pattern = 'Yes\. You.*"([^"]*)".* The year of the results is "([^=]*)"\.]?'
 
     def extract_parts(o):
         search_prompt_output = o.strip()
         search_match = re.match(search_pattern, search_prompt_output)
-        if o.startswith("No"):
-            classification = "No"
-            search_query = ""
-            search_query_time = ""
-        elif search_match:
+        if search_match:
             classification = "Yes"
             search_query = search_match.group(1)
             search_query_time = search_match.group(2)
+        else:
+            if o.startswith("No"):
+                classification = "No"
+                search_query = ""
+                search_query_time = ""
+            else:
+                print("Malformed search_prompt_output: ", search_prompt_output)
+                classification = ""
+                search_query = ""
+                search_query_time = ""
         return classification, search_query, search_query_time
 
     p_c, p_q, p_t = extract_parts(prediction)
@@ -194,7 +199,7 @@ if __name__ == "__main__":
         )
         prompt_matrics[prompt]["count"] = 0
 
-    for example in tqdm(all_examples):
+    for example in tqdm(all_examples, desc="Calculating metrics"):
         found = False
         for prompt in prompt_matrics.keys():
             if example["template_name"].endswith(prompt):

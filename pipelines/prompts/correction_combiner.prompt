@@ -1,21 +1,29 @@
-{% block instruction %}
-{{instruction_start}}The following is a conversation between a friendly, knowledgeable and intelligent chatbot, called {{ chatbot_name }}, and a user.
+# instruction
+The following is a conversation between a friendly, knowledgeable and intelligent chatbot, called {{ chatbot_name }}, and a user.
 {{ chatbot_name }} knows a lot, and always tells the truth.
 Today's date is {{ today }}.
 
-Edit the original reponses of {{ chatbot_name }} only using the provided bullet points.{{instruction_end}}
-{% endblock %}{% block short_instruction %}Edit the original reponses only using the provided bullet points. Today's date is {{ today }}.{% endblock %}
+Edit the original reponses of {{ chatbot_name }} only using the provided bullet points.
 
-=====
-{{input_start}}User: who was professor monica lam's phd advisor?
+# distillation instruction
+Edit the original reponses only using the provided bullet points. Today's date is {{ today }}.
+
+
+# input
+User: who was professor monica lam's phd advisor?
 {{ chatbot_name }}: Professor Monica Lam's PhD advisor was Professor John Hennessy, who was the President of Stanford University from 2000 to 2016.
 [You have the following bullet points to use in your edit:
 -  Professor John Hennessy was not Professor Monica Lam's PhD advisor.
 ]
-You fix:{{input_end}} {{output_start}}Sorry, I'm not sure who professor Monica Lam's PhD advisor was.{{output_end}}
+You fix:
 
-=====
-{{input_start}}{{ chatbot_name }}: How was your trip to Hawaii?
+# output
+Sorry, I'm not sure who professor Monica Lam's PhD advisor was.
+
+
+
+# input
+{{ chatbot_name }}: How was your trip to Hawaii?
 User: It was great! In fact, I witnessed the eruption of the largest volcano on earth.
 {{ chatbot_name }}: Wow, I hope I could see it, but sounds kinda dangerous. Is it the Mauna Loa?
 User: Yes, it is! Do you know when it started erupting?
@@ -23,29 +31,44 @@ User: Yes, it is! Do you know when it started erupting?
 [You have the following bullet points to use in your edit:
 - The last eruption of Mauna Loa started on Nov 27, 2022.
 ]
-You fix:{{input_end}} {{output_start}}Yes! The last eruption of Mauna Loa started on Nov 27, 2022.{{output_end}}
+You fix:
 
-=====
-{{input_start}}User: Who is the current prime minister of the united kingdoms?
+# output
+Yes! The last eruption of Mauna Loa started on Nov 27, 2022.
+
+
+
+# input
+User: Who is the current prime minister of the united kingdoms?
 {{ chatbot_name }}: The current prime minister is Rishi Sunak.
 User: Tell me about Rishi.
 {{ chatbot_name }}: Rishi Sunak was born on May 12th, 1980 in Southampton. His family is of Indian descent and they migrated to Britain from East Africa in the 1960s. Sunak studied philosophy, politics, and economics at Stanford University in California as a Fulbright Scholar. 
 [You have the following bullet points to use in your edit:
 - Rishi Sunak studied philosophy, politics and economics at Lincoln College, Oxford, and earned an MBA from Stanford University in California as a Fulbright Scholar.
 ]
-You fix:{{input_end}} {{output_start}}Rishi Sunak was born on May 12th, 1980 in Southampton. His family is of Indian descent and they migrated to Britain from East Africa in the 1960s. Sunak studied philosophy, politics, and economics at Lincoln College, Oxford. Later on, he pursued higher education and earned an MBA from Stanford University in California as a Fulbright Scholar.{{output_end}}
+You fix:
 
-=====
-{{input_start}}User: Have you heard about Elon Musk's acquisition of Twitter?
+# output
+Rishi Sunak was born on May 12th, 1980 in Southampton. His family is of Indian descent and they migrated to Britain from East Africa in the 1960s. Sunak studied philosophy, politics, and economics at Lincoln College, Oxford. Later on, he pursued higher education and earned an MBA from Stanford University in California as a Fulbright Scholar.
+
+
+
+# input
+User: Have you heard about Elon Musk's acquisition of Twitter?
 {{ chatbot_name }}: Yes, I have! He completed the acquisition of Twitter for $54.20 per share in October 2022. I think it's really interesting that he's trying to move into that space. 
 [You have the following bullet points to use in your edit:
 - On October 27, 2022, Elon Musk completed the acquisition of Twitter.
 - I'm not sure how much Elon Musk spent on the acquisition of Twitter per share.
 ]
-You fix:{{input_end}} {{output_start}}Yes, I have! He completed the acquisition of Twitter in October 2022. I think it's really interesting that he's trying to move into that space. {{output_end}}
+You fix:
 
-=====
-{{input_start}}User: Hey, do you know when starbucks was founded?
+# output
+Yes, I have! He completed the acquisition of Twitter in October 2022. I think it's really interesting that he's trying to move into that space. 
+
+
+
+# input
+User: Hey, do you know when starbucks was founded?
 {{ chatbot_name }}: It was founded in 1971.
 User: how many starbucks are there in the world
 {{ chatbot_name }}: There are 32,660 Starbucks locations in 79 countries.
@@ -53,11 +76,15 @@ User: how many starbucks are there in the world
 - As of November 2021, there were 33,833 Starbucks locations in 80 countries.
 - I'm not sure about the number of starbucks locations worldwide as of {{ today }}.
 ]
-You fix:{{input_end}} {{output_start}}As of November 2021, there were 33,833 Starbucks locations in 80 countries. This number might have changed since then, but I don't have a more current information.{{output_end}}
+You fix:
 
-=====
-{% block input %}
-{{input_start}}{% for dlg_turn in dlg[-2:] %}
+# output
+As of November 2021, there were 33,833 Starbucks locations in 80 countries. This number might have changed since then, but I don't have a more current information.
+
+
+
+# input
+{% for dlg_turn in dlg[-2:] %}
     User: {{ dlg_turn.user_utterance }}
     {{ chatbot_name }}: {{ dlg_turn.agent_utterance }}
 {% endfor %}
@@ -68,4 +95,4 @@ User: {{ last_user_utterance }}
     - {{ fixed_claim }}
 {% endfor %}
 ]
-You fix:{{input_end}}{% endblock %}
+You fix:
