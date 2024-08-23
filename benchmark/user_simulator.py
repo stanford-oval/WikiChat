@@ -59,9 +59,9 @@ def user_simulation_chain(user_engine: str, user_temperature: float, language: s
     )
 
 
-async def simulate_dialog(dialogue_inputs, args) -> list[DialogueTurn]:
+async def simulate_dialogue(dialogue_inputs, args) -> list[DialogueTurn]:
     """
-    Simulate one dialog
+    Simulate one dialogue
     """
     user_character = random.choice(user_characteristics)
     chatbot, dialogue_state = create_chain(args)
@@ -128,7 +128,7 @@ def repeat_dialogue_inputs(dialogue_inputs, target_num_dialogues):
     return dialogue_inputs
 
 
-def main(args):
+async def main(args):
     topics = []
     if args.mode == "topic":
         dialogue_inputs = []
@@ -162,9 +162,10 @@ def main(args):
         raise ValueError("Unknown mode: %s" % args.mode)
 
     all_dialogues = []
-    for di in tqdm(dialogue_inputs, desc="Dialogues"):
-        dialogue_state = asyncio.run(simulate_dialog(di, args=args))
-        all_dialogues.append(dialogue_state)
+    for i in tqdm(range(0, len(dialogue_inputs), args.batch_size), desc="Dialogue Batches"):
+        batch = dialogue_inputs[i:i+args.batch_size]
+        batch_results = await asyncio.gather(*[simulate_dialogue(di, args=args) for di in batch])
+        all_dialogues.extend(batch_results)
 
     make_parent_directories(args.output_file)
     with open(args.output_file, "w") as output_file:
@@ -237,7 +238,13 @@ if __name__ == "__main__":
         "--num_turns",
         type=int,
         required=True,
-        help="The number of turns in each dialog",
+        help="The number of turns in each dialogue",
+    )
+    parser.add_argument(
+        "--batch_size",
+        type=int,
+        default=10,
+        help="The number of dialogues to simulate in parallel",
     )
     parser.add_argument(
         "--language",
@@ -259,4 +266,4 @@ if __name__ == "__main__":
             level=logging.INFO, format=" %(name)s : %(levelname)-8s : %(message)s"
         )
 
-    main(args)
+    asyncio.run(main(args))

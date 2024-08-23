@@ -415,7 +415,7 @@ def extract_year(title, content):
         content = title + " | " + content
     years = []
     year_pattern = r"\d{4}"
-    year_duration_pattern = r"\b\d{4}[--–]\d{2}\b"
+    year_duration_pattern = r"\b\d{4}[-–]\d{2}\b"
     year_to_pattern = r"\b\d{4} to \d{4}\b"
     # extract "1990 to 1998" before spacy because spacy would split it to 1990 and 1998
     re_year_tos = re.findall(year_to_pattern, content)
