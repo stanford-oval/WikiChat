@@ -32,6 +32,7 @@ llm_endpoints:
     api_key: "AZURE_OPENAI_API_KEY" # This is the the name of the environment variable that contains your Azure OpenAI API key
     engine_map:
       gpt-35-turbo-instruct: azure_text/gpt-35-turbo-instruct
+      gpt-4o-mini: azure/gpt-4o-mini
 
   # Example of OpenAI models via openai.com
   # See more models at https://platform.openai.com/docs/models/. Note that OpenAI models don't need an "openai/" prefix in engine_map
