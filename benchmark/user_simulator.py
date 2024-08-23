@@ -154,7 +154,9 @@ def main(args):
     elif args.mode == "multihop":
         with open(args.input_file) as input_file:
             dialogue_inputs = json.load(input_file)
-            dialogue_inputs = repeat_dialogue_inputs(dialogue_inputs, args.num_dialogues)
+            dialogue_inputs = repeat_dialogue_inputs(
+                dialogue_inputs, args.num_dialogues
+            )
             topics = [m["title_1"] + " and " + m["title_2"] for m in dialogue_inputs]
     else:
         raise ValueError("Unknown mode: %s" % args.mode)

@@ -2,11 +2,12 @@ import asyncio
 import math
 from time import time
 from typing import Any
-from pydantic import BaseModel, Field
+
 import numpy as np
 import onnxruntime as ort
 import torch
 from huggingface_hub import hf_hub_download
+from pydantic import BaseModel, Field
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.models import (
     FieldCondition,

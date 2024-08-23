@@ -6,7 +6,10 @@ from bs4 import BeautifulSoup
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    "--wikipedia_date", type=str, required=True, help="Enter the date in the format yyyymmdd"
+    "--wikipedia_date",
+    type=str,
+    required=True,
+    help="Enter the date in the format yyyymmdd",
 )
 args = parser.parse_args()
 

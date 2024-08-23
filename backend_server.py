@@ -12,8 +12,8 @@ from pipelines.pipeline_arguments import (
     add_pipeline_arguments,
     check_pipeline_arguments,
 )
-from tasks.defaults import CHATBOT_DEFAULT_CONFIG
 from pipelines.utils import dict_to_command_line, get_logger
+from tasks.defaults import CHATBOT_DEFAULT_CONFIG
 
 logger = get_logger(__name__)
 

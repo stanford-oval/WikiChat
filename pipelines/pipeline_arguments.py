@@ -3,6 +3,7 @@ Add the common input arguments
 """
 
 from chainlite.llm_config import GlobalVars
+
 from pipelines.chatbot_config import PipelineEnum
 from tasks.defaults import CHATBOT_DEFAULT_CONFIG
 

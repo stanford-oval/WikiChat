@@ -114,6 +114,8 @@ conda activate wikichat
 python -m spacy download en_core_web_sm  # Spacy is only needed for certain WikiChat configurations
 ```
 
+If you see `Error: Redis lookup failed` after running the chatbot, it probably means Redis is not properly installed. You can try reinstalling it by following its [official documentation](https://redis.io/docs/latest/operate/oss_and_stack/install/install-redis/).
+
 Keep this environment activated for all subsequent commands.
 
 Install Docker for your operating system by following the instructions at https://docs.docker.com/engine/install/. WikiChat uses Docker primarily for creating and serving vector databases for retrieval, specifically [🤗 Text Embedding Inference](https://github.com/huggingface/text-embeddings-inference) and [Qdrant](https://github.com/qdrant/qdrant). On recent Ubuntu versions, you can try running `inv install-docker`. For other operating systems, follow the instructions on the docker website.
@@ -203,6 +205,8 @@ See `wikipedia_preprocessing/preprocess_html_dump.py` for details on how this is
 inv index-collection --collection-path <path to preprocessed JSONL> --collection-name <name>
 ```
 
+This command starts docker containers for [🤗 Text Embedding Inference](https://github.com/huggingface/text-embeddings-inference) (one per available GPU). By default, it uses the docker image compatible with NVIDIA GPUs with Ampere 80 architecture, e.g. A100. Support for some other GPUs is also available, but you would need to choose the right docker image from [available docker images](https://github.com/huggingface/text-embeddings-inference?tab=readme-ov-file#docker-images).
+
 
 #### To upload a Qdrant index to 🤗 Hub:
 1. Split the index into smaller parts:
@@ -268,7 +272,7 @@ This script reads the topic (i.e., a Wikipedia title and article) from the corre
 ```bash
 inv simulate-users --num-dialogues 1 --num-turns 2 --simulation-mode passage --language en --subset head
 ```
-Depending on the engine you are using, this might take some time. The simulated dialogues and log files will be saved in `benchmark/simulated_dialogs/`.
+Depending on the engine you are using, this might take some time. The simulated dialogues and log files will be saved in `benchmark/simulated_dialogues/`.
 You can also provide any of the pipeline parameters from above.
 You can experiment with different user characteristics by modifying `user_characteristics` in `benchmark/user_simulator.py`.
 
