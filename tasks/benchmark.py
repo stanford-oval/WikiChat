@@ -12,7 +12,7 @@ from tasks.retrieval import get_wikipedia_collection_path
 @task(pre=[load_api_keys])
 def simulate_users(
     c,
-    num_dialogs,  # -1 to simulate all
+    num_dialogues,  # -1 to simulate all available topics
     num_turns: int,
     simulation_mode: str,  # passage
     subset: str,  # head, recent, tail
@@ -89,7 +89,7 @@ def simulate_users(
 
     c.run(
         f"python benchmark/user_simulator.py {pipeline_flags} "
-        f"--num_dialogs {num_dialogs} "
+        f"--num_dialogues {num_dialogues} "
         f"--user_engine {user_simulator_engine} "
         f"--user_temperature {user_temperature} "
         f"--mode {simulation_mode} "

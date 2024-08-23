@@ -46,12 +46,6 @@ if __name__ == "__main__":
                 path_in_repo=f"{date}/{language}/{file}",
                 repo_id="stanford-oval/wikipedia",
                 repo_type="dataset",
-                run_as_future=True,
             )
-
-    # Remove the extracted files
-    for date, language in [
-        (date, lang) for date in args.dates for lang in args.languages
-    ]:
-        extracted_file = f"workdir/{language}/wikipedia_{date}/collection.jsonl"
+        # Remove the extracted file now
         os.remove(extracted_file)

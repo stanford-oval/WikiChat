@@ -113,18 +113,18 @@ async def simulate_dialog(dialogue_inputs, args) -> list[DialogueTurn]:
     return dialogue_state
 
 
-def repeat_dialogue_inputs(dialogue_inputs, target_num_dialogs):
+def repeat_dialogue_inputs(dialogue_inputs, target_num_dialogues):
     """
     repeats dialogue_inputs if we don't have enough of them, truncates if there are too many
     """
-    if target_num_dialogs == -1:
-        target_num_dialogs = len(dialogue_inputs)
-    full_rounds = target_num_dialogs // len(dialogue_inputs)
+    if target_num_dialogues == -1:
+        target_num_dialogues = len(dialogue_inputs)
+    full_rounds = target_num_dialogues // len(dialogue_inputs)
     dialogue_inputs = (
         dialogue_inputs * full_rounds
-        + dialogue_inputs[: target_num_dialogs % len(dialogue_inputs)]
+        + dialogue_inputs[: target_num_dialogues % len(dialogue_inputs)]
     )
-    assert len(dialogue_inputs) == target_num_dialogs
+    assert len(dialogue_inputs) == target_num_dialogues
     return dialogue_inputs
 
 
@@ -138,7 +138,7 @@ def main(args):
                 if len(line) > 0:
                     dialogue_inputs.append(line)
 
-        dialogue_inputs = repeat_dialogue_inputs(dialogue_inputs, args.num_dialogs)
+        dialogue_inputs = repeat_dialogue_inputs(dialogue_inputs, args.num_dialogues)
         topics = dialogue_inputs
     elif args.mode == "passage":
         with open(args.input_file) as input_file:
@@ -149,12 +149,12 @@ def main(args):
             for title, passage in dialogue_inputs.items()
         ]
 
-        dialogue_inputs = repeat_dialogue_inputs(dialogue_inputs, args.num_dialogs)
+        dialogue_inputs = repeat_dialogue_inputs(dialogue_inputs, args.num_dialogues)
         topics = [tp[0] for tp in dialogue_inputs]
     elif args.mode == "multihop":
         with open(args.input_file) as input_file:
             dialogue_inputs = json.load(input_file)
-            dialogue_inputs = repeat_dialogue_inputs(dialogue_inputs, args.num_dialogs)
+            dialogue_inputs = repeat_dialogue_inputs(dialogue_inputs, args.num_dialogues)
             topics = [m["title_1"] + " and " + m["title_2"] for m in dialogue_inputs]
     else:
         raise ValueError("Unknown mode: %s" % args.mode)
@@ -226,10 +226,10 @@ if __name__ == "__main__":
         "--output_file", type=str, required=True, help="Where to write the outputs"
     )
     parser.add_argument(
-        "--num_dialogs",
+        "--num_dialogues",
         type=int,
         required=True,
-        help="The number of dialogs to generate. -1 means all topics.",
+        help="The number of dialogues to generate. -1 means all topics.",
     )
     parser.add_argument(
         "--num_turns",
