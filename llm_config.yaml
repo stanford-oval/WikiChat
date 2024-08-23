@@ -99,4 +99,4 @@ llm_endpoints:
   # Use this endpoint if you want to host an open model like LLaMA, LLaMA-instruct, or open Mistral models etc.
   - api_base: http://127.0.0.1:5002
     engine_map:
-      local: huggingface/local
+      local: huggingface/local # The name after huggingface/ does not matter and is unused
