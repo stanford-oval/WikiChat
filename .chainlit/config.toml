@@ -1,0 +1,121 @@
+[project]
+# Whether to enable telemetry (default: true). No personal data is collected.
+enable_telemetry = false
+
+# List of environment variables to be provided by each user to use the app.
+user_env = []
+
+# Duration (in seconds) during which the session is saved when the connection is lost
+session_timeout = 3600
+
+# Enable third parties caching (e.g LangChain cache)
+cache = false
+
+# Authorized origins
+allow_origins = ["*"]
+
+# Follow symlink for asset mount (see https://github.com/Chainlit/chainlit/issues/317)
+# follow_symlink = false
+
+[features]
+# Show the prompt playground
+prompt_playground = false
+
+# Process and display HTML in messages. This can be a security risk (see https://stackoverflow.com/questions/19603097/why-is-it-dangerous-to-render-user-generated-html-or-javascript)
+unsafe_allow_html = true
+
+# Process and display mathematical expressions. This can clash with "$" characters in messages.
+latex = false
+
+# Automatically tag threads with the current chat profile (if a chat profile is used)
+auto_tag_thread = true
+
+# Authorize users to spontaneously upload files with messages
+[features.spontaneous_file_upload]
+    enabled = false
+    accept = ["*/*"]
+    max_files = 20
+    max_size_mb = 500
+
+[features.audio]
+    # Threshold for audio recording
+    min_decibels = -45
+    # Delay for the user to start speaking in MS
+    initial_silence_timeout = 3000
+    # Delay for the user to continue speaking in MS. If the user stops speaking for this duration, the recording will stop.
+    silence_timeout = 1500
+    # Above this duration (MS), the recording will forcefully stop.
+    max_duration = 15000
+    # Duration of the audio chunks in MS
+    chunk_duration = 1000
+    # Sample rate of the audio
+    sample_rate = 44100
+
+[UI]
+# Name of the app and chatbot.
+name = "WikiChat"
+
+# Show the readme while the thread is empty.
+show_readme_as_default = false
+
+# Description of the app and chatbot. This is used for HTML tags.
+description = "WikiChat is an experimental chatbot that improves the factuality of large language models by retrieving data from Wikipedia."
+
+# Large size content are by default collapsed for a cleaner ui
+default_collapse_content = true
+
+# The default value for the expand messages settings.
+default_expand_messages = false
+
+# Hide the chain of thought details from the user in the UI.
+hide_cot = false
+
+# Link to your github repo. This will add a github button in the UI's header.
+github = "https://github.com/stanford-oval/WikiChat"
+
+# Specify a CSS file that can be used to customize the user interface.
+# The CSS file can be served from the public directory or via an external link.
+custom_css = "/public/stylesheet.css"
+
+# Specify a Javascript file that can be used to customize the user interface.
+# The Javascript file can be served from the public directory.
+# custom_js = "/public/test.js"
+
+# Specify a custom font url.
+# custom_font = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap"
+
+# Specify a custom meta image url.
+custom_meta_image_url = "https://wikichat.genie.stanford.edu/logo?theme=light"
+
+# Specify a custom build directory for the frontend.
+# This can be used to customize the frontend code.
+# Be careful: If this is a relative path, it should not start with a slash.
+# custom_build = "./public/build"
+
+[UI.theme]
+    layout = "wide"
+    #font_family = "Inter, sans-serif"
+# Override default MUI light theme. (Check theme.ts)
+[UI.theme.light]
+    background = "#F7F7F7"  # An ultra-light grey for the background, almost white but still soft
+    paper = "#F0F0F0"       # A very light grey for paper elements, subtly different from the background
+
+    [UI.theme.light.primary]
+        main = "#26A69A"    # A slightly lighter teal for primary elements, still vibrant and noticeable
+        dark = "#00897B"    # A rich teal for strong contrast and emphasis, complementary to the lighter greys
+        light = "#B2DFDB"   # A soft, muted teal for hover and active states, blending well with the lighter theme
+
+
+# Override default MUI dark theme. (Check theme.ts)
+[UI.theme.dark]
+    background = "#121212"  # A deep grey, almost black, to serve as the primary background color
+    paper = "#1E1E1E"       # A slightly lighter shade of grey for paper elements like cards, modals, etc.
+
+    [UI.theme.dark.primary]
+        main = "#26A69A"    # Teal remains the primary color for interactive elements, vibrant against the dark
+        dark = "#00796B"    # A dark teal for pressed states or lower-tier action items
+        light = "#4DB6AC"   # A lighter teal for hover and focus states, ensuring good visibility
+
+
+[meta]
+generated_by = "1.1.202"

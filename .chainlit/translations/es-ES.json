@@ -1,0 +1,155 @@
+{
+    "components": {
+        "atoms": {
+            "buttons": {
+                "userButton": {
+                    "menu": {
+                        "settings": "Ajustes",
+                        "settingsKey": "A",
+                        "APIKeys": "Claves API",
+                        "logout": "Cerrar sesión"
+                    }
+                }
+            }
+        },
+        "molecules": {
+            "newChatButton": {
+                "newChat": "Nuevo chat"
+            },
+            "tasklist": {
+                "TaskList": {
+                    "title": "\ud83d\uddd2\ufe0f Lista de tareas",
+                    "loading": "Cargando...",
+                    "error": "Ocurrió un error"
+                }
+            },
+            "attachments": {
+                "cancelUpload": "Cancelar subida",
+                "removeAttachment": "Quitar adjunto"
+            },
+            "newChatDialog": {
+                "createNewChat": "¿Crear nuevo chat?",
+                "clearChat": "Esto borrará los mensajes actuales y comenzará un nuevo chat.",
+                "cancel": "Cancelar",
+                "confirm": "Confirmar"
+            },
+            "settingsModal": {
+                "expandMessages": "Expandir mensajes",
+                "hideChainOfThought": "Ocultar cadena de pensamientos",
+                "darkMode": "Modo oscuro"
+            }
+        },
+        "organisms": {
+            "chat": {
+                "history": {
+                    "index": {
+                        "lastInputs": "Últimas entradas",
+                        "noInputs": "Tan vacío...",
+                        "loading": "Cargando..."
+                    }
+                },
+                "inputBox": {
+                    "input": {
+                        "placeholder": "Escribe tu mensaje aquí..."
+                    },
+                    "speechButton": {
+                        "start": "Comenzar grabación",
+                        "stop": "Detener grabación"
+                    },
+                    "SubmitButton": {
+                        "sendMessage": "Enviar mensaje",
+                        "stopTask": "Detener tarea"
+                    },
+                    "UploadButton": {
+                        "attachFiles": "Adjuntar archivos"
+                    },
+                    "waterMark": {
+                        "text": "Construido con"
+                    }
+                },
+                "Messages": {
+                    "index": {
+                        "running": "Ejecutando",
+                        "executedSuccessfully": "ejecutado con éxito",
+                        "failed": "falló",
+                        "feedbackUpdated": "Retroalimentación actualizada",
+                        "updating": "Actualizando"
+                    }
+                },
+                "dropScreen": {
+                    "dropYourFilesHere": "Suelta tus archivos aquí"
+                },
+                "index": {
+                    "failedToUpload": "Error al subir",
+                    "cancelledUploadOf": "Subida cancelada de",
+                    "couldNotReachServer": "No se pudo conectar con el servidor",
+                    "continuingChat": "Continuando chat anterior"
+                },
+                "settings": {
+                    "settingsPanel": "Panel de ajustes",
+                    "reset": "Restablecer",
+                    "cancel": "Cancelar",
+                    "confirm": "Confirmar"
+                }
+            },
+            "threadHistory": {
+                "sidebar": {
+                    "filters": {
+                        "FeedbackSelect": {
+                            "feedbackAll": "Retroalimentación: Todo",
+                            "feedbackPositive": "Retroalimentación: Positiva",
+                            "feedbackNegative": "Retroalimentación: Negativa"
+                        },
+                        "SearchBar": {
+                            "search": "Buscar"
+                        }
+                    },
+                    "DeleteThreadButton": {
+                        "confirmMessage": "Esto eliminará el hilo así como sus mensajes y elementos.",
+                        "cancel": "Cancelar",
+                        "confirm": "Confirmar",
+                        "deletingChat": "Eliminando chat",
+                        "chatDeleted": "Chat eliminado"
+                    },
+                    "index": {
+                        "pastChats": "Chats anteriores"
+                    },
+                    "ThreadList": {
+                        "empty": "Vacío..."
+                    },
+                    "TriggerButton": {
+                        "closeSidebar": "Cerrar barra lateral",
+                        "openSidebar": "Abrir barra lateral"
+                    }
+                },
+                "Thread": {
+                    "backToChat": "Volver al chat",
+                    "chatCreatedOn": "Este chat se creó el"
+                }
+            },
+            "header": {
+                "chat": "Chat",
+                "readme": "Léeme"
+            }
+        }
+    },
+    "hooks": {
+        "useLLMProviders": {
+            "failedToFetchProviders": "Error al obtener proveedores:"
+        }
+    },
+    "pages": {
+        "Design": {},
+        "Env": {
+            "savedSuccessfully": "Guardado con éxito",
+            "requiredApiKeys": "Claves API necesarias",
+            "requiredApiKeysInfo": "Para usar esta aplicación, se requieren las siguientes claves API. Las claves se almacenan en el almacenamiento local de su dispositivo."
+        },
+        "Page": {
+            "notPartOfProject": "No formas parte de este proyecto."
+        },
+        "ResumeButton": {
+            "resumeChat": "Reanudar chat"
+        }
+    }
+}

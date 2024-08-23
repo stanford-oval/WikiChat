@@ -114,7 +114,7 @@ def setup_conda_env(c):
     """
     Sets up the Conda environment using the environment file.
 
-    This task creates a Conda environment based on the specifications in the 'conda_env.yml' file.
+    This task creates a Conda environment based on the specifications in the 'conda_env.yaml' file.
     After creating the environment, it activates the environment named 'wikichat' and downloads
     the 'en_core_web_sm' model for spaCy.
 
@@ -122,7 +122,7 @@ def setup_conda_env(c):
         c (invoke.context.Context): The context instance (passed automatically by the @task decorator).
     """
     logger.info("Creating the Conda environment")
-    c.run("conda env create --file conda_env.yml")
+    c.run("conda env create --file conda_env.yaml")
     c.run("conda activate wikichat")
     c.run("python -m spacy download en_core_web_sm")
 
@@ -172,7 +172,7 @@ def install(c):
     This task orchestrates the installation and setup of several tools and environments required for the project.
     It performs the following steps in sequence:
     1. Downloads and installs AzCopy, a command-line utility for copying data to and from Microsoft Azure.
-    2. Sets up the Conda environment using the specifications in the 'conda_env.yml' file and downloads the 'en_core_web_sm' model for spaCy.
+    2. Sets up the Conda environment using the specifications in the 'conda_env.yaml' file and downloads the 'en_core_web_sm' model for spaCy.
     3. Downloads and installs the Anaconda distribution if it is not already installed.
     4. Installs Docker, a platform for developing, shipping, and running applications inside containers.
     5. Sets up NVMe (Non-Volatile Memory Express) storage.
