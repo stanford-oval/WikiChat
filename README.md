@@ -189,14 +189,10 @@ Running this will start the backend and front-end servers. You can then access t
 `inv chainlit --backend-port 5001`
 
 
-
 # Other Commands
 
 ## Using the free Rate-limited Wikipedia search API
 See https://wikichat.genie.stanford.edu/search/redoc
-
-## Simulate User
-
 
 
 ## Upload an Index
