@@ -12,6 +12,23 @@ logger = get_logger(__name__)
 
 @task
 def setup_nvme(c):
+    """
+    Set up an NVMe drive on the VM by performing the following steps. Only works on certain Linux distributions.
+    
+    1. Installs the `nvme-cli` package to manage NVMe devices.
+    2. Lists available NVMe devices on the system.
+    3. Extracts NVMe device names from the listing output.
+    4. Checks if any NVMe devices are found; if none, logs a message and exits.
+    5. Formats the first NVMe device found with the XFS filesystem.
+    6. Creates a mount point at `/mnt/ephemeral_nvme`.
+    7. Mounts the NVMe device to the created mount point.
+    8. Changes ownership of the mount point to the current user to enable read and write access.
+    9. Creates a `workdir` directory on the NVMe drive.
+    10. Creates a symbolic link `./workdir` pointing to the `workdir` directory on the NVMe drive.
+
+    Args:
+        c: The context instance (passed automatically by invoke).
+    """
     # See if your VM has an NVMe drive
     c.run("sudo apt install -y nvme-cli")
 
@@ -52,7 +69,7 @@ def setup_nvme(c):
 @task
 def install_docker(c):
     """
-    Task to install Docker on an Ubuntu system by following https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository
+    Install Docker on an Ubuntu system by following https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository
 
     Args:
         c (invoke.context.Context): The context instance (passed automatically by the @task decorator).
@@ -89,7 +106,7 @@ def install_docker(c):
 @task
 def install_anaconda(c):
     """
-    Installs Anaconda if it is not already installed.
+    Install Anaconda if it is not already installed.
 
     This task checks if Anaconda (conda) is already installed on the system. If it is not installed,
     it downloads the Anaconda installer for Linux, runs the installer, and then removes the installer file.
@@ -112,7 +129,7 @@ def install_anaconda(c):
 @task(pre=[install_anaconda])
 def setup_conda_env(c):
     """
-    Sets up the Conda environment using the environment file.
+    Set up the Conda environment using the environment file.
 
     This task creates a Conda environment based on the specifications in the 'conda_env.yaml' file.
     After creating the environment, it activates the environment named 'wikichat' and downloads
@@ -130,7 +147,7 @@ def setup_conda_env(c):
 @task
 def download_azcopy(c):
     """
-    Downloads and installs AzCopy, a command-line utility for copying data to and from Microsoft Azure.
+    Download and install AzCopy, a command-line utility for copying data to and from Microsoft Azure.
 
     This task performs the following steps:
     1. Downloads the AzCopy tarball from the official Microsoft Azure link.
@@ -167,7 +184,7 @@ def download_azcopy(c):
 )
 def install(c):
     """
-    Installs various tools and sets up the environment.
+    Install various tools and set up the environment.
 
     This task orchestrates the installation and setup of several tools and environments required for the project.
     It performs the following steps in sequence:

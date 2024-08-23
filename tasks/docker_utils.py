@@ -95,7 +95,7 @@ def wait_for_docker_container_to_be_ready(
     timeout = 60
     step_time = timeout // 10
     elapsed_time = 0
-    logger.info("Waiting for the container '%s' to be ready...", container)
+    logger.info("Waiting for container '%s' to be ready...", container.name)
 
     def is_ready():
         container_status = docker_client.containers.get(container.id).status
@@ -128,7 +128,7 @@ def start_qdrant_docker_container(
     c, workdir=DEFAULT_WORKDIR, rest_port=6333, grpc_port=6334
 ):
     """
-    Starts a Qdrant docker container if it is not already running.
+    Start a Qdrant docker container if it is not already running.
 
     This function checks if a Qdrant docker container named 'qdrant' is already running. If so, it logs that
     the container is already up and does nothing. If the container exists but is stopped, it simply restarts
@@ -200,7 +200,7 @@ def start_embedding_docker_container(
     embedding_model=DEFAULT_EMBEDDING_MODEL_NAME,
 ):
     """
-    Starts a Docker container for HuggingFace's text embedding inference (TEI) if it is not already running.
+    Start a Docker container for HuggingFace's text embedding inference (TEI) if it is not already running.
 
     See https://github.com/huggingface/text-embeddings-inference for TEI documentation.
     This function checks if a text-embedding-inference Docker container is already running and starts it if not.
