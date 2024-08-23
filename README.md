@@ -33,7 +33,7 @@
 # Introduction
 
 Large language model (LLM) chatbots like ChatGPT and GPT-4 get things wrong a lot, especially if the information you are looking for is recent ("Tell me about the 2024 Super Bowl.") or about less popular topics ("What are some good movies to watch from [insert your favorite foreign director]?").
-WikiChat uses Wikipedia and the following 7-stage pipeline to makes sure its responses are factual.
+WikiChat uses Wikipedia and the following 7-stage pipeline to makes sure its responses are factual. Each numbered stage involves one or more LLM calls.
 
 
 <p align="center">
@@ -78,8 +78,14 @@ Installing WikiChat involves the following steps:
 4. Run WikiChat with your desired configuration.
 5. [Optional] Deploy WikiChat for multi-user access. We provide code to deploy a simple front-end and backend, as well as instructions to connect to an Azure Cosmos DB database for storing conversations.
 
-This project has been tested using Python 3.10 on Ubuntu Focal 20.04 (LTS), but should run on most recent Linux distributions.
-If you want to use this on Windows WSL or Mac, or with a different Python version, expect to do some troubleshooting in some of the installation steps.
+
+## System Requirements
+This project has been tested with Python 3.10 on Ubuntu 20.04 LTS (Focal Fossa), but it should be compatible with many other Linux distributions. If you plan to use this on Windows WSL or macOS, or with a different Python version, be prepared for potential troubleshooting during installation.
+
+Running WikiChat using LLM APIs and our Wikipedia search API does not have specific hardware requirements and can be performed on most systems. However, if you intend to host a search index locally, ensure you have sufficient disk space for the index. For large indices, retrieval latency is heavily dependant on disk speed, so we recommend using SSDs and preferably NVMe drives. For example, storage-optimized VMs like [`Standard_L8s_v3`](https://learn.microsoft.com/en-us/azure/virtual-machines/lsv3-series) on Azure are suitable for this.
+
+If you plan to use WikiChat with a local LLM, a GPU is necessary to host the model.
+
 
 ## Install Dependencies
 

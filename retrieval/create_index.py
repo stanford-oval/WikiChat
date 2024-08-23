@@ -96,7 +96,7 @@ def commit_to_index(
         desc="Indexing collection",
         miniters=1e-6,
         unit_scale=1,
-        unit=" Block",
+        unit=" Blocks",
         dynamic_ncols=True,
         smoothing=0,
         total=collection_size,
@@ -219,7 +219,7 @@ if __name__ == "__main__":
         "--collection_file", type=str, default=None, help=".jsonl file to read from."
     )
     parser.add_argument(
-        "--embedding_model",
+        "--embedding_model_name",
         type=str,
         choices=QdrantIndex.get_supported_embedding_models(),
         default="BAAI/bge-m3",
@@ -258,10 +258,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     model_port = args.model_port
-    embedding_size = QdrantIndex.get_embedding_model_parameters(args.embedding_model)[
+    embedding_size = QdrantIndex.get_embedding_model_parameters(args.embedding_model_name)[
         "embedding_dimension"
     ]
-    query_prefix = QdrantIndex.get_embedding_model_parameters(args.embedding_model)[
+    query_prefix = QdrantIndex.get_embedding_model_parameters(args.embedding_model_name)[
         "query_prefix"
     ]
 
@@ -325,7 +325,7 @@ if __name__ == "__main__":
         ]
 
         with QdrantIndex(
-            args.embedding_model, args.collection_name, use_onnx=True
+            args.embedding_model_name, args.collection_name, use_onnx=True
         ) as index:
             results = asyncio.run(index.search(queries, 5))
             logger.info(json.dumps(results, indent=2, ensure_ascii=False))

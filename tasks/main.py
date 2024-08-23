@@ -15,6 +15,20 @@ logger = get_logger(__name__)
 
 @task
 def load_api_keys(c):
+    """
+    Load API keys from a file named 'API_KEYS' and set them as environment variables.
+
+    This function reads the 'API_KEYS' file line by line, extracts key-value pairs,
+    and sets them as environment variables. Lines starting with '#' are treated as
+    comments and ignored. The expected format for each line in the file is 'KEY=VALUE'.
+
+    Parameters:
+    - c: Context, automatically passed by invoke.
+
+    Raises:
+    - Exception: If there is an error while reading the 'API_KEYS' file or setting
+      the environment variables, an error message is logged.
+    """
     try:
         with open("API_KEYS") as f:
             for line in f:
@@ -33,7 +47,18 @@ def load_api_keys(c):
 
 
 @task()
-def start_redis(c, redis_port=DEFAULT_REDIS_PORT):
+def start_redis(c, redis_port: int = DEFAULT_REDIS_PORT):
+    """
+    Start a Redis server if it is not already running.
+
+    This task attempts to connect to a Redis server on the specified port.
+    If the connection fails (indicating that the Redis server is not running),
+    it starts a new Redis server on that port.
+
+    Parameters:
+    - c: Context, automatically passed by invoke.
+    - redis_port (int): The port number on which to start the Redis server. Defaults to DEFAULT_REDIS_PORT.
+    """
     try:
         r = redis.Redis(host="localhost", port=redis_port)
         r.ping()

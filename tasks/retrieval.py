@@ -11,6 +11,7 @@ from bs4 import BeautifulSoup
 from huggingface_hub import snapshot_download
 from invoke import task
 from tqdm import tqdm
+from typing import Optional
 
 from tasks.docker_utils import (
     start_embedding_docker_container,
@@ -34,35 +35,6 @@ from tasks.defaults import (
 from pipelines.utils import get_logger
 
 logger = get_logger(__name__)
-
-
-@task
-def download_wikipedia_index(
-    c,
-    repo_id="stanford-oval/wikipedia_10-languages_bge-m3_qdrant_index",
-    workdir=DEFAULT_WORKDIR,
-    num_threads=10,
-):
-    # Download the files
-    snapshot_download(
-        repo_id=repo_id,
-        repo_type="dataset",
-        local_dir=workdir,
-        allow_patterns="*.tar.*",
-        max_workers=num_threads,
-    )
-
-    # Find the part files
-    part_files = " ".join(sorted(glob.glob(os.path.join(workdir, "*.tar.*"))))
-
-    # Ensure part_files is not empty
-    if not part_files:
-        raise FileNotFoundError("No part files found in the specified directory.")
-
-    # Decompress and extract the files
-    c.run(
-        f"cat {part_files} | pigz -d -p {num_threads} | tar --strip-components=2 -xv -C {workdir}"
-    )  # strip-components gets rid of the extra workdir/
 
 
 def get_latest_wikipedia_dump_date() -> str:
@@ -111,7 +83,7 @@ def download_chunk_from_url(
     url, start, end, output_path, pbar, file_lock, num_retries=3
 ):
     """
-    Downloads a chunk of data from a specific URL, within a given byte range, and writes it to a part of a file.
+    Download a chunk of data from a specific URL, within a given byte range, and write it to a part of a file.
 
     This function attempts to download a specified range of bytes from a given URL and write this data into a part
     of a file denoted by the start byte. If the download fails due to a ChunkedEncodingError, it will retry up to
@@ -148,7 +120,7 @@ def download_chunk_from_url(
 
 def multithreaded_download(url: str, output_path: str, num_parts: int = 3) -> None:
     """
-    Downloads a file in parts concurrently using multiple threads to optimize the download process.
+    Download a file in parts concurrently using multiple threads to optimize the download process.
 
     This function breaks the download into several parts and downloads each part in parallel, thus potentially
     improving the download speed. It is especially useful when dealing with large files and/or rate-limited servers.
@@ -213,7 +185,48 @@ def multithreaded_download(url: str, output_path: str, num_parts: int = 3) -> No
 
 
 @task
-def print_wikipedia_dump_date(c, date=None):
+def download_wikipedia_index(
+    c,
+    repo_id: str = "stanford-oval/wikipedia_10-languages_bge-m3_qdrant_index",
+    workdir: str = DEFAULT_WORKDIR,
+    num_threads: int = 8,
+):
+    """
+    Download and extract a pre-built Qdrant index for Wikipedia from a 🤗 Hub.
+
+    Args:
+    - c: Context, automatically passed by invoke.
+    - repo_id (str): The 🤗 hub repository ID from which to download the index files. Defaults to "stanford-oval/wikipedia_10-languages_bge-m3_qdrant_index".
+    - workdir (str): The working directory where the files will be downloaded and extracted. Defaults to DEFAULT_WORKDIR.
+    - num_threads (int): The number of threads to use for downloading and decompressing the files. Defaults to 8.
+
+    Raises:
+    - FileNotFoundError: If no part files are found in the specified directory.
+    """
+    # Download the files
+    snapshot_download(
+        repo_id=repo_id,
+        repo_type="dataset",
+        local_dir=workdir,
+        allow_patterns="*.tar.*",
+        max_workers=num_threads,
+    )
+
+    # Find the part files
+    part_files = " ".join(sorted(glob.glob(os.path.join(workdir, "*.tar.*"))))
+
+    # Ensure part_files is not empty
+    if not part_files:
+        raise FileNotFoundError("No part files found in the specified directory.")
+
+    # Decompress and extract the files
+    c.run(
+        f"cat {part_files} | pigz -d -p {num_threads} | tar --strip-components=2 -xv -C {workdir}"
+    )  # strip-components gets rid of the extra workdir/
+
+
+@task
+def print_wikipedia_dump_date(c, date: Optional[str] = None):
     """
     Prints the specified date in a human-readable format.
 
@@ -235,13 +248,27 @@ def print_wikipedia_dump_date(c, date=None):
 def start_retriever(
     c,
     collection_name=DEFAULT_QDRANT_COLLECTION_NAME,
-    embedding_model=DEFAULT_EMBEDDING_MODEL_NAME,
+    embedding_model_name=DEFAULT_EMBEDDING_MODEL_NAME,
     use_onnx=DEFAULT_EMBEDDING_USE_ONNX,
     retriever_port=DEFAULT_RETRIEVER_PORT,
 ):
+    """
+    Starts the retriever server.
+
+    This task runs the retriever server, which is responsible for handling
+    retrieval requests. It uses Gunicorn to manage Uvicorn workers for asynchronous processing.
+    The retriever server sends search requests to the Qdrant docker container.
+
+    Args:
+    - c: Context, automatically passed by invoke.
+    - collection_name (str): The name of the Qdrant collection to query. Defaults to DEFAULT_QDRANT_COLLECTION_NAME.
+    - embedding_model_name (str): The HuggingFace ID of the embedding model to use for retrieval. Defaults to DEFAULT_EMBEDDING_MODEL_NAME.
+    - use_onnx (bool): Flag indicating whether to use the ONNX version of the embedding model. Defaults to DEFAULT_EMBEDDING_USE_ONNX.
+    - retriever_port (int): The port on which the retriever server will listen. Defaults to DEFAULT_RETRIEVER_PORT.
+    """
     command = (
         f"gunicorn -k uvicorn.workers.UvicornWorker 'retrieval.retriever_server:gunicorn_app("
-        f'embedding_model="{embedding_model}", '
+        f'embedding_model_name="{embedding_model_name}", '
         f'use_onnx="{use_onnx}", '
         f'collection_name="{collection_name}")\' '
         f"--access-logfile=- "
@@ -255,13 +282,24 @@ def start_retriever(
 @task(pre=[start_qdrant_docker_container])
 def test_index(
     c,
-    collection_name=DEFAULT_QDRANT_COLLECTION_NAME,
-    embedding_model=DEFAULT_EMBEDDING_MODEL_NAME,
+    collection_name: str = DEFAULT_QDRANT_COLLECTION_NAME,
+    embedding_model_name: str = DEFAULT_EMBEDDING_MODEL_NAME,
 ):
+    """
+    Test a Qdrant index.
+
+    This task starts a Qdrant Docker container and then runs a test query to ensure that the index is working correctly.
+    Note that this task does not perform the actual indexing; it only tests an index that already exists.
+
+    Args:
+    - c: Context, automatically passed by invoke.
+    - collection_name (str): Name of the Qdrant collection to test. Defaults to DEFAULT_QDRANT_COLLECTION_NAME.
+    - embedding_model_name (str): Name of the embedding model to use for testing. Defaults to DEFAULT_EMBEDDING_MODEL_NAME.
+    """
     cmd = (
         f"python retrieval/create_index.py "
         f"--collection_name {collection_name}"
-        f"--embedding_model {embedding_model} "
+        f"--embedding_model_name {embedding_model_name} "
         f"--test"  # Just test, don't index
     )
     c.run(cmd, pty=True)
@@ -278,9 +316,9 @@ def test_index(
 def index_collection(
     c,
     collection_path,
-    collection_name=DEFAULT_QDRANT_COLLECTION_NAME,
-    embedding_model_port=DEFAULT_EMBEDDING_MODEL_PORT,
-    embedding_model=DEFAULT_EMBEDDING_MODEL_NAME,
+    collection_name: str = DEFAULT_QDRANT_COLLECTION_NAME,
+    embedding_model_port: int = DEFAULT_EMBEDDING_MODEL_PORT,
+    embedding_model_name: str = DEFAULT_EMBEDDING_MODEL_NAME,
 ):
     """
     Creates a Qdrant index from a collection file using a specified embedding model.
@@ -301,13 +339,13 @@ def index_collection(
         - collection_name (str): The name of the Qdrant collection where the indexed data will be stored.
         This parameter allows you to specify a custom name for the collection, which can be useful for organizing multiple indexes or distinguishing between different versions of the same dataset.
         - embedding_model_port (int): The port on which the embedding model server is running.
-        - embedding_model (str): The HuggingFace ID of the embedding model to use for indexing.
+        - embedding_model_name (str): The HuggingFace ID of the embedding model to use for indexing.
     """
     c.run(
         f"python retrieval/create_index.py "
         f"--collection_file {collection_path} "
         f"--collection_name {collection_name} "
-        f"--embedding_model {embedding_model} "
+        f"--embedding_model_name {embedding_model_name} "
         f"--model_port {embedding_model_port} "
         f"--index",  # But don't test, because it takes time for Qdrant to optimize the index after we have inserted vectors in bulk.
         pty=True,
@@ -316,14 +354,17 @@ def index_collection(
 
 @task
 def download_wikipedia_dump(
-    c, workdir=DEFAULT_WORKDIR, language=DEFAULT_WIKIPEDIA_DUMP_LANGUAGE, wikipedia_date=None
+    c,
+    workdir: str = DEFAULT_WORKDIR,
+    language: str = DEFAULT_WIKIPEDIA_DUMP_LANGUAGE,
+    wikipedia_date: Optional[str] = None,
 ):
     """
-    Downloads the Wikipedia HTML dump from https://dumps.wikimedia.org/other/enterprise_html/runs/
+    Download a Wikipedia HTML dump from https://dumps.wikimedia.org/other/enterprise_html/runs/
 
     Args:
     - c: Context, automatically passed by invoke.
-    - wikipedia_date: Date of the Wikipedia dump. Note that currently Wikipedia keeps its HTML dumps available for a limited period of time, so older dates might not be available.
+    - wikipedia_date (str, optional): The date of the Wikipedia dump to use. If not provided, the latest available dump is used.
     - language: Language edition of Wikipedia.
     """
     if not wikipedia_date:
@@ -342,22 +383,25 @@ def download_wikipedia_dump(
 @task
 def preprocess_wikipedia_dump(
     c,
-    workdir=DEFAULT_WORKDIR,
-    language=DEFAULT_WIKIPEDIA_DUMP_LANGUAGE,
-    wikipedia_date=None,
-    pack_to_tokens=200,
-    num_exclude_frequent_words_from_translation=1000,
+    workdir: str = DEFAULT_WORKDIR,
+    language: str = DEFAULT_WIKIPEDIA_DUMP_LANGUAGE,
+    wikipedia_date: Optional[str] = None,
+    pack_to_tokens: int = 200,
+    num_exclude_frequent_words_from_translation: int = 1000,
 ):
     """
-    Process Wikipedia HTML dump into a collection.
+    Process Wikipedia HTML dump into a JSONL collection file.
     This takes ~4 hours for English on a 24-core CPU VM. Processing is fully parallelizable so the time is proportional to number of cores available.
     It might take more for other languages, if we need to also get entity translations from Wikidata. This is because of Wikidata's rate limit.
 
 
     Args:
-    - index_dir: Directory containing the HTML dump file (articles-html.json.tar.gz)
-    - workdir: Working directory for processing
-    - language: Language of the dump to process
+    - workdir (str): Working directory for processing
+    - language (str): Language of the dump to process
+    - wikipedia_date (str, optional): The date of the Wikipedia dump to use. If not provided, the latest available dump is used.
+    - pack_to_tokens(int): We try to pack smaller text chunks to get to this number of tokens.
+    - num_exclude_frequent_words_from_translation (int): For non-English Wikipedia dumps, we try to find English translations of all article names
+    in Wikidata. We will exclude the `num_exclude_frequent_words_from_translation` most common words because neural models are already familiar with these.
     """
     output_path = get_wikipedia_collection_path(workdir, language, wikipedia_date)
     if os.path.exists(output_path):
@@ -395,12 +439,12 @@ def preprocess_wikipedia_dump(
 )
 def index_wikipedia_dump(
     c,
-    collection_name=DEFAULT_QDRANT_COLLECTION_NAME,
-    embedding_model_port=DEFAULT_EMBEDDING_MODEL_PORT,
-    embedding_model=DEFAULT_EMBEDDING_MODEL_NAME,
-    workdir=DEFAULT_WORKDIR,
-    language=DEFAULT_WIKIPEDIA_DUMP_LANGUAGE,
-    wikipedia_date=None,
+    collection_name: str = DEFAULT_QDRANT_COLLECTION_NAME,
+    embedding_model_port: int = DEFAULT_EMBEDDING_MODEL_PORT,
+    embedding_model_name: str = DEFAULT_EMBEDDING_MODEL_NAME,
+    workdir: str = DEFAULT_WORKDIR,
+    language: str = DEFAULT_WIKIPEDIA_DUMP_LANGUAGE,
+    wikipedia_date: Optional[str] = None,
 ):
     """
     Orchestrates the indexing of a Wikipedia collection using a specified embedding model.
@@ -418,7 +462,7 @@ def index_wikipedia_dump(
         - collection_name (str): The name of the Qdrant collection where the indexed data will be stored.
         This parameter allows you to specify a custom name for the collection, which can be useful for organizing multiple indexes or distinguishing between different versions of the same dataset.
         - embedding_model_port (int): The port on which the embedding model server is running.
-        - embedding_model (str): The HuggingFace ID of the embedding model to use for indexing.
+        - embedding_model_name (str): The HuggingFace ID of the embedding model to use for indexing.
         - workdir (str): The working directory where intermediate and final files are stored.
         - language (str): The language edition of Wikipedia to index (e.g., "en" for English).
         - wikipedia_date (str, optional): The date of the Wikipedia dump to use. If not provided, the latest available dump is used.
@@ -441,7 +485,7 @@ def index_wikipedia_dump(
         collection_path=collection_path,
         collection_name=collection_name,
         embedding_model_port=embedding_model_port,
-        embedding_model=embedding_model,
+        embedding_model_name=embedding_model_name,
     )
 
 
@@ -455,10 +499,15 @@ def index_wikipedia_dump(
     iterable=["language"],
 )
 def index_multiple_wikipedia_dumps(
-    c, language, workdir=DEFAULT_WORKDIR, wikipedia_date=None
+    c, language, workdir: str = DEFAULT_WORKDIR, wikipedia_date: Optional[str] = None
 ):
+    """
+    Index multiple Wikipedia dumps from different languages in a for loop.
+    """
     if not wikipedia_date:
         wikipedia_date = get_latest_wikipedia_dump_date()
     for l in language:
         logger.info("Started indexing for language %s", l)
-        index_wikipedia_dump(c, workdir=workdir, language=l, wikipedia_date=wikipedia_date)
+        index_wikipedia_dump(
+            c, workdir=workdir, language=l, wikipedia_date=wikipedia_date
+        )

@@ -43,6 +43,12 @@ def simulate_users(
     draft_engine=CHATBOT_DEFAULT_CONFIG["draft_engine"],
     refine_engine=CHATBOT_DEFAULT_CONFIG["refine_engine"],
 ):
+    """
+    Simulate user dialogues with a chatbot using specified parameters.
+
+    Accepts all parameters that `inv demo` accepts, plus a few additional parameters for the user simulator.
+    """
+    
     pipeline_flags = (
         f"--pipeline {pipeline} "
         f"--engine {engine} "

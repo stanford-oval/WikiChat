@@ -164,7 +164,7 @@ async def search(request: Request, query_data: QueryData):
 def init():
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument(
-        "--embedding_model",
+        "--embedding_model_name",
         type=str,
         required=True,
         help="Path or the HuggingFace model name for the model used to encode the query.",
@@ -183,7 +183,7 @@ def init():
     if args.use_onnx:
         logger.info("Using ONNX for the embedding model.")
     qdrant_index = QdrantIndex(
-        embedding_model_name=args.embedding_model,
+        embedding_model_name=args.embedding_model_name,
         collection_name=args.collection_name,
         use_onnx=args.use_onnx,
     )
