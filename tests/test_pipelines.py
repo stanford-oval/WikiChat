@@ -6,7 +6,6 @@ import pytest
 
 sys.path.insert(0, "./")
 from backend_server import chat_profiles_dict
-from tasks.defaults import CHATBOT_DEFAULT_CONFIG
 from pipelines.chatbot import create_chain, run_one_turn
 from pipelines.dialogue_state import DialogueState
 from pipelines.pipeline_arguments import (
@@ -14,6 +13,7 @@ from pipelines.pipeline_arguments import (
     check_pipeline_arguments,
 )
 from pipelines.utils import dict_to_command_line
+from tasks.defaults import CHATBOT_DEFAULT_CONFIG
 
 test_user_utterances = [
     "Hi",  # a turn that doesn't need retrieval

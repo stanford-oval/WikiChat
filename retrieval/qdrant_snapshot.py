@@ -47,7 +47,9 @@ def main():
 
     args = parser.parse_args()
 
-    qdrant_client = QdrantClient(url="http://localhost", port=6333, timeout=60, prefer_grpc=False)
+    qdrant_client = QdrantClient(
+        url="http://localhost", port=6333, timeout=60, prefer_grpc=False
+    )
 
     if args.action == "save":
         qdrant_client.create_snapshot(collection_name=args.collection_name, wait=False)

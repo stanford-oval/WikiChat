@@ -14,7 +14,7 @@ logger = get_logger(__name__)
 def setup_nvme(c):
     """
     Set up an NVMe drive on the VM by performing the following steps. Only works on certain Linux distributions.
-    
+
     1. Installs the `nvme-cli` package to manage NVMe devices.
     2. Lists available NVMe devices on the system.
     3. Extracts NVMe device names from the listing output.

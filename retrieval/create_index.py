@@ -24,11 +24,10 @@ from qdrant_client.models import (
 )
 from tqdm import tqdm
 
-
 sys.path.insert(0, "./")
-from tasks.defaults import DEFAULT_QDRANT_COLLECTION_NAME
 from pipelines.utils import get_logger
 from retrieval.qdrant_index import QdrantIndex
+from tasks.defaults import DEFAULT_QDRANT_COLLECTION_NAME
 
 logger = get_logger(__name__)
 
@@ -243,7 +242,9 @@ if __name__ == "__main__":
         default=48,
         help="The size of each request sent to GPU. The actual batch size is `embedding_batch_size * num_embedding_workers`",
     )
-    parser.add_argument("--collection_name", default=DEFAULT_QDRANT_COLLECTION_NAME, type=str)
+    parser.add_argument(
+        "--collection_name", default=DEFAULT_QDRANT_COLLECTION_NAME, type=str
+    )
     parser.add_argument(
         "--index",
         action="store_true",
@@ -258,12 +259,12 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     model_port = args.model_port
-    embedding_size = QdrantIndex.get_embedding_model_parameters(args.embedding_model_name)[
-        "embedding_dimension"
-    ]
-    query_prefix = QdrantIndex.get_embedding_model_parameters(args.embedding_model_name)[
-        "query_prefix"
-    ]
+    embedding_size = QdrantIndex.get_embedding_model_parameters(
+        args.embedding_model_name
+    )["embedding_dimension"]
+    query_prefix = QdrantIndex.get_embedding_model_parameters(
+        args.embedding_model_name
+    )["query_prefix"]
 
     if args.index:
         collection_size = 0

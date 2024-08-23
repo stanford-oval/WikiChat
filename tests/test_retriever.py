@@ -1,6 +1,7 @@
+import sys
+
 import pytest
 from pydantic import ValidationError
-import sys
 
 sys.path.insert(0, "./")
 from retrieval.retriever_server import QueryData

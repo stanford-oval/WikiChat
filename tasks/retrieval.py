@@ -5,13 +5,13 @@ import sys
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
+from typing import Optional
 
 import requests
 from bs4 import BeautifulSoup
 from huggingface_hub import snapshot_download
 from invoke import task
 from tqdm import tqdm
-from typing import Optional
 
 from tasks.docker_utils import (
     start_embedding_docker_container,
@@ -21,18 +21,17 @@ from tasks.docker_utils import (
 from tasks.main import start_redis
 
 sys.path.insert(0, "./")
+from pipelines.utils import get_logger
 from tasks.defaults import (
     DEFAULT_EMBEDDING_MODEL_NAME,
     DEFAULT_EMBEDDING_MODEL_PORT,
+    DEFAULT_EMBEDDING_USE_ONNX,
     DEFAULT_NUM_GPUS,
     DEFAULT_QDRANT_COLLECTION_NAME,
     DEFAULT_RETRIEVER_PORT,
-    DEFAULT_EMBEDDING_USE_ONNX,
     DEFAULT_WIKIPEDIA_DUMP_LANGUAGE,
     DEFAULT_WORKDIR,
 )
-
-from pipelines.utils import get_logger
 
 logger = get_logger(__name__)
 

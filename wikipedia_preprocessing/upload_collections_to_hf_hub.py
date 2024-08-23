@@ -1,11 +1,10 @@
 import argparse
-from huggingface_hub import HfApi
 import gzip
-import shutil
 import os
+import shutil
 
+from huggingface_hub import HfApi
 from tqdm import tqdm
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(

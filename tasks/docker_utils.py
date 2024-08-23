@@ -1,9 +1,9 @@
 import os
+import sys
 from time import sleep
 
 import docker
 from invoke import task
-import sys
 
 sys.path.insert(0, "./")
 from pipelines.utils import get_logger

@@ -48,7 +48,7 @@ def simulate_users(
 
     Accepts all parameters that `inv demo` accepts, plus a few additional parameters for the user simulator.
     """
-    
+
     pipeline_flags = (
         f"--pipeline {pipeline} "
         f"--engine {engine} "
@@ -95,7 +95,7 @@ def simulate_users(
         f"--mode {simulation_mode} "
         f"--input_file benchmark/topics/{input_file} "
         f"--num_turns {num_turns} "
-        f"--output_file benchmark/simulated_dialogs/{pipeline}_{subset}_{language}_{engine}.txt "
+        f"--output_file benchmark/simulated_dialogues/{pipeline}_{subset}_{language}_{engine}.txt "
         f"--language {language} "
         f"--no_logging"
     )
