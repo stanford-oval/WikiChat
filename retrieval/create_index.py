@@ -96,7 +96,7 @@ def commit_to_index(
         desc="Indexing collection",
         miniters=1e-6,
         unit_scale=1,
-        unit=" Block",
+        unit=" Blocks",
         dynamic_ncols=True,
         smoothing=0,
         total=collection_size,

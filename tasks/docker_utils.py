@@ -95,7 +95,7 @@ def wait_for_docker_container_to_be_ready(
     timeout = 60
     step_time = timeout // 10
     elapsed_time = 0
-    logger.info("Waiting for the container '%s' to be ready...", container)
+    logger.info("Waiting for container '%s' to be ready...", container.name)
 
     def is_ready():
         container_status = docker_client.containers.get(container.id).status

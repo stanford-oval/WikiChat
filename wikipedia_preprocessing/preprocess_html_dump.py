@@ -687,7 +687,7 @@ def build_redirection_map(file_path: str) -> dict:
         desc="Building the Wikipedia redirection graph",
         miniters=1e-6,
         unit_scale=1,
-        unit=" Article",
+        unit=" Articles",
         smoothing=0,
     ):
         if is_disambiguation(article):
@@ -743,7 +743,7 @@ def articles_without_disambiguation_or_redirections(
         desc="Extracting blocks",
         miniters=1e-6,
         unit_scale=1,
-        unit=" Block",
+        unit=" Blocks",
         smoothing=0,
         total=len(redirect_map),
     )
