@@ -97,7 +97,7 @@ Make sure you have one of [Conda](https://docs.conda.io/en/latest/), [Anaconda](
 Create and activate the conda environment by running:
 
 ```bash
-conda env create --file conda_env.yml
+conda env create --file conda_env.yaml
 conda activate wikichat
 python -m spacy download en_core_web_sm # Spacy is only needed for certain configurations of WikiChat
 ```
@@ -203,7 +203,7 @@ Then update the arguments in `retrieval/upload_to_hf_hub.py` and run it.
 
 
 ## Run a distilled model for lower latency and cost
-WikiChat 2.0 is not compatible with (fine-tuned LLaMA-2 checkpoints released)[https://huggingface.co/collections/stanford-oval/wikichat-v10-66c580bf15e26b87d622498c]. Please refer to v1.0 for now.
+WikiChat 2.0 is not compatible with [fine-tuned LLaMA-2 checkpoints released](https://huggingface.co/collections/stanford-oval/wikichat-v10-66c580bf15e26b87d622498c). Please refer to v1.0 for now.
 
 ## Simulate Conversations
 In order to evaluate a chatbot, you can simulate conversations with a user simulator. `subset` can be one of `head`, `tail`, or `recent`, corresponding to the three subsets introduced in the WikiChat paper. We have also added the option to specify the language of the user (WikiChat always replies in the language of the user).
@@ -218,7 +218,7 @@ You can experiment with different user characteristics by modifying `user_charac
 
 
 # Wikipedia Preprocessing: Why is it difficult?
-
+Coming soon.
 
 # License
 WikiChat code and models are released under Apache-2.0 license.

@@ -1,0 +1,155 @@
+{
+    "components": {
+        "atoms": {
+            "buttons": {
+                "userButton": {
+                    "menu": {
+                        "settings": "Paramètres",
+                        "settingsKey": "S",
+                        "APIKeys": "Clés API",
+                        "logout": "Déconnexion"
+                    }
+                }
+            }
+        },
+        "molecules": {
+            "newChatButton": {
+                "newChat": "Nouveau Chat"
+            },
+            "tasklist": {
+                "TaskList": {
+                    "title": "\ud83d\uddd2\ufe0f Liste des Tâches",
+                    "loading": "Chargement...",
+                    "error": "Une erreur s'est produite"
+                }
+            },
+            "attachments": {
+                "cancelUpload": "Annuler le téléchargement",
+                "removeAttachment": "Supprimer la pièce jointe"
+            },
+            "newChatDialog": {
+                "createNewChat": "Créer un nouveau chat ?",
+                "clearChat": "Cela effacera les messages actuels et commencera un nouveau chat.",
+                "cancel": "Annuler",
+                "confirm": "Confirmer"
+            },
+            "settingsModal": {
+                "expandMessages": "Développer les messages",
+                "hideChainOfThought": "Masquer le fil de pensée",
+                "darkMode": "Mode Sombre"
+            }
+        },
+        "organisms": {
+            "chat": {
+                "history": {
+                    "index": {
+                        "lastInputs": "Dernières Entrées",
+                        "noInputs": "Tellement vide...",
+                        "loading": "Chargement..."
+                    }
+                },
+                "inputBox": {
+                    "input": {
+                        "placeholder": "Tapez votre message ici..."
+                    },
+                    "speechButton": {
+                        "start": "Commencer l'enregistrement",
+                        "stop": "Arrêter l'enregistrement"
+                    },
+                    "SubmitButton": {
+                        "sendMessage": "Envoyer le message",
+                        "stopTask": "Arrêter la Tâche"
+                    },
+                    "UploadButton": {
+                        "attachFiles": "Joindre des fichiers"
+                    },
+                    "waterMark": {
+                        "text": "Construit avec"
+                    }
+                },
+                "Messages": {
+                    "index": {
+                        "running": "En cours",
+                        "executedSuccessfully": "exécuté avec succès",
+                        "failed": "échoué",
+                        "feedbackUpdated": "Retour mis à jour",
+                        "updating": "Mise à jour"
+                    }
+                },
+                "dropScreen": {
+                    "dropYourFilesHere": "Déposez vos fichiers ici"
+                },
+                "index": {
+                    "failedToUpload": "Échec du téléchargement",
+                    "cancelledUploadOf": "Téléchargement annulé de",
+                    "couldNotReachServer": "Impossible d'atteindre le serveur",
+                    "continuingChat": "Continuation du chat précédent"
+                },
+                "settings": {
+                    "settingsPanel": "Panneau des paramètres",
+                    "reset": "Réinitialiser",
+                    "cancel": "Annuler",
+                    "confirm": "Confirmer"
+                }
+            },
+            "threadHistory": {
+                "sidebar": {
+                    "filters": {
+                        "FeedbackSelect": {
+                            "feedbackAll": "Retour : Tous",
+                            "feedbackPositive": "Retour : Positif",
+                            "feedbackNegative": "Retour : Négatif"
+                        },
+                        "SearchBar": {
+                            "search": "Rechercher"
+                        }
+                    },
+                    "DeleteThreadButton": {
+                        "confirmMessage": "Cela supprimera le fil ainsi que ses messages et éléments.",
+                        "cancel": "Annuler",
+                        "confirm": "Confirmer",
+                        "deletingChat": "Suppression du chat",
+                        "chatDeleted": "Chat supprimé"
+                    },
+                    "index": {
+                        "pastChats": "Chats Passés"
+                    },
+                    "ThreadList": {
+                        "empty": "Vide..."
+                    },
+                    "TriggerButton": {
+                        "closeSidebar": "Fermer la barre latérale",
+                        "openSidebar": "Ouvrir la barre latérale"
+                    }
+                },
+                "Thread": {
+                    "backToChat": "Retour au chat",
+                    "chatCreatedOn": "Ce chat a été créé le"
+                }
+            },
+            "header": {
+                "chat": "Chat",
+                "readme": "Lisez-moi"
+            }
+        }
+    },
+    "hooks": {
+        "useLLMProviders": {
+            "failedToFetchProviders": "Échec de la récupération des fournisseurs :"
+        }
+    },
+    "pages": {
+        "Design": {},
+        "Env": {
+            "savedSuccessfully": "Enregistré avec succès",
+            "requiredApiKeys": "Clés API requises",
+            "requiredApiKeysInfo": "Pour utiliser cette application, les clés API suivantes sont requises. Les clés sont stockées dans le stockage local de votre appareil."
+        },
+        "Page": {
+            "notPartOfProject": "Vous ne faites pas partie de ce projet."
+        },
+        "ResumeButton": {
+            "resumeChat": "Reprendre le Chat"
+        }
+    }
+}

@@ -1,0 +1,155 @@
+{
+    "components": {
+        "atoms": {
+            "buttons": {
+                "userButton": {
+                    "menu": {
+                        "settings": "تنظیمات",
+                        "settingsKey": "ت",
+                        "APIKeys": "کلیدهای API",
+                        "logout": "خروج"
+                    }
+                }
+            }
+        },
+        "molecules": {
+            "newChatButton": {
+                "newChat": "چت جدید"
+            },
+            "tasklist": {
+                "TaskList": {
+                    "title": "\ud83d\uddd2\ufe0f لیست وظایف",
+                    "loading": "در حال بارگذاری...",
+                    "error": "خطایی رخ داده است"
+                }
+            },
+            "attachments": {
+                "cancelUpload": "لغو بارگذاری",
+                "removeAttachment": "حذف پیوست"
+            },
+            "newChatDialog": {
+                "createNewChat": "ایجاد چت جدید؟",
+                "clearChat": "این کار پیام‌های فعلی را پاک کرده و چت جدیدی را شروع می‌کند.",
+                "cancel": "لغو",
+                "confirm": "تایید"
+            },
+            "settingsModal": {
+                "expandMessages": "گسترش پیام‌ها",
+                "hideChainOfThought": "مخفی کردن زنجیره فکر",
+                "darkMode": "حالت تاریک"
+            }
+        },
+        "organisms": {
+            "chat": {
+                "history": {
+                    "index": {
+                        "lastInputs": "آخرین ورودی‌ها",
+                        "noInputs": "خالی است...",
+                        "loading": "در حال بارگذاری..."
+                    }
+                },
+                "inputBox": {
+                    "input": {
+                        "placeholder": "پیام خود را اینجا بنویسید..."
+                    },
+                    "speechButton": {
+                        "start": "شروع ضبط",
+                        "stop": "توقف ضبط"
+                    },
+                    "SubmitButton": {
+                        "sendMessage": "ارسال پیام",
+                        "stopTask": "توقف وظیفه"
+                    },
+                    "UploadButton": {
+                        "attachFiles": "ضمیمه کردن فایل‌ها"
+                    },
+                    "waterMark": {
+                        "text": "ساخته شده با"
+                    }
+                },
+                "Messages": {
+                    "index": {
+                        "running": "در حال اجرا",
+                        "executedSuccessfully": "با موفقیت اجرا شد",
+                        "failed": "ناموفق",
+                        "feedbackUpdated": "بازخورد به‌روزرسانی شد",
+                        "updating": "در حال به‌روزرسانی"
+                    }
+                },
+                "dropScreen": {
+                    "dropYourFilesHere": "فایل‌های خود را اینجا رها کنید"
+                },
+                "index": {
+                    "failedToUpload": "بارگذاری ناموفق بود",
+                    "cancelledUploadOf": "بارگذاری لغو شد برای",
+                    "couldNotReachServer": "نتوانست به سرور دسترسی پیدا کند",
+                    "continuingChat": "ادامه چت قبلی"
+                },
+                "settings": {
+                    "settingsPanel": "پنل تنظیمات",
+                    "reset": "بازنشانی",
+                    "cancel": "لغو",
+                    "confirm": "تایید"
+                }
+            },
+            "threadHistory": {
+                "sidebar": {
+                    "filters": {
+                        "FeedbackSelect": {
+                            "feedbackAll": "بازخورد: همه",
+                            "feedbackPositive": "بازخورد: مثبت",
+                            "feedbackNegative": "بازخورد: منفی"
+                        },
+                        "SearchBar": {
+                            "search": "جستجو"
+                        }
+                    },
+                    "DeleteThreadButton": {
+                        "confirmMessage": "این کار نخ چت به همراه پیام‌ها و عناصر آن را حذف می‌کند.",
+                        "cancel": "لغو",
+                        "confirm": "تایید",
+                        "deletingChat": "حذف چت",
+                        "chatDeleted": "چت حذف شد"
+                    },
+                    "index": {
+                        "pastChats": "چت‌های گذشته"
+                    },
+                    "ThreadList": {
+                        "empty": "خالی..."
+                    },
+                    "TriggerButton": {
+                        "closeSidebar": "بستن نوار کناری",
+                        "openSidebar": "باز کردن نوار کناری"
+                    }
+                },
+                "Thread": {
+                    "backToChat": "بازگشت به چت",
+                    "chatCreatedOn": "این چت ایجاد شده در"
+                }
+            },
+            "header": {
+                "chat": "چت",
+                "readme": "راهنما"
+            }
+        }
+    },
+    "hooks": {
+        "useLLMProviders": {
+            "failedToFetchProviders": "ناتوان در دریافت ارائه‌دهندگان:"
+        }
+    },
+    "pages": {
+        "Design": {},
+        "Env": {
+            "savedSuccessfully": "با موفقیت ذخیره شد",
+            "requiredApiKeys": "کلیدهای API مورد نیاز",
+            "requiredApiKeysInfo": "برای استفاده از این برنامه، کلیدهای API زیر مورد نیاز است. کلیدها در حافظه محلی دستگاه شما ذخیره می‌شوند."
+        },
+        "Page": {
+            "notPartOfProject": "شما بخشی از این پروژه نیستید."
+        },
+        "ResumeButton": {
+            "resumeChat": "ادامه چت"
+        }
+    }
+}

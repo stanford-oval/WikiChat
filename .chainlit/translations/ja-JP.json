@@ -1,0 +1,155 @@
+{
+    "components": {
+        "atoms": {
+            "buttons": {
+                "userButton": {
+                    "menu": {
+                        "settings": "設定",
+                        "settingsKey": "S",
+                        "APIKeys": "API キー",
+                        "logout": "ログアウト"
+                    }
+                }
+            }
+        },
+        "molecules": {
+            "newChatButton": {
+                "newChat": "新しいチャット"
+            },
+            "tasklist": {
+                "TaskList": {
+                    "title": "\ud83d\uddd2\ufe0f タスクリスト",
+                    "loading": "読み込み中...",
+                    "error": "エラーが発生しました"
+                }
+            },
+            "attachments": {
+                "cancelUpload": "アップロードをキャンセル",
+                "removeAttachment": "添付ファイルを削除"
+            },
+            "newChatDialog": {
+                "createNewChat": "新しいチャットを作成しますか？",
+                "clearChat": "現在のメッセージをクリアして、新しいチャットを開始します。",
+                "cancel": "キャンセル",
+                "confirm": "確認"
+            },
+            "settingsModal": {
+                "expandMessages": "メッセージを展開",
+                "hideChainOfThought": "思考の連鎖を隠す",
+                "darkMode": "ダークモード"
+            }
+        },
+        "organisms": {
+            "chat": {
+                "history": {
+                    "index": {
+                        "lastInputs": "最後の入力",
+                        "noInputs": "空っぽです...",
+                        "loading": "読み込み中..."
+                    }
+                },
+                "inputBox": {
+                    "input": {
+                        "placeholder": "ここにメッセージを入力..."
+                    },
+                    "speechButton": {
+                        "start": "録音を開始",
+                        "stop": "録音を停止"
+                    },
+                    "SubmitButton": {
+                        "sendMessage": "メッセージを送信",
+                        "stopTask": "タスクを停止"
+                    },
+                    "UploadButton": {
+                        "attachFiles": "ファイルを添付"
+                    },
+                    "waterMark": {
+                        "text": "Built with"
+                    }
+                },
+                "Messages": {
+                    "index": {
+                        "running": "実行中",
+                        "executedSuccessfully": "正常に実行されました",
+                        "failed": "失敗しました",
+                        "feedbackUpdated": "フィードバックを更新しました",
+                        "updating": "更新中"
+                    }
+                },
+                "dropScreen": {
+                    "dropYourFilesHere": "ここにファイルをドロップ"
+                },
+                "index": {
+                    "failedToUpload": "アップロードに失敗しました",
+                    "cancelledUploadOf": "アップロードをキャンセルしました",
+                    "couldNotReachServer": "サーバーに到達できませんでした",
+                    "continuingChat": "前のチャットを続けます"
+                },
+                "settings": {
+                    "settingsPanel": "設定パネル",
+                    "reset": "リセット",
+                    "cancel": "キャンセル",
+                    "confirm": "確認"
+                }
+            },
+            "threadHistory": {
+                "sidebar": {
+                    "filters": {
+                        "FeedbackSelect": {
+                            "feedbackAll": "フィードバック: すべて",
+                            "feedbackPositive": "フィードバック: 肯定的",
+                            "feedbackNegative": "フィードバック: 否定的"
+                        },
+                        "SearchBar": {
+                            "search": "検索"
+                        }
+                    },
+                    "DeleteThreadButton": {
+                        "confirmMessage": "この操作を行うと、スレッドとそのメッセージ、要素が削除されます。",
+                        "cancel": "キャンセル",
+                        "confirm": "確認",
+                        "deletingChat": "チャットを削除中",
+                        "chatDeleted": "チャットを削除しました"
+                    },
+                    "index": {
+                        "pastChats": "過去のチャット"
+                    },
+                    "ThreadList": {
+                        "empty": "空です..."
+                    },
+                    "TriggerButton": {
+                        "closeSidebar": "サイドバーを閉じる",
+                        "openSidebar": "サイドバーを開く"
+                    }
+                },
+                "Thread": {
+                    "backToChat": "チャットに戻る",
+                    "chatCreatedOn": "このチャットは作成されました"
+                }
+            },
+            "header": {
+                "chat": "チャット",
+                "readme": "リードミー"
+            }
+        }
+    },
+    "hooks": {
+        "useLLMProviders": {
+            "failedToFetchProviders": "プロバイダーの取得に失敗しました:"
+        }
+    },
+    "pages": {
+        "Design": {},
+        "Env": {
+            "savedSuccessfully": "正常に保存されました",
+            "requiredApiKeys": "必要なAPIキー",
+            "requiredApiKeysInfo": "このアプリを使用するには、以下のAPIキーが必要です。キーはデバイスのローカルストレージに保存されます。"
+        },
+        "Page": {
+            "notPartOfProject": "このプロジェクトの一部ではありません。"
+        },
+        "ResumeButton": {
+            "resumeChat": "チャットを再開"
+        }
+    }
+}
