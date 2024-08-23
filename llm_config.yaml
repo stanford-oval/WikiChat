@@ -1,48 +1,102 @@
-# Before you can run the code, you need to modify this file and provide the settings that matches your specific needs and APIs.
-# See llm/load_prompt.py and llm/llm_generate.py for more details on how these settings are used.
+# WikiChat uses ChainLite (https://github.com/stanford-oval/chainlite), a wrapper around
+# LangChain (https://github.com/langchain-ai/langchain) and LiteLLM (https://github.com/BerriAI/litellm) that enables easy and unified API access to hundreds of LLMs.
+# This configuration file defines the setup for how ChainLite calls various LLM APIs, and how it logs LLM inputs/outputs.
+# To configure it:
+# Configure LLM endpoints under the `llm_endpoints` section, specifying the API base URL, version (if needed), API key (if needed), 
+#    and the mapping of model names to their respective deployment identifiers. The name on the left-hand side of each mapping is "engine", the shorthand
+#    you can use in your code when calling llm_generation_chain(engine=...).
+#    The name on the right side-hand is the "model", the specific name that LiteLLM expects: https://docs.litellm.ai/docs/providers
+#    Note that "engine" names should be unique within this file, but "model" names do not have to be unique.
+# Follow the examples provided for Azure, OpenAI, Groq, Together, Mistral, and local models as needed, and remove unused llm endpoints.
 
-# Here we provide examples on how to use OpenAI API (via Azure), OpenAI API (via openai.com), Together.ai API and local inference servers.
-# api_base is the URL that we will call behind the scenes to send the request to the API.
-# api_key is the name of the environment variable that contains your API key. We recommend that you store your API key in an environment variable because it is safer than storing it in a file that you might push to git.
-# engine_map is a mapping between general model names and specific model names. For example, if you want to specify the June 2023 version of GPT-4 to be used with your OpenAI API (via openai.com), set the map to "gpt-4-0613".
 
+prompt_dirs: # relative to the location of this file
+  - "./" # Current directory
+  - "./pipelines/prompts"
+
+litellm_set_verbose: false
+
+prompt_logging:
+  log_file: "./data/prompt_logs.jsonl" # Path to the log file for prompt logs, relative to the location of this file
+  prompts_to_skip: # List of prompts to exclude from logging, relative to the location of this file
+    - "benchmark/prompts/user_with_passage.prompt"
+    - "benchmark/prompts/user_with_topic.prompt"
+
+# Configuration for different LLM endpoints
 llm_endpoints:
-  # Use this endpoint if you are accessing OpenAI models via Azure
-  - api_type: azure
-    api_version: "2023-07-01-preview"
-    api_base: https://[resource].openai.azure.com # Replace [resource] with your Azure OpenAI resource name
-    api_key: AZURE_OPENAI_API_KEY # This is the the name of the environment variable that contains your Azure OpenAI API key
-    engine_map: # For Azure OpenAI, the value on the right hand side should be the "Deployment name" of your model
-      text-davinci-003: text-davinci-003
-      gpt-35-turbo-instruct: gpt-35-turbo-instruct
-      gpt-35-turbo: gpt-35-turbo
-      gpt-4: gpt-4
-      gpt-4-32k: gpt-4-32k
-  # Use this endpoint if you are accessing OpenAI models via openai.com
-  - api_type: open_ai
-    api_version: null
-    api_base: https://api.openai.com/v1
+  # Example of OpenAI models via Azure
+  # See more models at https://learn.microsoft.com/en-us/azure/ai-services/openai/concepts/models.
+  # For Azure OpenAI, the value on the right hand side should be the "Deployment name" of your model
+  - api_base: https://[resource].openai.azure.com # Replace [resource] with your Azure OpenAI resource name
+    api_version: "2024-02-15-preview" # API version for Azure OpenAI
+    api_key: "AZURE_OPENAI_API_KEY" # This is the the name of the environment variable that contains your Azure OpenAI API key
+    engine_map:
+      gpt-35-turbo-instruct: azure_text/gpt-35-turbo-instruct
+
+  # Example of OpenAI models via openai.com
+  # See more models at https://platform.openai.com/docs/models/. Note that OpenAI models don't need an "openai/" prefix in engine_map
+  - api_base: https://api.openai.com/v1
     api_key: OPENAI_API_KEY # This is the the name of the environment variable that contains your OpenAI API key
     engine_map:
-      text-davinci-003: text-davinci-003
-      gpt-35-turbo-instruct: gpt-3.5-turbo-instruct
-      gpt-35-turbo: gpt-3.5-turbo-0613 # e.g. gpt-3.5-turbo-16k-0613, gpt-3.5-turbo-1106, gpt-3.5-turbo-0613, gpt-3.5-turbo
-      gpt-4: gpt-4-0613 # e.g. gpt-4-0314, gpt-4-0613, gpt-4-1106-preview
-  # Use this endpoint if you are accessing open models from Together.ai
-  - api_type: together
-    api_key: TOGETHER_API_KEY # This is the the name of the environment variable that contains your Together.ai API key
-    engine_map: # If you want to use other models from Together.ai, add them here from https://docs.together.ai/docs/inference-models
-      llama-2-70b: togethercomputer/llama-2-70b
-      llama-2-13b: togethercomputer/llama-2-13b
-      llama-2-7b: togethercomputer/llama-2-7b
-      llama-2-7b-32k: togethercomputer/LLaMA-2-7B-32K
-      RedPajama-INCITE-7B-Instruct: togethercomputer/RedPajama-INCITE-7B-Instruct
-      mixtral-8-7b: mistralai/Mixtral-8x7B-v0.1
-      mistral-7b: mistralai/Mistral-7B-v0.1
-  # Use this endpoint if you are hosting your language model locally, e.g. via HuggingFace's text-generation-inference library
-  - api_type: local
-    api_version: null
-    api_base: http://[ip]:[port] # replace [ip] and [port] with the ip address and the port number where your inference server is running. You can use 0.0.0.0 for the IP address if your inference server is running on this machine.
-    prompt_format: simple # One of simple, alpaca or none. Use none if you are using zero-shot or few-shot prompting. Use simple or alpaca  if you are using a distilled model, depending on what format the model has been trained with.
+      gpt-35-turbo: gpt-3.5-turbo-0125
+      gpt-4o: gpt-4o-2024-08-06
+      gpt-4o-mini: gpt-4o-mini
+      gpt-4: gpt-4-turbo-2024-04-09
+
+  # Example of fine-tuned OpenAI models via openai.com
+  # Visit https://platform.openai.com/finetune/ to learn more about fine-tuned OpenAI models
+  - api_base: https://api.openai.com/v1
+    api_key: OPENAI_API_KEY
+    prompt_format: distilled
     engine_map:
-      local: local
+      gpt-35-turbo-finetuned: ft:gpt-3.5-turbo-1106:[model_id] # Replace [model_id] with your fine-tuned model id
+
+  # Example of open models via groq.com
+  # Groq has limited model availability, but a very fast inference on custom hardware
+  # See more models at https://console.groq.com/docs/models
+  - api_key: GROQ_API_KEY # This is the the name of the environment variable that contains your groq.com API key
+    engine_map:
+      llama-3-70b-instruct: groq/llama3-70b-8192
+    
+  # Example of Claude models by Anthropic
+  # See more models at https://docs.anthropic.com/en/docs/about-claude/models
+  - api_base: https://api.anthropic.com/v1/messages
+    api_key: ANTHROPIC_API_KEY # This is the the name of the environment variable that contains your Anthropic API key
+    engine_map:
+      claude-sonnet-35: claude-3-5-sonnet-20240620
+
+  # Example of open models via together.ai
+  # See more models at https://docs.together.ai/docs/inference-models
+  # TODO non-instruct models don't work well because of LiteLLM's formatting issues, does not work with free accounts because of the 1 QPS limit
+  - api_key: TOGETHER_API_KEY # This is the the name of the environment variable that contains your together.ai API key
+    engine_map:
+      llama-2-70b: together_ai/togethercomputer/llama-2-70b
+      llama-3-70b-instruct: together_ai/meta-llama/Llama-3-70b-chat-hf
+      mixtral-8-7b: together_ai/mistralai/Mixtral-8x7B-v0.1
+      mixtral-8-7b-instruct: together_ai/mistralai/Mixtral-8x7B-Instruct-v0.1
+      mistral-7b: together_ai/mistralai/Mistral-7B-v0.1
+
+  # Example of models by Mistral
+  # See more models at https://docs.mistral.ai/platform/endpoints/
+  - api_base: https://api.mistral.ai/v1 
+    api_key: MISTRAL_API_KEY
+    engine_map:
+      mistral-large: mistral/mistral-large-latest
+      mistral-medium: mistral/mistral-medium-latest
+      mistral-small: mistral/mistral-small-latest
+      mistral-7b-instruct: mistral/open-mistral-7b
+      mixtral-8-7b-instruct: mistral/open-mixtral-8x7b
+
+  # Local **distilled** models served via HuggingFace's text-generation-inference (https://github.com/huggingface/text-generation-inference/)
+  # This endpoint expects the model to have been fine-tuned with a specific data format generated from this repository.
+  # Use the next endpoint below instead if you are using general open models (with or without instructions and few-shot examples).
+  - api_base: http://127.0.0.1:5002
+    prompt_format: distilled
+    engine_map:
+      local_distilled: huggingface/local  # The name after huggingface/ does not matter and is unused
+
+  # Local models served via HuggingFace's text-generation-inference (https://github.com/huggingface/text-generation-inference/)
+  # Use this endpoint if you want to host an open model like LLaMA, LLaMA-instruct, or open Mistral models etc.
+  - api_base: http://127.0.0.1:5002
+    engine_map:
+      local: huggingface/local
