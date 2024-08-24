@@ -21,7 +21,7 @@ limiter = Limiter(key_func=get_remote_address, storage_uri="redis://localhost:63
 
 app = FastAPI(
     title="Wikipedia Search API",
-    description="An API for retrieving information from 10 Wikipedia languages from the Wikipedia dump of Feb 20, 2024.",
+    description="An API for retrieving information from 10 Wikipedia languages from the Wikipedia dump of August 1, 2024.",
     version="1.0.0",
     docs_url="/search/docs",
     redoc_url="/search/redoc",

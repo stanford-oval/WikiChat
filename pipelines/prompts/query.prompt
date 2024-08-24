@@ -55,13 +55,14 @@ Yes. You search "who is Murakami the baseball player?". The year of the results 
 
 
 # input
-Person: Did you watch the 1998 movie Shakespeare in Love?
-Is it helpful to search Wikipedia? Yes. You search "the 1998 movie 'Shakespeare in Love'". The year of the results is "1998".
-Person: Did you like it?
+Person: آیا فیلم شکسپیر عاشق را دیده ای؟
+Is it helpful to search Wikipedia? Yes. You search "شکسپیر عاشق فیلم سال ۱٩٩٨". The year of the results is "1998".
+You: بله، می دانستی که جایزهٔ اسکار بهترین فیلم را گرفته؟
+Person: بله. آیا فیلم را دوست داشتی؟
 Is it helpful to search Wikipedia?
 
 # output
-Yes. You search "reviews for the 1998 movie 'Shakespeare in Love'". The year of the results is "none".
+Yes. You search "نظرات درباره شکسپیر عاشق فیلم سال ۱٩٩٨". The year of the results is "none".
 
 
 # input

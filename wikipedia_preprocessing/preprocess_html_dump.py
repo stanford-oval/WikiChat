@@ -480,7 +480,7 @@ def get_entity_translation_to_english(
         separated by a specific prefix, if the translation is found and deemed
         non-redundant. Returns just the entity name if the translation is redundant or not found.
     """
-    cached_english = get_from_translation_cache(
+    cached_english = get_from_translation_map(
         source_language, entity_name, inverse_redirection_map
     )
     if cached_english is not None:
@@ -499,7 +499,7 @@ def get_entity_translation_to_english(
             else:
                 return entity_name
         else:
-            logger.debug("Excluded %s because it is too frequnt", cached_english)
+            logger.debug("Excluded '%s' because it is too frequent", cached_english)
             return entity_name
     else:
         logger.debug(
@@ -782,9 +782,9 @@ if __name__ == "__main__":
         help="If we should translate named entities to English using Wikidata. Has no effect if `--language` is English",
     )
     arg_parser.add_argument(
-        "--translation_cache",
+        "--wikidata_translation_map",
         type=str,
-        help="Where to read/write the translation cache.",
+        help="Where to read/write the translation mapping we obtain from Wikidata.",
     )
     arg_parser.add_argument("--num_workers", type=int, default=max(1, cpu_count() - 4))
     arg_parser.add_argument(
@@ -832,24 +832,24 @@ if __name__ == "__main__":
                     ):
                         break
 
-        load_translation_cache(args.translation_cache)
+        load_translation_map(args.wikidata_translation_map)
         non_cached_titles = []
         for url in redirection_map:
             if (
-                get_from_translation_cache(args.language, url, inverse_redirection_map)
+                get_from_translation_map(args.language, url, inverse_redirection_map)
                 is None
             ):
                 non_cached_titles.append(url)
 
         if len(non_cached_titles) > 0:
             logger.info(
-                "Did not find %d articles in the cache, will call the Wikidata API for them",
+                "Did not find %d articles in the translation map, will call the Wikidata API for them",
                 len(non_cached_titles),
             )
             asyncio.run(
                 batch_get_wikidata_english_name(non_cached_titles, args.language)
             )
-            save_translation_cache(args.translation_cache)
+            save_translation_map(args.wikidata_translation_map)
 
     input_queue = SimpleQueue()
     output_queue = SimpleQueue()

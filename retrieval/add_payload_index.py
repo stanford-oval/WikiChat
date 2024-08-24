@@ -1,8 +1,8 @@
 import argparse
-
+import sys
 from qdrant_client import QdrantClient
 from qdrant_client.models import PayloadSchemaType
-
+sys.path.insert(0, "./")
 from tasks.defaults import DEFAULT_QDRANT_COLLECTION_NAME
 
 if __name__ == "__main__":

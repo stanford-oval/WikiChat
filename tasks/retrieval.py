@@ -186,7 +186,7 @@ def multithreaded_download(url: str, output_path: str, num_parts: int = 3) -> No
 @task
 def download_wikipedia_index(
     c,
-    repo_id: str = "stanford-oval/wikipedia_10-languages_bge-m3_qdrant_index",
+    repo_id: str = "stanford-oval/wikipedia_20240401_10-languages_bge-m3_qdrant_index",
     workdir: str = DEFAULT_WORKDIR,
     num_threads: int = 8,
 ):
@@ -195,7 +195,7 @@ def download_wikipedia_index(
 
     Args:
     - c: Context, automatically passed by invoke.
-    - repo_id (str): The 🤗 hub repository ID from which to download the index files. Defaults to "stanford-oval/wikipedia_10-languages_bge-m3_qdrant_index".
+    - repo_id (str): The 🤗 Hub repository ID from which to download the index files.
     - workdir (str): The working directory where the files will be downloaded and extracted. Defaults to DEFAULT_WORKDIR.
     - num_threads (int): The number of threads to use for downloading and decompressing the files. Defaults to 8.
 
@@ -220,7 +220,7 @@ def download_wikipedia_index(
 
     # Decompress and extract the files
     c.run(
-        f"cat {part_files} | pigz -d -p {num_threads} | tar --strip-components=2 -xv -C {workdir}"
+        f"cat {part_files} | pigz -d -p {num_threads} | tar --strip-components=2 -xv -C {os.path.join(workdir, 'qdrant_index')}"
     )  # strip-components gets rid of the extra workdir/
 
 
@@ -410,14 +410,16 @@ def preprocess_wikipedia_dump(
 
     index_dir = get_wikipedia_collection_dir(workdir, language, wikipedia_date)
     input_path = os.path.join(index_dir, "articles-html.json.tar.gz")
-    translation_cache = os.path.join(workdir, "translation_cache.jsonl.gz")
+    wikidata_translation_map = os.path.join(
+        workdir, "wikidata_translation_map.jsonl.gz"
+    )
 
     # Constructing the command with parameters
     command = (
         f"python wikipedia_preprocessing/preprocess_html_dump.py "
         f"--input_path {input_path} "
         f"--output_path {output_path} "
-        f"--translation_cache {translation_cache} "
+        f"--wikidata_translation_map {wikidata_translation_map} "
         f"--language {language} "
         f"--should_translate "
         f"--pack_to_tokens {pack_to_tokens} "

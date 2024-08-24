@@ -15,10 +15,10 @@ from pipelines.utils import get_logger
 
 logger = get_logger(__name__)
 
-# cache for all-languages-to-english. e.g. global_translation_dict["fa"] is a dictionary of Farsi -> English translations
-# values can be the emtpy string "", which means we have already looked up the translations in Wikidata, but did not find the English translation
+# Mapping for all languages to English. E.g. global_translation_map["fa"] is a dictionary of Farsi -> English translations
+# values can be the empty string "", which means we have already looked up the translations in Wikidata, but did not find the English translation
 # this is different from the case that the key is absent, which means we have never looked up that translation in Wikidata
-global_translation_cache = {}
+global_translation_map = {}
 
 
 translation_prefix = "(in English: "
@@ -84,57 +84,57 @@ def replace_except_first(s, old, new):
     return first_part + rest_replaced
 
 
-def get_from_translation_cache(
+def get_from_translation_map(
     source_language: str, entity: str, inverse_redirection_map: dict = {}
 ):
-    global global_translation_cache
-    if source_language not in global_translation_cache:
+    global global_translation_map
+    if source_language not in global_translation_map:
         return None
-    if entity not in global_translation_cache[source_language] and (
+    if entity not in global_translation_map[source_language] and (
         entity not in inverse_redirection_map
         or inverse_redirection_map[entity]
-        not in global_translation_cache[source_language]
+        not in global_translation_map[source_language]
     ):
         return None
     if (
-        entity in global_translation_cache[source_language]
-        and global_translation_cache[source_language][entity] is not None
+        entity in global_translation_map[source_language]
+        and global_translation_map[source_language][entity] is not None
     ):
-        return global_translation_cache[source_language][entity]
+        return global_translation_map[source_language][entity]
     else:
-        return global_translation_cache[source_language][
+        return global_translation_map[source_language][
             inverse_redirection_map[entity]
         ]
 
 
-def load_translation_cache(file_name: str):
-    global global_translation_cache
+def load_translation_map(file_name: str):
+    global global_translation_map
     try:
         for language in tqdm(
-            orjsonl.stream(file_name), desc="Loading translation cache", smoothing=0
+            orjsonl.stream(file_name), desc="Loading translation map", smoothing=0
         ):
-            global_translation_cache[language["language"]] = language["translations"]
+            global_translation_map[language["language"]] = language["translations"]
     except FileNotFoundError as e:
         logger.warning(
-            "Could not find the translation cache file at %s. Initializing the cache as an empty dictionary.",
+            "Could not find the Wikidata translation map file at %s. Initializing the translation map as an empty dictionary.",
             file_name,
         )
-        global_translation_cache = {}
+        global_translation_map = {}
 
 
-def save_translation_cache(file_name: str):
-    global global_translation_cache
+def save_translation_map(file_name: str):
+    global global_translation_map
     orjsonl.save(
         file_name,
         tqdm(
             [
                 {
                     "language": language,
-                    "translations": global_translation_cache[language],
+                    "translations": global_translation_map[language],
                 }
-                for language in global_translation_cache
+                for language in global_translation_map
             ],
-            desc="Saving translation cache",
+            desc="Saving translation map",
             smoothing=0,
         ),
         compression_format="gz",
@@ -146,9 +146,9 @@ async def get_wikidata_english_name(article_title: str, session, language: str):
     Returns
         (english_name: str, new_translation_dict: dict)
     """
-    global global_translation_cache
-    if get_from_translation_cache(language, article_title) is not None:
-        return get_from_translation_cache(language, article_title), {}
+    global global_translation_map
+    if get_from_translation_map(language, article_title) is not None:
+        return get_from_translation_map(language, article_title), {}
     try:
         # the API expects a user agent
         # labels cover more entity-languages, but are sometimes ambiguous. Therefore, we give priority to sitelinks and fallback to labels if needed.
@@ -221,7 +221,7 @@ async def get_wikidata_english_name(article_title: str, session, language: str):
                 list(sitelink_dict.keys()) + list(wikidata_entity["labels"].keys())
             )
 
-            # No need to include these in the translation cache
+            # No need to include these in the translation map
             for l in ["en", "en-gb", "en-ca", "commons", "simple"]:
                 set_of_available_languages.discard(l)
 
@@ -250,7 +250,7 @@ async def get_wikidata_english_name(article_title: str, session, language: str):
 
 
 async def batch_get_wikidata_english_name(article_titles: list[str], language: str):
-    global global_translation_cache
+    global global_translation_map
     async with aiohttp.ClientSession() as session:
         with logging_redirect_tqdm():
             minibatch_size = 100  # The wikipedia API only allows 100 requests per second, so we batch the requests.
@@ -285,10 +285,10 @@ async def batch_get_wikidata_english_name(article_titles: list[str], language: s
                 # Add to the global translation dictionary
                 for translation_dict in batch_new_translation_dicts:
                     for lang in translation_dict.keys():
-                        if lang not in global_translation_cache:
-                            global_translation_cache[lang] = {}
+                        if lang not in global_translation_map:
+                            global_translation_map[lang] = {}
                         for k, v in translation_dict[lang].items():
-                            global_translation_cache[lang][k] = v
+                            global_translation_map[lang][k] = v
                 time_passed = time() - start_time
                 time_to_wait = 1.1 - time_passed
                 if time_to_wait > 0:

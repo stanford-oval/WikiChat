@@ -92,7 +92,6 @@ def wait_for_docker_container_to_be_ready(
     Raises:
         RuntimeError: If the container is not ready within the timeout period.
     """
-    timeout = 60
     step_time = timeout // 10
     elapsed_time = 0
     logger.info("Waiting for container '%s' to be ready...", container.name)
