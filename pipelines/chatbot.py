@@ -242,16 +242,17 @@ async def process_refine_prompt_output(
                     return refined_agent_utterance.strip(), feedback
 
         logger.error(
-            "Skipping refinement due to malformatted Refined response: %s",
+            "Skipping refinement due to malformed Refined response: %s",
             refine_prompt_output,
         )
         return utterance_to_refine, None
     else:
         # There is no feedback part to the output
-        if refine_prompt_output.startswith("Chatbot:"):
-            refine_prompt_output = refine_prompt_output[
-                len(refine_prompt_output) :
-            ].strip()
+        refine_identifiers = ["Chatbot:", "Chatbot's revised response:"]
+        for identifier in refine_identifiers:
+            if refine_prompt_output.startswith(identifier):
+                refine_prompt_output = refine_prompt_output[len(identifier) :].strip()
+                break
         return refine_prompt_output, None
 
 

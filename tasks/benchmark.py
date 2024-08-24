@@ -9,14 +9,14 @@ from tasks.main import load_api_keys
 from tasks.retrieval import get_wikipedia_collection_path
 
 
-@task(pre=[load_api_keys])
+@task(pre=[load_api_keys], iterable=["subset", "language"])
 def simulate_users(
     c,
     num_dialogues,  # -1 to simulate all available topics
     num_turns: int,
     simulation_mode: str,  # passage
-    subset: str,  # head, recent, tail
-    language: str,  # for the topics
+    subset: list[str],  # head, recent, tail
+    language: list[str],
     input_file=None,
     user_simulator_engine="gpt-4o",
     user_temperature=1.0,
@@ -48,6 +48,9 @@ def simulate_users(
 
     Accepts all parameters that `inv demo` accepts, plus a few additional parameters for the user simulator.
     """
+
+    if not language or not subset:
+        raise ValueError("Specify at least one --language and one --subset")
 
     pipeline_flags = (
         f"--pipeline {pipeline} "
@@ -84,21 +87,23 @@ def simulate_users(
         if enabled:
             pipeline_flags += f"--{arg} "
 
-    if not input_file:
-        input_file = f"{subset}_articles_{language}.json"
+    for l in language:
+        for s in subset:
+            if not input_file:
+                input_file = f"{s}_articles_{l}.json"
 
-    c.run(
-        f"python benchmark/user_simulator.py {pipeline_flags} "
-        f"--num_dialogues {num_dialogues} "
-        f"--user_engine {user_simulator_engine} "
-        f"--user_temperature {user_temperature} "
-        f"--mode {simulation_mode} "
-        f"--input_file benchmark/topics/{input_file} "
-        f"--num_turns {num_turns} "
-        f"--output_file benchmark/simulated_dialogues/{pipeline}_{subset}_{language}_{engine}.txt "
-        f"--language {language} "
-        f"--no_logging"
-    )
+            c.run(
+                f"python benchmark/user_simulator.py {pipeline_flags} "
+                f"--num_dialogues {num_dialogues} "
+                f"--user_engine {user_simulator_engine} "
+                f"--user_temperature {user_temperature} "
+                f"--mode {simulation_mode} "
+                f"--input_file benchmark/topics/{input_file} "
+                f"--num_turns {num_turns} "
+                f"--output_file benchmark/simulated_dialogues/{pipeline}_{s}_{l}_{engine}.txt "
+                f"--language {l} "
+                f"--no_logging"
+            )
 
 
 @task(iterable=["language"])

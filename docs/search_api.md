@@ -6,7 +6,7 @@
 ## Description
 This endpoint allows you to search in text, table and infoboxes of 10 Wikipedias (🇺🇸 English, 🇨🇳 Chinese, 🇪🇸 Spanish, 🇵🇹 Portuguese, 🇷🇺 Russian, 🇩🇪 German, 🇮🇷 Farsi, 🇯🇵 Japanese, 🇫🇷 French, 🇮🇹 Italian) with various query parameters.
 
-It is currently retrieving from the Wikipedia dump of Feb 20, 2024.
+It is currently retrieving from the Wikipedia dump of August 1, 2024.
 
 The search endpoint is a hosted version of `retrieval/retriever_server.py`.
 Specifically, it uses the state-of-the-art multilingual vector embedding models for high quality search results.

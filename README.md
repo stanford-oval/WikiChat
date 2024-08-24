@@ -28,8 +28,33 @@
 </p>
 
 
-
 https://github.com/user-attachments/assets/982e8733-f7a7-468d-940c-5c96f411f527
+
+# Table of Contents
+- [Introduction](#introduction)
+  - [🚨 Announcements](#-announcements)
+- [Installation](#installation)
+  - [System Requirements](#system-requirements)
+  - [Install Dependencies](#install-dependencies)
+  - [Configure the LLM of Your Choice](#configure-the-llm-of-your-choice)
+  - [Configure Information Retrieval](#configure-information-retrieval)
+    - [Option 1 (Default): Use our free rate-limited Wikipedia search API](#option-1-default-use-our-free-rate-limited-wikipedia-search-api)
+    - [Option 2: Download and host our Wikipedia index](#option-2-download-and-host-our-wikipedia-index)
+    - [Option 3: Build your own index](#option-3-build-your-own-index)
+      - [To build a Wikipedia index](#to-build-a-wikipedia-index)
+      - [To index custom documents](#to-index-custom-documents)
+      - [To upload a Qdrant index to 🤗 Hub:](#to-upload-a-qdrant-index-to--hub)
+  - [Run WikiChat in Terminal](#run-wikichat-in-terminal)
+  - [\[Optional\] Deploy WikiChat for Multi-user Access](#optional-deploy-wikichat-for-multi-user-access)
+    - [Set up Cosmos DB](#set-up-cosmos-db)
+    - [Run Chainlit](#run-chainlit)
+- [The Free Rate-limited Wikipedia Search API](#the-free-rate-limited-wikipedia-search-api)
+- [Wikipedia Preprocessing: Why is it Difficult?](#wikipedia-preprocessing-why-is-it-difficult)
+- [Other Commands](#other-commands)
+  - [Run a Distilled Model for Lower Latency and Cost](#run-a-distilled-model-for-lower-latency-and-cost)
+  - [Simulate Conversations](#simulate-conversations)
+- [License](#license)
+- [Citation](#citation)
 
 
 
@@ -49,7 +74,7 @@ WikiChat uses Wikipedia and the following 7-stage pipeline to makes sure its res
 Check out our paper for more details:
 Sina J. Semnani, Violet Z. Yao*, Heidi C. Zhang*, and Monica S. Lam. 2023. [WikiChat: Stopping the Hallucination of Large Language Model Chatbots by Few-Shot Grounding on Wikipedia](https://arxiv.org/abs/2305.14292). In Findings of the Association for Computational Linguistics: EMNLP 2023, Singapore. Association for Computational Linguistics.
 
-## 🚨 **Announcements** 
+## 🚨 Announcements
 - (August 22, 2024) WikiChat 2.0 is now available! Key updates include:
     - **Multilingual Support**: By default, retrieves information from 10 different Wikipedias: 🇺🇸 English, 🇨🇳 Chinese, 🇪🇸 Spanish, 🇵🇹 Portuguese, 🇷🇺 Russian, 🇩🇪 German, 🇮🇷 Farsi, 🇯🇵 Japanese, 🇫🇷 French, and 🇮🇹 Italian.
     - **Improved Information Retrieval**
@@ -126,7 +151,7 @@ Keep this environment activated for all subsequent commands.
 
 Install Docker for your operating system by following the instructions at https://docs.docker.com/engine/install/. WikiChat uses Docker primarily for creating and serving vector databases for retrieval, specifically [🤗 Text Embedding Inference](https://github.com/huggingface/text-embeddings-inference) and [Qdrant](https://github.com/qdrant/qdrant). On recent Ubuntu versions, you can try running `inv install-docker`. For other operating systems, follow the instructions on the docker website.
 
-WikiChat uses `invoke` (https://www.pyinvoke.org/) to add custom commands for various purposes. To see all available commands and their descriptions, run:
+WikiChat uses [`invoke`](https://www.pyinvoke.org/) to add custom commands for various purposes. To see all available commands and their descriptions, run:
 ```
 invoke --list
 ```
@@ -167,16 +192,16 @@ Note that locally hosted models do NOT need an API key, but you need to provide 
 
 ## Configure Information Retrieval
 
-### Option 1 (default): Use our free rate-limited Wikipedia search API
+### Option 1 (Default): Use our free rate-limited Wikipedia search API
 By default, WikiChat retrieves information from 10 Wikipedias via the endpoint at https://wikichat.genie.stanford.edu/search/. If you want to just try WikiChat, you do not need to modify anything.
 
 ### Option 2: Download and host our Wikipedia index
-1. Download the [index](stanford-oval/wikipedia_10-languages_bge-m3_qdrant_index) from 🤗 Hub and extract it:
+1. Download the [August 1, 2024 index of 10 Wikipedia languages](https://huggingface.co/datasets/stanford-oval/wikipedia_20240801_10-languages_bge-m3_qdrant_index) from 🤗 Hub and extract it:
 ```bash
 inv download-wikipedia-index --workdir ./workdir
 ```
 
-Note that this index contains ~180M vector embeddings and therefore requires a at least 800 GB of empty disk space. It uses [Qdrant's binary quantization](https://qdrant.tech/articles/binary-quantization/) to reduce RAM requirements to 55 GB without sacrificing accuracy or latency.
+Note that this index contains ~180M vector embeddings and therefore requires at least 500 GB of empty disk space. It uses [Qdrant's binary quantization](https://qdrant.tech/articles/binary-quantization/) to reduce RAM requirements to 55 GB without sacrificing accuracy or latency.
 
 2. Start a FastAPI server similar to option 1 that responds to HTTP POST requests:
 ```bash
@@ -197,7 +222,7 @@ inv index-wikipedia-dump  --embedding-model BAAI/bge-m3 --workdir ./workdir --la
 
 1. Preprocess your data into a [JSON Lines](https://jsonlines.org/) file (with .jsonl or .jsonl.gz file extension) where each line  has the following fields:
 ```json
-{"content_string": "string", "article_title": "string", "full_section_title": "string", "block_type": "string", "language": "string", "last_edit_date": "string (optional)", "num_tokens": "integer (optional)"}
+{"id": "integer", "content_string": "string", "article_title": "string", "full_section_title": "string", "block_type": "string", "language": "string", "last_edit_date": "string (optional)", "num_tokens": "integer (optional)"}
 ```
 `content_string` should be the chunked text of your documents. We recommend chunking to less than 500 tokens of the embedding model's tokenizer. See [this](https://python.langchain.com/v0.1/docs/modules/data_connection/document_transformers/) for an overview on chunking methods.
 `block_type` and `language` are only used to provide filtering on search results. If you do not need them, you can simply set them to `block_type=text` and `language=en`.
@@ -205,13 +230,25 @@ The script will feed `full_section_title` and `content_string` to the embedding 
 
 See `wikipedia_preprocessing/preprocess_html_dump.py` for details on how this is implemented for Wikipedia HTML dumps.
 
-2. Then run the indexing command:
+1. Run the indexing command:
 
 ```bash
 inv index-collection --collection-path <path to preprocessed JSONL> --collection-name <name>
 ```
 
 This command starts docker containers for [🤗 Text Embedding Inference](https://github.com/huggingface/text-embeddings-inference) (one per available GPU). By default, it uses the docker image compatible with NVIDIA GPUs with Ampere 80 architecture, e.g. A100. Support for some other GPUs is also available, but you would need to choose the right docker image from [available docker images](https://github.com/huggingface/text-embeddings-inference?tab=readme-ov-file#docker-images).
+
+3. (Optional) Add a [payload index](https://qdrant.tech/documentation/concepts/payload/#payload-indexing)
+```bash
+python retrieval/add_payload_index.py
+```
+This will enable queries that filter on `language` or `block_type`. Note that for large indices, it might take several minutes for the index to become available again.
+
+4. After indexing, load and use the index as in option 2. For example:
+```bash
+inv start-retriever --embedding-model BAAI/bge-m3 --retriever-port <port number>
+curl -X POST 0.0.0.0:5100/search -H "Content-Type: application/json" -d '{"query": ["What is GPT-4?", "What is LLaMA-3?"], "num_blocks": 3}'
+```
 
 
 #### To upload a Qdrant index to 🤗 Hub:
@@ -256,19 +293,21 @@ Running this will start the backend and front-end servers. You can then access t
 
 
 
-# The free Rate-limited Wikipedia search API
+# The Free Rate-limited Wikipedia Search API
 You can use this API endpoint for prototyping high-quality RAG systems.
 See https://wikichat.genie.stanford.edu/search/redoc for the full specification.
 
 Note that we do not provide any guarantees about this endpoint, and it is not suitable for production.
 
 
-# Wikipedia Preprocessing: Why is it difficult?
-Coming soon.
+# Wikipedia Preprocessing: Why is it Difficult?
+(Coming soon...)
+
+We publicly release [preprocessed Wikipedia in 10 languages](https://huggingface.co/datasets/stanford-oval/wikipedia).
 
 # Other Commands
 
-## Run a distilled model for lower latency and cost
+## Run a Distilled Model for Lower Latency and Cost
 WikiChat 2.0 is not compatible with [fine-tuned LLaMA-2 checkpoints released](https://huggingface.co/collections/stanford-oval/wikichat-v10-66c580bf15e26b87d622498c). Please refer to v1.0 for now.
 
 ## Simulate Conversations
@@ -282,12 +321,8 @@ Depending on the engine you are using, this might take some time. The simulated 
 You can also provide any of the pipeline parameters from above.
 You can experiment with different user characteristics by modifying `user_characteristics` in `benchmark/user_simulator.py`.
 
-
-
 # License
 WikiChat code, and models and data are released under Apache-2.0 license.
-
-
 
 # Citation
 

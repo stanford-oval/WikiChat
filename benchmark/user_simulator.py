@@ -170,7 +170,7 @@ async def main(args):
     make_parent_directories(args.output_file)
     with open(args.output_file, "w") as output_file:
         for idx, dlg in enumerate(all_dialogues):
-            if not dlg["dialogue_history"]:
+            if not dlg or not dlg["dialogue_history"]:
                 logger.error('dialog with topic "%s" failed', topics[idx])
                 # skip dialogs that failed
                 continue

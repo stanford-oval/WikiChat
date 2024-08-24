@@ -193,7 +193,7 @@ class QdrantIndex:
             collection_name=self.collection_name,
             requests=[
                 SearchRequest(
-                    vector=v,
+                    vector=vector,
                     with_vector=False,
                     with_payload=True,
                     limit=k,
@@ -202,17 +202,17 @@ class QdrantIndex:
                         Filter(
                             must=[  # 'must' acts like AND, 'should' acts like OR
                                 FieldCondition(
-                                    key=k,
-                                    match=MatchAny(any=list(v)),
+                                    key=key,
+                                    match=MatchAny(any=list(value)),
                                 )
-                                for k, v in filters.items()
+                                for key, value in filters.items()
                             ]
                         )
                         if filters
                         else None
                     ),
                 )
-                for v in query_embeddings
+                for vector in query_embeddings
             ],
         )
         logger.info("Nearest neighbor search took %.2f seconds", (time() - start_time))
@@ -296,7 +296,7 @@ class QdrantIndex:
                 )
 
         logger.info(
-            "Embedding the query vector took %.2f seconds", (time() - start_time)
+            "Embedding the query into a vector took %.2f seconds", (time() - start_time)
         )
 
         return normalized_embeddings.tolist()
