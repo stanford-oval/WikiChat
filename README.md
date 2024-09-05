@@ -191,7 +191,7 @@ OPENAI_API_KEY=[Your OpenAI API key from https://platform.openai.com/api-keys]
 MISTRAL_API_KEY=[Your Mistral API key from https://console.mistral.ai/api-keys/]
 ```
 
-Note that locally hosted models do NOT need an API key, but you need to provide an OpenAI-compatible endpoint in `api_base`. The code has been tested with [🤗 Text Generation Inference](https://github.com/huggingface/text-generation-inference/) endpoints, but you can try other similar endpoints like [vLLM](https://github.com/vllm-project/vllm), [SGLang](https://github.com/sgl-project/sglang), etc.
+Note that locally hosted models do NOT need an API key, but you need to provide an OpenAI-compatible endpoint in `api_base`. The code has been tested with [🤗 Text Generation Inference](https://github.com/huggingface/text-generation-inference/).
 
 
 ## Configure Information Retrieval
