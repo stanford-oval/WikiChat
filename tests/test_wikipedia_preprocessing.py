@@ -5,11 +5,11 @@ import pytest
 from bs4 import BeautifulSoup
 
 sys.path.insert(0, "./")
-from wikipedia_preprocessing.preprocess_html_dump import (
+from preprocessing.preprocess_wikipedia_html_dump import (
     find_h_tags_hierarchy,
     get_adjacent_tags,
 )
-from wikipedia_preprocessing.utils import (
+from preprocessing.utils import (
     extract_english_translations,
     find_forest_roots_and_members,
     get_wikidata_english_name,

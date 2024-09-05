@@ -265,6 +265,8 @@ def start_embedding_docker_container(
                     "50000",
                     "--max-concurrent-requests",
                     "128",
+                    "--dtype", 
+                    "float16",
                     "--hostname",
                     "0.0.0.0",
                 ],

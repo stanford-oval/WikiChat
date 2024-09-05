@@ -18,8 +18,6 @@ from qdrant_client.models import (
     Datatype,
     Distance,
     HnswConfigDiff,
-    OptimizersConfig,
-    PayloadSchemaType,
     VectorParams,
 )
 from tqdm import tqdm
@@ -117,9 +115,6 @@ def commit_to_index(
                 on_disk=True,
                 datatype=Datatype.FLOAT16,
             ),
-            # optimizers_config=OptimizersConfig(
-            #     indexing_threshold=10
-            # ),
             hnsw_config=HnswConfigDiff(
                 m=64, ef_construct=100, full_scan_threshold=10, on_disk=True
             ),
@@ -174,34 +169,13 @@ def commit_to_index(
 
         pbar.update(len(batch_blocks))
 
-    # index these payload fields, so that we can filter searched based on them
-    # logger.info("Indexing payload fields.")
-    # qdrant_client.create_payload_index(
-    #     collection_name=args.collection_name,
-    #     field_name="language",
-    #     field_schema=PayloadSchemaType.KEYWORD,
-    #     wait=False,
-    # )
-    # qdrant_client.create_payload_index(
-    #     collection_name=args.collection_name,
-    #     field_name="block_type",
-    #     field_schema=PayloadSchemaType.KEYWORD,
-    #     wait=False,
-    # )
-    # qdrant_client.create_payload_index(
-    #     collection_name=args.collection_name,
-    #     field_name="title",
-    #     field_schema=PayloadSchemaType.KEYWORD,
-    #     wait=False,
-    # )
-
     qdrant_client.close()
 
 
 def batch_generator(collection_file, embedding_batch_size):
     """Generator function to yield batches of data from the queue."""
     batch = []
-    for block in orjsonl.stream(collection_file, compression_format="gz"):
+    for block in orjsonl.stream(collection_file):
         batch.append(block)
         if len(batch) == embedding_batch_size:
             yield batch

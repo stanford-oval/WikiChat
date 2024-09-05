@@ -1,4 +1,5 @@
 import argparse
+import asyncio
 import os
 import pathlib
 import re
@@ -11,13 +12,25 @@ import orjson
 from bs4 import BeautifulSoup, NavigableString
 from markdownify import MarkdownConverter
 from mwparserfromhtml.parse.plaintext import html_to_plaintext
+import orjsonl
 from tqdm import tqdm
-from transformers import AutoTokenizer
+
+
+from preprocessing.block import Block
 
 sys.path.insert(0, "./")
 from pipelines.utils import get_logger
-from wikipedia_preprocessing.utils import *
-from wikipedia_preprocessing.wikipedia_disambiguation import is_disambiguation
+from preprocessing.utils import (
+    batch_get_wikidata_english_name,
+    draw_and_save_histogram_log_bins,
+    find_forest_roots_and_members,
+    get_from_translation_map,
+    load_translation_map,
+    num_tokens,
+    save_translation_map,
+    translation_prefix,
+)
+from preprocessing.wikipedia_disambiguation import is_disambiguation
 
 logger = get_logger(__name__)
 from transformers.utils import logging as transformers_logging
@@ -28,54 +41,6 @@ inverse_redirection_map = (
     {}
 )  # used to expand translation search. This map includes a map of each root to itself, for simplicity
 frequent_words_to_exclude = set()
-tokenizer = AutoTokenizer.from_pretrained("BAAI/bge-m3", fast=True)
-
-
-class Block:
-    """
-    A paragraph, list, linearized table, or linearized Infobox
-    """
-
-    content_string: str
-    article_title: str
-    full_section_title: str
-    block_type: str
-    language: str
-    last_edit_date: str
-    num_tokens: int
-
-    def __init__(
-        self,
-        content_string: str,
-        full_section_title: str,
-        block_type: str,
-        article_title: str = None,
-        language: str = None,
-        last_edit_date: str = None,
-    ):
-        self.content_string = content_string.strip()
-        self.article_title = article_title
-        self.full_section_title = full_section_title
-        self.block_type = block_type
-        self.language = language
-        self.last_edit_date = last_edit_date
-        self.num_tokens = 0
-
-    def to_json(self, _id: int):
-        ret = self.__dict__
-        ret["id"] = _id
-        return ret
-
-    def deduplicate_translations(self) -> None:
-        """
-        Deduplicates (in English: ...) from each block
-        """
-        string = self.full_section_title + " | " + self.content_string
-        translation_parenthesis = set(extract_english_translations(string))
-        for t in translation_parenthesis:
-            string = replace_except_first(string, " " + t, "")
-
-        self.full_section_title, self.content_string = tuple(string.split(" | ", 1))
 
 
 banned_sections = {
@@ -414,10 +379,6 @@ def get_passages(
     blocks = pack_blocks(blocks, pack_to_tokens)
 
     return blocks
-
-
-def num_tokens(text: str) -> int:
-    return len(tokenizer(text)["input_ids"])
 
 
 def pack_blocks(blocks: list[tuple[str, str]], pack_to_tokens: int) -> list[Block]:
@@ -823,7 +784,7 @@ if __name__ == "__main__":
             len(redirection_map),
         )
         if args.num_exclude_frequent_words_from_translation > 0:
-            with open("wikipedia_preprocessing/word_list.txt") as f:
+            with open("preprocessing/word_list.txt") as f:
                 for line in f:
                     frequent_words_to_exclude.add(line.strip())
                     if (
@@ -891,7 +852,6 @@ if __name__ == "__main__":
     # make parent directories
     pathlib.Path(os.path.dirname(args.output_path)).mkdir(parents=True, exist_ok=True)
 
-    # compact just removes the extra space in the json formatting
     counter = 0
 
     while True:
@@ -912,8 +872,12 @@ if __name__ == "__main__":
         all_blocks.append(block.to_json(counter))
         counter += 1
 
+    # Wait for processes to complete
+    for p in all_worker_processes + [reader_process]:
+        p.join()
+        
     logger.info("Saving the collection to %s", args.output_path)
-    orjsonl.save(args.output_path, all_blocks, compression_format="gz")
+    orjsonl.save(args.output_path, all_blocks)
 
     # save the collection size
     with open(
@@ -921,9 +885,6 @@ if __name__ == "__main__":
     ) as f:
         f.write(str(len(all_blocks)))
 
-    # Wait for processes to complete
-    for p in all_worker_processes + [reader_process]:
-        p.join()
 
     logger.info("Found {:,d} text blocks (including lists)".format(text_count))
     logger.info("Found {:,d} table blocks".format(table_count))
@@ -935,5 +896,5 @@ if __name__ == "__main__":
     # print_histogram([len(block.content_string) for block in all_blocks])
     draw_and_save_histogram_log_bins(
         [block["num_tokens"] for block in all_blocks],
-        args.output_path.split(".")[0] + "_histogram.png",
+        args.output_path.rsplit(".", 1)[0] + "_histogram.png",
     )

@@ -18,7 +18,6 @@ The request body should be a JSON object with the following fields:
 - `query`: A string or a list of strings representing the search queries.
 - `num_blocks`: An integer representing the number of items to retrieve.
 - `languages`: (Optional) A string or a list of strings representing the language codes to filter the search results.
-- `block_types`: (Optional) A string or a list of strings representing the block types to filter the search results.
 
 ### Example
 Search for the 3 most relevant text, table or infobox in the any of the 10 Wikipedia languages.

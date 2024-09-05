@@ -73,9 +73,6 @@ class QueryData(BaseModel):
     languages: Optional[Union[list[Language], Language]] = Field(
         default=None, description="The language codes of the results you want"
     )
-    block_types: Optional[Union[list[BlockType], BlockType]] = Field(
-        default=None, description="Can be zero, one or more of the defined block types"
-    )
 
     @field_validator("query")
     def validate_query(cls, value):
@@ -95,7 +92,8 @@ class QueryData(BaseModel):
         return value
 
     model_config = ConfigDict(
-        use_enum_values=True  # This allows the API to accept string values for enums
+        extra="forbid",
+        use_enum_values=True,  # This allows the API to accept string values for enums
     )
 
 
@@ -143,16 +141,13 @@ async def search(request: Request, query_data: QueryData):
     languages = query_data.languages
     if isinstance(languages, str):
         languages = [languages]
-    block_types = query_data.block_types
-    if isinstance(block_types, str):
-        block_types = [block_types]
 
     try:
         results = await qdrant_search(
             tuple(queries),
             evi_num,
             languages=tuple(languages) if languages else None,
-            block_types=tuple(block_types) if block_types else None,
+            block_types=None,
         )
     except Exception as e:
         logger.error(str(e))

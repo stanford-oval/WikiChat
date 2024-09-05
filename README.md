@@ -208,6 +208,11 @@ Note that this index contains ~180M vector embeddings and therefore requires at 
 inv start-retriever --embedding-model BAAI/bge-m3 --retriever-port <port number>
 ```
 
+3. Start WikiChat by passing in the URL of this retriever. For example:
+```bash
+inv demo --retriever-endpoint "http://0.0.0.0:<port number>/search"
+```
+
 Note that this server and its embedding model run on CPU, and do not require GPU. For better performance, on compatible systems you can add `--use-onnx` to use the ONNX version of the embedding model, to significantly lower the embedding latency.
 
 ### Option 3: Build your own index
@@ -228,7 +233,7 @@ inv index-wikipedia-dump  --embedding-model BAAI/bge-m3 --workdir ./workdir --la
 `block_type` and `language` are only used to provide filtering on search results. If you do not need them, you can simply set them to `block_type=text` and `language=en`.
 The script will feed `full_section_title` and `content_string` to the embedding model to create embedding vectors.
 
-See `wikipedia_preprocessing/preprocess_html_dump.py` for details on how this is implemented for Wikipedia HTML dumps.
+See `preprocessing/preprocess_wikipedia_html_dump.py` for details on how this is implemented for Wikipedia HTML dumps.
 
 1. Run the indexing command:
 
@@ -250,6 +255,11 @@ inv start-retriever --embedding-model BAAI/bge-m3 --retriever-port <port number>
 curl -X POST 0.0.0.0:5100/search -H "Content-Type: application/json" -d '{"query": ["What is GPT-4?", "What is LLaMA-3?"], "num_blocks": 3}'
 ```
 
+5. Start WikiChat by passing in the URL of this retriever. For example:
+```bash
+inv demo --retriever-endpoint "http://0.0.0.0:<port number>/search"
+```
+
 
 #### To upload a Qdrant index to 🤗 Hub:
 1. Split the index into smaller parts:
@@ -258,8 +268,8 @@ tar -cvf - <path to the Qdrant index folder> | pigz -p 14 | split --bytes=10GB -
 ```
 
 2. Upload the resulting parts:
-```
-retrieval/upload_folder_to_hf_hub.py --folder_path <path to the output folder> --repo_id <Repo ID on 🤗 Hub>
+```bash
+python retrieval/upload_folder_to_hf_hub.py --folder_path <path to the output folder> --repo_id <Repo ID on 🤗 Hub>
 ```
 
 

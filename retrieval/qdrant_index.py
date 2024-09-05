@@ -1,7 +1,7 @@
 import asyncio
 import math
 from time import time
-from typing import Any
+from typing import Any, Optional
 
 import numpy as np
 import onnxruntime as ort
@@ -41,6 +41,10 @@ embedding_model_to_parameters = {
         "embedding_dimension": 384,
         "query_prefix": "Represent this sentence for searching relevant passages: ",
     },
+    "Alibaba-NLP/gte-base-en-v1.5": {
+        "embedding_dimension": 768,
+        "query_prefix": "",
+    },  # Its maximum sequence length is 8192 tokens
     "Alibaba-NLP/gte-Qwen2-1.5B-instruct": {
         "embedding_dimension": 1536,
         "query_prefix": "Given a web search query, retrieve relevant passages that answer the query",
@@ -95,7 +99,7 @@ class SearchResult(BaseModel):
     language: list[str] = Field(
         default_factory=list, json_schema_extra={"example": ["ja", "pt", "es"]}
     )
-    last_edit_date: list[str] = Field(
+    last_edit_date: list[Optional[str]] = Field(
         default_factory=list,
         json_schema_extra={
             "example": [
@@ -129,7 +133,7 @@ class QdrantIndex:
         use_onnx: bool = False,
     ):
         self.qdrant_client = AsyncQdrantClient(
-            url=qdrant_url, timeout=10, prefer_grpc=True
+            url=qdrant_url, timeout=20, prefer_grpc=True
         )  # Lower timeout so that we don't get stuck on long retrieval jobs
         self.collection_name = collection_name
         self.use_onnx = use_onnx
@@ -162,7 +166,7 @@ class QdrantIndex:
 
             self.ort_session = ort.InferenceSession(onnx_model_path)
         else:
-            self.embedding_model = AutoModel.from_pretrained(embedding_model_name)
+            self.embedding_model = AutoModel.from_pretrained(embedding_model_name, trust_remote_code=True)
 
         # self.embedding_model.eval()
         logger.info("Successfully loaded the embedding model " + embedding_model_name)
@@ -262,7 +266,6 @@ class QdrantIndex:
         # take the softmax
         passage_probs = [math.exp(score) for score in ret["score"]]
         ret["prob"] = [prob / sum(passage_probs) for prob in passage_probs]
-
         return SearchResult(**ret)
 
     def embed_queries(self, queries: list[str]):
