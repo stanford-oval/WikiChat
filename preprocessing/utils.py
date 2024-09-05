@@ -9,6 +9,7 @@ import orjsonl
 from matplotlib import pyplot as plt
 from tqdm import tqdm, trange
 from tqdm.contrib.logging import logging_redirect_tqdm
+from transformers import AutoTokenizer
 
 sys.path.insert(0, "./")
 from pipelines.utils import get_logger
@@ -20,7 +21,7 @@ logger = get_logger(__name__)
 # this is different from the case that the key is absent, which means we have never looked up that translation in Wikidata
 global_translation_map = {}
 
-
+tokenizer = AutoTokenizer.from_pretrained("BAAI/bge-m3", fast=True)
 translation_prefix = "(in English: "
 
 
@@ -372,3 +373,6 @@ def find_forest_roots_and_members(incoming_edges):
     for root in roots:
         trees[root] = find_tree_members(root, incoming_edges)
     return trees
+
+def num_tokens(text: str) -> int:
+    return len(tokenizer(text)["input_ids"])

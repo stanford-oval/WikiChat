@@ -73,7 +73,7 @@ class RetrievalResult:
             results["score"],
             results["last_edit_date"],
         ):
-            if block_type not in ["text", "table", "infobox", "list"]:
+            if block_type not in ["text", "table", "infobox"]:
                 logger.warning(
                     f"Found invalid block type {str(block_type)} for {passage}."
                 )
@@ -266,7 +266,7 @@ def _try_to_enforce_block_type_limits(
     results: list[RetrievalResult], block_type_limits: dict, target_num: int
 ) -> list[RetrievalResult]:
     block_type_limits_copy = {}
-    for k in ["table", "text", "list", "infobox"]:
+    for k in ["table", "text", "infobox"]:
         if k not in block_type_limits:
             block_type_limits_copy[k] = 1e6  # Infinity
         else:

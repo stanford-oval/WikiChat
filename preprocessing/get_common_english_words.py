@@ -26,5 +26,5 @@ for header in soup.find_all("h2"):
                     word_list.append(w)
 
 print("Extracted %d words from %s" % (len(word_list), word_frequency_page))
-with open("./wikipedia_preprocessing/word_list.txt", "w") as f:
+with open("./preprocessing/word_list.txt", "w") as f:
     f.write("\n".join(word_list))

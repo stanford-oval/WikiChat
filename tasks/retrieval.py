@@ -4,6 +4,7 @@ import pathlib
 import sys
 import threading
 from concurrent.futures import ThreadPoolExecutor
+import concurrent
 from datetime import datetime
 from typing import Optional
 
@@ -18,7 +19,7 @@ from tasks.docker_utils import (
     start_qdrant_docker_container,
     stop_all_docker_containers,
 )
-from tasks.main import start_redis
+from tasks.main import load_api_keys, start_redis
 
 sys.path.insert(0, "./")
 from pipelines.utils import get_logger
@@ -117,7 +118,9 @@ def download_chunk_from_url(
                 pbar.update(len(chunk))
 
 
-def multithreaded_download(url: str, output_path: str, num_parts: int = 3) -> None:
+def multithreaded_download(
+    url: str, output_path: str, num_parts: int = 3, disable_tqdm=False
+) -> None:
     """
     Download a file in parts concurrently using multiple threads to optimize the download process.
 
@@ -131,6 +134,7 @@ def multithreaded_download(url: str, output_path: str, num_parts: int = 3) -> No
         output_path (str): The path to which the file will be downloaded.
         num_parts (int, optional): The number of parts into which the download will be split. Defaults to 3, based
         on the typical rate limiting encountered from servers.
+        disable_tqdm (bool, optional): Whether to disable showing a progress bar
 
     Note:
         The server from which files are being downloaded must support range requests, as the function relies on
@@ -154,8 +158,9 @@ def multithreaded_download(url: str, output_path: str, num_parts: int = 3) -> No
             total=total_size,
             unit="iB",
             unit_scale=True,
-            desc="Downloading the HTML dump",
+            desc="Downloading file",
             smoothing=0,
+            disable=disable_tqdm,
         )
 
         for i in range(num_parts):
@@ -307,7 +312,6 @@ def test_index(
 @task(
     pre=[
         stop_all_docker_containers,
-        start_embedding_docker_container,
         start_qdrant_docker_container,
     ],
     post=[stop_all_docker_containers],
@@ -340,6 +344,9 @@ def index_collection(
         - embedding_model_port (int): The port on which the embedding model server is running.
         - embedding_model_name (str): The HuggingFace ID of the embedding model to use for indexing.
     """
+    start_embedding_docker_container(
+        c, port=embedding_model_port, embedding_model=embedding_model_name
+    )
     c.run(
         f"python retrieval/create_index.py "
         f"--collection_file {collection_path} "
@@ -416,7 +423,7 @@ def preprocess_wikipedia_dump(
 
     # Constructing the command with parameters
     command = (
-        f"python wikipedia_preprocessing/preprocess_html_dump.py "
+        f"python preprocessing/preprocess_wikipedia_html_dump.py "
         f"--input_path {input_path} "
         f"--output_path {output_path} "
         f"--wikidata_translation_map {wikidata_translation_map} "
@@ -433,7 +440,6 @@ def preprocess_wikipedia_dump(
 @task(
     pre=[
         stop_all_docker_containers,
-        start_embedding_docker_container,
         start_qdrant_docker_container,
     ],
     post=[stop_all_docker_containers],
@@ -468,6 +474,13 @@ def index_wikipedia_dump(
         - language (str): The language edition of Wikipedia to index (e.g., "en" for English).
         - wikipedia_date (str, optional): The date of the Wikipedia dump to use. If not provided, the latest available dump is used.
     """
+    start_embedding_docker_container(
+        c,
+        workdir=workdir,
+        port=embedding_model_port,
+        embedding_model=embedding_model_name,
+    )
+
     if not wikipedia_date:
         wikipedia_date = get_latest_wikipedia_dump_date()
     preprocess_wikipedia_dump(
@@ -493,18 +506,29 @@ def index_wikipedia_dump(
 @task(
     pre=[
         stop_all_docker_containers,
-        start_embedding_docker_container,
         start_qdrant_docker_container,
     ],
     post=[stop_all_docker_containers],
     iterable=["language"],
 )
 def index_multiple_wikipedia_dumps(
-    c, language, workdir: str = DEFAULT_WORKDIR, wikipedia_date: Optional[str] = None
+    c,
+    language,
+    workdir: str = DEFAULT_WORKDIR,
+    wikipedia_date: Optional[str] = None,
+    embedding_model_port: int = DEFAULT_EMBEDDING_MODEL_PORT,
+    embedding_model_name: str = DEFAULT_EMBEDDING_MODEL_NAME,
 ):
     """
     Index multiple Wikipedia dumps from different languages in a for loop.
     """
+    start_embedding_docker_container(
+        c,
+        workdir=workdir,
+        port=embedding_model_port,
+        embedding_model=embedding_model_name,
+    )
+
     if not wikipedia_date:
         wikipedia_date = get_latest_wikipedia_dump_date()
     for l in language:
@@ -512,3 +536,74 @@ def index_multiple_wikipedia_dumps(
         index_wikipedia_dump(
             c, workdir=workdir, language=l, wikipedia_date=wikipedia_date
         )
+
+
+@task(pre=[load_api_keys])
+def download_semantic_scholar_dump(
+    c, workdir: str = DEFAULT_WORKDIR, num_threads: int = 8
+):
+    # Read the API key from environment variables
+    api_key = os.environ.get("SEMANTIC_SCHOLAR_API_KEY")
+    if not api_key:
+        raise ValueError("SEMANTIC_SCHOLAR_API_KEY environment variable is not set")
+
+    # Set up headers with the API key
+    headers = {"x-api-key": api_key}
+
+    # Call the Semantic Scholar API to get the latest release information
+    response = requests.get("https://api.semanticscholar.org/datasets/v1/release/")
+
+    if response.status_code != 200:
+        raise Exception(
+            f"Failed to fetch release information. Status code: {response.status_code}"
+        )
+
+    latest_release = response.json()[-1]
+
+    response = requests.get(
+        f"https://api.semanticscholar.org/datasets/v1/release/{latest_release}/dataset/s2orc",
+        headers=headers,
+    )
+    if response.status_code != 200:
+        raise Exception(
+            f"Failed to fetch release details. Status code: {response.status_code}"
+        )
+    release_details = response.json()
+    # logger.info(release_details)
+    file_urls = release_details["files"]
+
+    # Download all files
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        futures = []
+        for file_idx, url in enumerate(file_urls):
+            file_path = os.path.join(
+                workdir, f"semantic_scholar_dump_{file_idx:03d}.jsonl.gz"
+            )
+            future = executor.submit(
+                multithreaded_download, url, file_path, num_parts=1
+            )
+            futures.append(future)
+
+        for future in tqdm(
+            concurrent.futures.as_completed(futures), total=len(futures), desc="Files"
+        ):
+            future.result()  # This will raise any exceptions that occurred during download
+
+    logger.info("All files have been downloaded.")
+
+    # Find the part files
+    part_files = glob.glob(
+        os.path.join(workdir, "semantic_scholar_dump_part*.jsonl.gz")
+    )
+
+    # Ensure part_files is not empty
+    if not part_files:
+        raise FileNotFoundError("No part files found in the specified directory.")
+
+    # Unzip part files
+    for file in tqdm(part_files, desc="Running gunzip"):
+        output_file = file[:-3]  # Remove the .gz extension
+        c.run(f"gunzip -c {file} > {output_file}", pty=True)
+        logger.info(f"Unzipped {file} to {output_file}")
+
+    logger.info("All part files have been unzipped.")
