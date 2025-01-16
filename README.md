@@ -197,7 +197,7 @@ Note that locally hosted models do NOT need an API key, but you need to provide 
 ## Configure Information Retrieval
 
 ### Option 1 (Default): Use our free rate-limited Wikipedia search API
-By default, WikiChat retrieves information from 10 Wikipedias via the endpoint at https://wikichat.genie.stanford.edu/search/. If you want to just try WikiChat, you do not need to modify anything.
+By default, WikiChat retrieves information from 10 Wikipedias via the endpoint at https://search.genie.stanford.edu/wikipedia/. If you want to just try WikiChat, you do not need to modify anything.
 
 ### Option 2: Download and host our Wikipedia index
 1. Download the [August 1, 2024 index of 10 Wikipedia languages](https://huggingface.co/datasets/stanford-oval/wikipedia_20240801_10-languages_bge-m3_qdrant_index) from 🤗 Hub and extract it:
@@ -309,7 +309,7 @@ Running this will start the backend and front-end servers. You can then access t
 
 # The Free Rate-limited Wikipedia Search API
 You can use this API endpoint for prototyping high-quality RAG systems.
-See https://wikichat.genie.stanford.edu/search/redoc for the full specification.
+See https://search.genie.stanford.edu/redoc for the full specification.
 
 Note that we do not provide any guarantees about this endpoint, and it is not suitable for production.
 
