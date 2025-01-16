@@ -22,7 +22,7 @@ The request body should be a JSON object with the following fields:
 ### Example
 Search for the 3 most relevant text, table or infobox in the any of the 10 Wikipedia languages.
 ```http
-POST https://wikichat.genie.stanford.edu/search
+POST https://search.genie.stanford.edu/wikipedia
 Content-Type: application/json
 
 {
@@ -34,7 +34,7 @@ Content-Type: application/json
 or equivalently, run
 
 ```
-curl -X POST https://wikichat.genie.stanford.edu/search -H "Content-Type: application/json" -d '{"query": ["What is GPT-4?", "What is LLaMA-3?"], "num_blocks": 3}'
+curl -X POST https://search.genie.stanford.edu/wikipedia -H "Content-Type: application/json" -d '{"query": ["What is GPT-4?", "What is LLaMA-3?"], "num_blocks": 3}'
 ```
 
 Response:

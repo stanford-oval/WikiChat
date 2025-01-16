@@ -23,7 +23,7 @@ CHATBOT_DEFAULT_CONFIG = {
     "pipeline": "early_combine",
     "temperature": 0.0,
     "top_p": 0.9,
-    "retriever_endpoint": "https://wikichat.genie.stanford.edu/search",
+    "retriever_endpoint": "https://search.genie.stanford.edu/wikipedia",
     "skip_verification": False,
     "skip_query": False,
     "fuse_claim_splitting": True,
