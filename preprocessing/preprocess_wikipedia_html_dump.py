@@ -753,7 +753,7 @@ if __name__ == "__main__":
         type=int,
         default=0,
         help="If consecutive paragraphs in the same subsection are small, we greedily concatenate them together, while keeping the result shorter than this many tokens."
-        " This helps reduce the number of vector embeddings when indexing. BAAI/bge-m3 tokenizer is used to determine token boundaries.",
+        " This helps reduce the number of vector embeddings when indexing. BAAI/bge-m3-unsupervised tokenizer is used to determine token boundaries.",
     )
     arg_parser.add_argument(
         "--max_articles",

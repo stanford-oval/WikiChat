@@ -25,7 +25,7 @@ from pipelines.utils import get_logger
 logger = get_logger(__name__)
 
 embedding_model_to_parameters = {
-    "BAAI/bge-m3": {
+    "BAAI/bge-m3-unsupervised": {
         "embedding_dimension": 1024,
         "query_prefix": "",
     },  # Supports more than 100 languages. no prefix needed for this model
@@ -153,7 +153,7 @@ class QdrantIndex:
 
         self.embedding_tokenizer = AutoTokenizer.from_pretrained(embedding_model_name)
         if self.use_onnx:
-            if embedding_model_name != "BAAI/bge-m3":
+            if embedding_model_name != "BAAI/bge-m3-unsupervised":
                 raise ValueError("ONNX has only been tested for bge-m3.")
 
             # Download the .onnx model files

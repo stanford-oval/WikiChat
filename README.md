@@ -84,7 +84,7 @@ Sina J. Semnani, Violet Z. Yao*, Heidi C. Zhang*, and Monica S. Lam. 2023. [Wiki
     - **Improved Information Retrieval**
       - Now supports retrieval from structured data such as tables, infoboxes, and lists, in addition to text.
       - Has the highest quality public Wikipedia preprocessing scripts
-      - Uses the state-of-the-art multilingual retrieval model [BGE-M3](https://huggingface.co/BAAI/bge-m3).
+      - Uses the state-of-the-art multilingual retrieval model [BGE-M3](https://huggingface.co/BAAI/bge-m3-unsupervised).
       - Uses [Qdrant](https://github.com/qdrant/qdrant) for scalable vector search.
       - Uses [RankGPT](https://github.com/sunnweiwei/RankGPT) to rerank search results.
     - **Free Multilingual Wikipedia Search API**: We offer a high-quality, free (but rate-limited) search API for access to 10 Wikipedias, encompassing over 180M vector embeddings.
@@ -109,7 +109,7 @@ Installing WikiChat involves the following steps:
 
 1. Install dependencies
 1. Configure the LLM of your choice. WikiChat supports over 100 LLMs, including models from OpenAI, Azure, Anthropic, Mistral, HuggingFace, Together.ai, and Groq.
-1. Select an information retrieval source. This can be any HTTP endpoint that conforms to the interface defined in `retrieval/retriever_server.py`. We provide instructions and scripts for the following options:
+1. Select an information retrieval source. This can be any HTTP endpoint that conforms to the interface defined in [`retrieval/retriever_server.py`](retrieval/retriever_server.py). We provide instructions and scripts for the following options:
     1. Use our free, rate-limited API for Wikipedia in 10 languages.
     1. Download and host our provided Wikipedia index yourself.
     1. Create and run a new custom index from your own documents.
@@ -128,7 +128,7 @@ Hardware requirements vary based on your intended use:
 
 1. **Local LLM**: If you plan to use WikiChat with a local LLM, a GPU is necessary to host the model.
 
-1. **Creating a New Retrieval Index**: If you want to index a collection, you need a GPU to embed documents to vectors. The default embedding model (`BAAI/BGE-M3`) requires at least 13GB of GPU memory to run.
+1. **Creating a New Retrieval Index**: If you want to index a collection, you need a GPU to embed documents to vectors. The default embedding model (`BAAI/bge-m3-unsupervised`) requires at least 13GB of GPU memory to run.
 
 
 ## Install Dependencies
@@ -179,7 +179,6 @@ You can also use WikiChat with many locally hosted models via HuggingFace.
 
 To configure your LLM:
 1. Fill out the appropriate fields in `llm_config.yaml`.
-
 2. Create a file named `API_KEYS` (which is included in `.gitignore`).
 3. In the `API_KEYS` file, set the API key for the LLM endpoint you want to use. The name of the API key should match the name you provided in `llm_config.yaml` under `api_key`.
 For example, if you're using OpenAI models via openai.com and Mistral endpoints, your `API_KEYS` file might look like this:
@@ -209,7 +208,7 @@ Note that this index contains ~180M vector embeddings and therefore requires at 
 
 2. Start a FastAPI server similar to option 1 that responds to HTTP POST requests:
 ```bash
-inv start-retriever --embedding-model BAAI/bge-m3 --retriever-port <port number>
+inv start-retriever --embedding-model BAAI/bge-m3-unsupervised --retriever-port <port number>
 ```
 
 3. Start WikiChat by passing in the URL of this retriever. For example:
@@ -224,22 +223,24 @@ Note that this server and its embedding model run on CPU, and do not require GPU
 The following command will download, preprocess, and index the latest HTML dump of the [Kurdish Wikipedia](ku.wikipedia.org), which we use in this example for its relatively small size.
 
 ```bash
-inv index-wikipedia-dump  --embedding-model BAAI/bge-m3 --workdir ./workdir --language ku
+inv index-wikipedia-dump  --embedding-model BAAI/bge-m3-unsupervised --workdir ./workdir --language ku
 ```
 
 #### To index custom documents
 
 1. Preprocess your data into a [JSON Lines](https://jsonlines.org/) file (with .jsonl or .jsonl.gz file extension) where each line  has the following fields:
 ```json
-{"id": "integer", "content_string": "string", "article_title": "string", "full_section_title": "string", "block_type": "string", "language": "string", "last_edit_date": "string (optional)", "num_tokens": "integer (optional)"}
+{"id": "integer", "content_string": "string", "article_title": "string", "full_section_title": "string", "block_type": "string", "language": "string", "last_edit_date": "string", "num_tokens": "integer (optional)"}
 ```
-`content_string` should be the chunked text of your documents. We recommend chunking to less than 500 tokens of the embedding model's tokenizer. See [this](https://python.langchain.com/v0.1/docs/modules/data_connection/document_transformers/) for an overview on chunking methods.
+`content_string` should be the chunked text of your documents. We recommend chunking to fewer than 500 tokens of the embedding model's tokenizer. See [this](https://python.langchain.com/v0.1/docs/modules/data_connection/document_transformers/) for an overview on chunking methods.
+`full_section_title` should include the list of headings from article title to the smallest heading separated by " > ".
 `block_type` and `language` are only used to provide filtering on search results. If you do not need them, you can simply set them to `block_type=text` and `language=en`.
+`last_edit_date` should follow the ISO 8601 date and time format: "yyyy-MM-ddTHH:mm:ssZ" (UTC).
 The script will feed `full_section_title` and `content_string` to the embedding model to create embedding vectors.
 
-See `preprocessing/preprocess_wikipedia_html_dump.py` for details on how this is implemented for Wikipedia HTML dumps.
+See [`docs/search_api.md`](docs/search_api.md) for an example of how the formatting is implemented for the Wikipedia Search API and [`preprocessing/preprocess_wikipedia_html_dump.py`](preprocessing/preprocess_wikipedia_html_dump.py) for details on how this is implemented for Wikipedia HTML dumps.
 
-1. Run the indexing command:
+2. Run the indexing command:
 
 ```bash
 inv index-collection --collection-path <path to preprocessed JSONL> --collection-name <name>
@@ -255,9 +256,10 @@ This will enable queries that filter on `language` or `block_type`. Note that fo
 
 4. After indexing, load and use the index as in option 2. For example:
 ```bash
-inv start-retriever --embedding-model BAAI/bge-m3 --retriever-port <port number>
-curl -X POST 0.0.0.0:5100/search -H "Content-Type: application/json" -d '{"query": ["What is GPT-4?", "What is LLaMA-3?"], "num_blocks": 3}'
+inv start-retriever --embedding-model-name BAAI/bge-m3-unsupervised --retriever-port <port number> --collection-name <name>
+curl -X POST 0.0.0.0:<port number>/search -H "Content-Type: application/json" -d '{"query": ["What is GPT-4?", "What is LLaMA-3?"], "num_blocks": 3}'
 ```
+The default retriever port is 5100. The cURL command will return the vector embeddings corresponding to the sample queries and may be used to verify retriever functionality.
 
 5. Start WikiChat by passing in the URL of this retriever. For example:
 ```bash
@@ -292,8 +294,8 @@ For a full list of all available options, you can run `inv demo --help`
 
 ## [Optional] Deploy WikiChat for Multi-user Access
 This repository provides code to deploy a web-based chat interface via [Chainlit](https://github.com/Chainlit/chainlit), and store user conversations to a [Cosmos DB](https://azure.microsoft.com/en-us/products/cosmos-db) database.
-These are implemented in `backend_server.py` and `database.py` respectively. If you want to use other databases or front-ends, you need to modify these files. For development, it should be straightforward to remove the dependency on Cosmos DB and simply store conversations in memory.
-You can also configure chatbot parameters defined in `backend_server.py`, for example to use a different LLM or add/remove stages of WikiChat.
+These are implemented in [`backend_server.py`](backend_server.py) and [`database.py`](database.py) respectively. If you want to use other databases or front-ends, you need to modify these files. For development, it should be straightforward to remove the dependency on Cosmos DB and simply store conversations in memory.
+You can also configure chatbot parameters defined in [`backend_server.py`](backend_server.py), for example to use a different LLM or add/remove stages of WikiChat.
 
 ### Set up Cosmos DB
 After creating an instance via Azure, obtain the connection string and add this value in `API_KEYS`.
@@ -333,7 +335,7 @@ inv simulate-users --num-dialogues 1 --num-turns 2 --simulation-mode passage --l
 ```
 Depending on the engine you are using, this might take some time. The simulated dialogues and log files will be saved in `benchmark/simulated_dialogues/`.
 You can also provide any of the pipeline parameters from above.
-You can experiment with different user characteristics by modifying `user_characteristics` in `benchmark/user_simulator.py`.
+You can experiment with different user characteristics by modifying `user_characteristics` in [`benchmark/user_simulator.py`](benchmark/user_simulator.py).
 
 # License
 WikiChat code, and models and data are released under Apache-2.0 license.

@@ -21,7 +21,7 @@ logger = get_logger(__name__)
 # this is different from the case that the key is absent, which means we have never looked up that translation in Wikidata
 global_translation_map = {}
 
-tokenizer = AutoTokenizer.from_pretrained("BAAI/bge-m3", fast=True)
+tokenizer = AutoTokenizer.from_pretrained("BAAI/bge-m3-unsupervised", fast=True)
 translation_prefix = "(in English: "
 
 
@@ -327,7 +327,7 @@ def draw_and_save_histogram_log_bins(data, filename: str) -> None:
     plt.xlabel("Passage Length (tokens)")
     plt.ylabel("Frequency (%)")
 
-    context_length = 8192  # for BAAI/bge-m3
+    context_length = 8192  # for BAAI/bge-m3-unsupervised
     # Draw a vertical line at x=context_length
     plt.axvline(x=context_length, color="red", linestyle="--", linewidth=1, alpha=0.5)
 
@@ -335,7 +335,7 @@ def draw_and_save_histogram_log_bins(data, filename: str) -> None:
     plt.text(
         context_length,
         max(plt.ylim()) * 0.85,
-        "BAAI/bge-m3\ncontext length",
+        "BAAI/bge-m3-unsupervised\ncontext length",
         color="red",
         ha="center",
     )

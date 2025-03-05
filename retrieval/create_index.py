@@ -195,7 +195,7 @@ if __name__ == "__main__":
         "--embedding_model_name",
         type=str,
         choices=QdrantIndex.get_supported_embedding_models(),
-        default="BAAI/bge-m3",
+        default="BAAI/bge-m3-unsupervised",
     )
     parser.add_argument(
         "--model_port",
