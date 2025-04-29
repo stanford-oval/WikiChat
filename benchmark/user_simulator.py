@@ -15,16 +15,15 @@ from tqdm import tqdm
 sys.path.insert(0, "./")
 from chainlite import get_total_cost, llm_generation_chain, write_prompt_logs_to_file
 
+from utils.logging import logger, make_parent_directories
 from pipelines.chatbot import create_chain, run_one_turn
-from pipelines.dialogue_state import DialogueTurn, state_to_string
+from pipelines.dialogue_state import DialogueTurn
 from pipelines.pipeline_arguments import (
     add_pipeline_arguments,
     all_configured_engines,
     check_pipeline_arguments,
 )
-from pipelines.utils import get_logger, make_parent_directories
 
-logger = get_logger(__name__)
 
 spacy_nlp = spacy.load("en_core_web_sm")
 
@@ -108,7 +107,7 @@ async def simulate_dialogue(dialogue_inputs, args) -> list[DialogueTurn]:
 
     except Exception:
         logger.exception(
-            "Skipping dialog due to exception. dialogue_inputs=%s", str(dialogue_inputs)
+            f"Skipping dialog due to exception. dialogue_inputs={str(dialogue_inputs)}"
         )
     return dialogue_state
 
@@ -159,19 +158,23 @@ async def main(args):
             )
             topics = [m["title_1"] + " and " + m["title_2"] for m in dialogue_inputs]
     else:
-        raise ValueError("Unknown mode: %s" % args.mode)
+        raise ValueError(f"Unknown mode: {args.mode}")
 
     all_dialogues = []
-    for i in tqdm(range(0, len(dialogue_inputs), args.batch_size), desc="Dialogue Batches"):
-        batch = dialogue_inputs[i:i+args.batch_size]
-        batch_results = await asyncio.gather(*[simulate_dialogue(di, args=args) for di in batch])
+    for i in tqdm(
+        range(0, len(dialogue_inputs), args.batch_size), desc="Dialogue Batches"
+    ):
+        batch = dialogue_inputs[i : i + args.batch_size]
+        batch_results = await asyncio.gather(
+            *[simulate_dialogue(di, args=args) for di in batch]
+        )
         all_dialogues.extend(batch_results)
 
     make_parent_directories(args.output_file)
     with open(args.output_file, "w") as output_file:
         for idx, dlg in enumerate(all_dialogues):
             if not dlg or not dlg["dialogue_history"]:
-                logger.error('dialog with topic "%s" failed', topics[idx])
+                logger.error(f'dialog with topic "{topics[idx]}" failed')
                 # skip dialogs that failed
                 continue
             output_file.write("Topic: " + topics[idx].strip() + "\n")
@@ -192,7 +195,7 @@ async def main(args):
             output_file.write("=====\n")
 
     write_prompt_logs_to_file(args.output_file.strip("txt") + "log")
-    logger.info("Total LLM cost: $%.2f" % get_total_cost())
+    logger.info(f"Total LLM cost: ${get_total_cost():.2f}")
 
 
 if __name__ == "__main__":

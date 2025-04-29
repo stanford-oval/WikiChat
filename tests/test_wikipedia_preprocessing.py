@@ -1,62 +1,16 @@
 import sys
+from datetime import datetime
 
 import aiohttp
 import pytest
-from bs4 import BeautifulSoup
 
 sys.path.insert(0, "./")
-from preprocessing.preprocess_wikipedia_html_dump import (
-    find_h_tags_hierarchy,
-    get_adjacent_tags,
-)
+from preprocessing.block import Block, BlockLanguage, BlockType
 from preprocessing.utils import (
     extract_english_translations,
     find_forest_roots_and_members,
     get_wikidata_english_name,
 )
-
-
-@pytest.fixture
-def sample_html():
-    html_content = """
-    <html>
-    <body>
-        <h1>Main Title</h1>
-        <p>Some introduction text.</p>
-        <h2>Subtitle Level 1</h2>
-        <p>More detailed discussion.</p>
-        <h3>Subtitle Level 2</h3>
-        <h2>Another Subtitle Level 1</h2>
-        <div id="target">Content here</div>
-    </body>
-    </html>
-    """
-    return BeautifulSoup(html_content, "html.parser")
-
-
-def test_find_h_tags_with_simple_hierarchy(sample_html):
-    tag = sample_html.find(id="target")
-    hierarchy = find_h_tags_hierarchy(tag)
-    assert len(hierarchy) == 2
-    assert [tag.name for tag in hierarchy] == ["h1", "h2"]
-
-
-def test_find_h_tags_with_no_previous_h_tags(sample_html):
-    # Modify the HTML structure to not include any <h> tags before the target
-    sample_html.find("h1").decompose()  # Removing h1
-    sample_html.find("h2").decompose()  # Removing the first h2
-    sample_html.find("h2").decompose()  # Removing the second h2
-    sample_html.find("h3").decompose()  # Removing h3
-    tag = sample_html.find(id="target")
-    hierarchy = find_h_tags_hierarchy(tag)
-    assert len(hierarchy) == 0  # No headers found
-
-
-def test_reverse_order_correctness(sample_html):
-    h3_tag = sample_html.find("h3")
-    hierarchy = find_h_tags_hierarchy(h3_tag)
-    assert len(hierarchy) == 2  # Only h1 and the first h2 should be captured
-    assert [tag.name for tag in hierarchy] == ["h1", "h2"]
 
 
 # Test extracting single translation
@@ -119,54 +73,227 @@ def test_find_forest_roots_and_members():
     assert len(trees) == 2, "Should identify two separate trees"
     for root, members in expected_trees.items():
         assert root in trees, f"Missing root {root} in result"
-        assert (
-            trees[root] == members
-        ), f"Tree members for root {root} do not match expected"
-
-
-# A function to create a simple HTML soup for testing purposes
-def create_soup(html_content):
-    return BeautifulSoup(html_content, "html.parser")
-
-
-@pytest.mark.parametrize(
-    "html_content,first_tag,second_tag,expected_output",
-    [
-        (
-            "<p>First Paragraph</p><div>First Div</div>",
-            "p",
-            "div",
-            (["First Paragraph"], ["First Div"]),
-        ),
-        ("<p>First Paragraph</p><p>Second Paragraph</p>", "p", "div", ([], [])),
-        (
-            "<div>A div</div><p>A Paragraph</p><div>Another div</div><p>Another Paragraph</p>",
-            "div",
-            "p",
-            (["A div", "Another div"], ["A Paragraph", "Another Paragraph"]),
-        ),
-        (
-            "<h1>Header</h1><p>Paragraph after header</p><div>Div after paragraph</div>",
-            "h1",
-            "p",
-            (["Header"], ["Paragraph after header"]),
-        ),
-    ],
-)
-def test_get_adjacent_tags(html_content, first_tag, second_tag, expected_output):
-    soup = create_soup(html_content)
-    first_tags, second_tags = get_adjacent_tags(soup, first_tag, second_tag)
-    assert set([tag.get_text() for tag in first_tags]) == set(expected_output[0])
-    assert set([tag.get_text() for tag in second_tags]) == set(expected_output[1])
+        assert trees[root] == members, (
+            f"Tree members for root {root} do not match expected"
+        )
 
 
 @pytest.mark.asyncio
 async def test_get_wikidata_entry():
     async with aiohttp.ClientSession() as session:
-        result = await get_wikidata_english_name("سیدنی (بازیکن فوتبال)", session, "fa")
+        result = await get_wikidata_english_name(
+            "سیدنی (بازیکن فوتبال)", session, "fa", {}
+        )
         # print(result)
         assert len(result) == 2
         assert "es" in result[1]
         assert result[1]["es"] == {
             "Sidnei Rechel da Silva Junior": "Sidnei (footballer, born 1989)"
         }
+
+
+def test_to_json():
+    block = Block(
+        content="This is a test content.",
+        document_title="Test Article",
+        section_title="Test Section",
+        last_edit_date="2023-10-01",
+        url="http://example.com",
+        block_metadata={
+            "type": BlockType.TEXT,
+            "language": BlockLanguage.ENGLISH,
+        },
+    )
+    print(block)
+
+    expected_output = {
+        "url": "http://example.com",
+        "document_title": "Test Article",
+        "section_title": "Test Section",
+        "content": "This is a test content.",
+        "last_edit_date": "2023-10-01",
+        "num_tokens": 0,
+        "block_metadata": {
+            "type": BlockType.TEXT,
+            "language": BlockLanguage.ENGLISH,
+        },
+    }
+
+    assert block.model_dump() == expected_output
+
+    reloaded_block = Block(**expected_output)
+    assert reloaded_block == block
+
+
+def test_to_json_missing_optional_fields():
+    block = Block(
+        document_title="Test Article",
+        section_title="Test Section",
+        content="This is a test content.",
+        block_metadata={"type": BlockType.TEXT},
+    )
+
+    expected_output = {
+        "url": None,
+        "document_title": "Test Article",
+        "section_title": "Test Section",
+        "content": "This is a test content.",
+        "last_edit_date": None,
+        "num_tokens": 0,
+        "block_metadata": {"type": BlockType.TEXT},
+    }
+
+    assert block.model_dump() == expected_output
+
+
+def test_block_valid_data():
+    data = {
+        "content": "This is a valid content.",
+        "document_title": "Valid Document",
+        "section_title": "Section",
+        "last_edit_date": "2023-01-01",
+        "url": "    http://example.com ",
+        "num_tokens": 6,
+        "block_metadata": {
+            "type": BlockType.TEXT,
+            "language": BlockLanguage.ENGLISH,
+        },
+    }
+    block = Block(**data)
+    assert block.content == data["content"]
+    assert block.document_title == data["document_title"]
+    assert block.section_title == data["section_title"]
+    assert block.full_title == data["document_title"] + " > " + data["section_title"]
+    assert block.last_edit_date == datetime(2023, 1, 1, 0, 0)
+    assert block.url == data["url"].strip()
+    assert block.num_tokens == data["num_tokens"]
+    assert block.block_metadata == data["block_metadata"]
+
+
+def test_block_swapped_date():
+    data = {
+        "content": "This is a valid content.",
+        "document_title": "Valid Document",
+        "section_title": "Section",
+        "last_edit_date": "2023-22-01",
+        "url": "http://example.com",
+        "num_tokens": 6,
+        "block_metadata": {
+            "type": BlockType.TEXT,
+            "language": BlockLanguage.ENGLISH,
+        },
+    }
+    with pytest.raises(
+        ValueError,
+    ):
+        Block(**data)
+
+
+def test_block_empty_content():
+    data = {
+        "content": "",
+        "document_title": "Valid Document",
+        "section_title": "Section",
+        "last_edit_date": "2023-01-01T12:00:00Z",
+        "url": "http://example.com",
+        "num_tokens": 6,
+        "block_metadata": {
+            "type": BlockType.TEXT,
+            "language": BlockLanguage.ENGLISH,
+        },
+    }
+    with pytest.raises(ValueError):
+        Block(**data)
+
+
+def test_block_invalid_last_edit_date():
+    data = {
+        "content": "This is a valid content.",
+        "document_title": "Valid Document",
+        "section_title": "Section",
+        "last_edit_date": "invalid-date",
+        "url": "http://example.com",
+        "num_tokens": 6,
+        "block_metadata": {
+            "type": BlockType.TEXT,
+            "language": BlockLanguage.ENGLISH,
+        },
+    }
+    with pytest.raises(
+        ValueError,
+    ):
+        Block(**data)
+
+
+def test_block_invalid_url():
+    data = {
+        "content": "This is a valid content.",
+        "document_title": "Valid Document",
+        "section_title": "Section",
+        "last_edit_date": "2023-01-01T12:00:00Z",
+        "url": "invalid-url",
+        "num_tokens": 6,
+        "block_metadata": {
+            "type": BlockType.TEXT,
+            "language": BlockLanguage.ENGLISH,
+        },
+    }
+    with pytest.raises(ValueError):
+        Block(**data)
+
+
+def test_block_empty_document_title():
+    data = {
+        "content": "This is a valid content.",
+        "document_title": "",
+        "section_title": "Section",
+        "last_edit_date": "2023-01-01T12:00:00Z",
+        "url": "http://example.com",
+        "num_tokens": 6,
+        "block_metadata": {
+            "type": BlockType.TEXT,
+            "language": BlockLanguage.ENGLISH,
+        },
+    }
+    with pytest.raises(
+        ValueError, match="`document_title` cannot be empty or just whitespace"
+    ):
+        Block(**data)
+
+
+def test_update_after_creation():
+    data = {
+        "content": "This is a valid content.",
+        "document_title": "Valid Document",
+        "section_title": "Valid Section",
+        "last_edit_date": "2023-01-01T12:00:00Z",
+        "url": "http://example.com",
+        "num_tokens": 6,
+        "block_metadata": {
+            "type": BlockType.TEXT,
+            "language": BlockLanguage.ENGLISH,
+        },
+    }
+    block = Block(**data)
+
+    with pytest.raises(
+        ValueError,
+        match="Invalid date format for `last_edit_date`: '2024'. It should be in the format YYYY-MM-DD or YYYY-MM-DDTHH:MM:SSZ",
+    ):
+        block.last_edit_date = "2024"
+
+
+def test_invalid_metadata_name():
+    data = {
+        "content": "This is a valid content.",
+        "document_title": "Valid Document",
+        "section_title": "Valid Section",
+        "last_edit_date": "2023-01-01T12:00:00Z",
+        "url": "http://example.com",
+        "num_tokens": 6,
+        "block_metadata": {
+            "url": "http://example.com",  # metadata cannot be named url
+        },
+    }
+    with pytest.raises(ValueError):
+        Block(**data)

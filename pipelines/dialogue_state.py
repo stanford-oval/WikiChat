@@ -1,150 +1,136 @@
-import json
-import operator
-from enum import Enum
-from typing import Annotated, Sequence, TypedDict
+import re
+from typing import Optional
 
-from pipelines.chatbot_config import ChatbotConfig
-from pipelines.retriever import RetrievalResult
+import tiktoken
+from pydantic import BaseModel, Field
 
-
-class SearchQuery:
-    text: str
-    time: str
-    retrieval_results: list[RetrievalResult]
-
-    def __init__(self, query: str, time: str):
-        self.text = query
-        self.time = time
-        self.retrieval_results = []
-
-    def to_dict(self):
-        return {
-            "text": self.text,
-            "time": self.time,
-            "retrieval_results": [r.__dict__ for r in self.retrieval_results],
-        }
-
-    def to_markdown(self):
-        # Chainlit can display Markdown with support for some HTML tags
-        return (
-            "<center><span style='font-weight:bold'> Query: "
-            + self.text
-            + "</span></center>"
-        )
+from retrieval.retrieval_commons import QueryResult, SearchResultBlock
 
 
-class DialogueTurn:
-    def __init__(
-        self,
-        agent_utterance: str = None,
-        user_utterance: str = None,
-        initial_search_query: SearchQuery = None,
-        turn_log: dict = None,
-    ):
-        self.agent_utterance = agent_utterance
-        self.user_utterance = user_utterance
-        self.initial_search_query = initial_search_query
-        self.turn_log = turn_log
-
-    def to_json(self) -> str:
-        return json.dumps(self.__dict__)
+tokenizer = tiktoken.encoding_for_model("gpt-4o")
 
 
-class ClaimLabel(str, Enum):  # subclassing `str` makes this JSON serializable
-    supported = "SUPPORTS"
-    refuted = "REFUTES"
-    nei = "NOT ENOUGH INFORMATION"
+def jaccard_similarity(tokens1: list[int], tokens2: list[int]) -> float:
+    """Compute Jaccard similarity between two tokenized strings"""
+    set1 = set(tokens1)
+    set2 = set(tokens2)
+
+    intersection = set1.intersection(set2)
+    union = set1.union(set2)
+
+    # Return the Jaccard similarity
+    return len(intersection) / len(union) if len(union) > 0 else 0
 
 
-class Claim(SearchQuery):
-    label: str
-    fixed_claim: ClaimLabel
+def deduplicate_search_results(
+    results: list[SearchResultBlock],
+) -> list[SearchResultBlock]:
+    tokenized_contents = tokenizer.encode_batch([r.content for r in results])
+    deduplicated_indices = []
+    for j in range(len(results)):
+        similarity = 0
+        for idx in deduplicated_indices:
+            similarity = max(
+                similarity,
+                jaccard_similarity(tokenized_contents[j], tokenized_contents[idx]),
+            )
+            if similarity > 0.8:
+                break
+        if similarity < 0.8:
+            deduplicated_indices.append(j)
+    deduplicated_results = [results[i] for i in deduplicated_indices]
+    # logger.info(
+    #     f"Before deduplication: {len(results)} results, after deduplication: {len(deduplicated_results)} results"
+    # )
+    assert len(deduplicated_results) <= len(results)
 
-    def __init__(self, claim: str, time: str):
-        super().__init__(query=claim, time=time)
-        self.label = ""
-        self.fixed_claim = ""
-
-    def to_dict(self) -> dict:
-        d = super().to_dict()
-        d["label"] = self.label
-        for r in d["retrieval_results"]:
-            if "content_summary" in r:
-                assert len(r["content_summary"]) == 0
-                del r[
-                    "content_summary"
-                ]  # claim retrieval results always have empty summaries
-        return d
-
-
-class Feedback:
-    string: str
-    scores: dict[str, float]
-
-    def __init__(self, string: str, scores: dict[str, float]):
-        self.string = string
-        self.scores = scores
-
-    def is_full_score(self) -> bool:
-        for criterion, score in self.scores.items():
-            if score < 100:
-                return False
-
-        return True
-
-    def to_dict(self):
-        return self.__dict__
-
-    def __repr__(self):
-        return json.dumps(self.to_dict(), indent=2, ensure_ascii=False)
+    return deduplicated_results
 
 
-class DialogueState(TypedDict):
-    # The dialogue history excluding the current turn
-    dialogue_history: Annotated[Sequence[DialogueTurn], operator.add]
+class DialogueTurn(BaseModel):
+    user_utterance: Optional[str] = None
+    search_query: list[str] = []
+    search_results: list[QueryResult] = []
+    llm_claims: list[str] = []
+    llm_claim_search_results: list[QueryResult] = []
+    filtered_search_results: list[SearchResultBlock] = []
+    draft_stage_output: Optional[str] = None
+    agent_utterance: Optional[str] = None
 
-    # For the current turn
-    chatbot_config: ChatbotConfig
-    new_agent_utterance: Annotated[str, operator.add]
-    new_user_utterance: Annotated[str, operator.add]
-    generate_stage_output: Annotated[str, operator.add]
-    generation_claims: Sequence[Claim]
-    draft_stage_output: Annotated[str, operator.add]
-    refine_stage_output: Annotated[str, operator.add]
-    initial_search_query: SearchQuery
-    feedback: Feedback
-    wall_time: str  # in seconds
+    # @model_validator(mode="after")
+    # def check_claims_and_results_length(cls, values):
+    #     # Access fields directly from the instance (values)
+    #     if len(values.llm_claims) != len(values.llm_claim_search_results):
+    #         raise ValueError(
+    #             "The number of claims must match the number of search results."
+    #         )
 
+    #     return values
 
-def state_to_dict(state: DialogueState):
-    """
-    This is defined outside of the DialogueState class because TypedDict classes cannot have methods
-    """
-    j = dict(state)  # copy
-    j["chatbot_config"] = j["chatbot_config"].model_dump()
-    if j["generation_claims"]:
-        j["generation_claims"] = [c.to_dict() for c in j["generation_claims"]]
-    for field in ["initial_search_query", "feedback"]:
-        if j[field]:
-            j[field] = j[field].to_dict()
+    @property
+    def all_single_search_results(self) -> list[SearchResultBlock]:
+        results = []
+        for r in self.search_results + self.llm_claim_search_results:
+            results.extend(r.results)
 
-    del j["dialogue_history"]
-
-    return j
+        return deduplicate_search_results(results)
 
 
-def state_to_string(state: DialogueState):
-    return json.dumps(
-        state_to_dict(state), indent=2, ensure_ascii=False, default=vars, sort_keys=True
+class ChatbotConfig(BaseModel):
+    """A configuration class for setting up a chatbot with various parameters."""
+
+    engine: str = Field(..., description="The LLM engine to use.")
+    do_refine: bool = Field(..., description="Whether to refine the final response.")
+    llm_corpus_description: str = Field(
+        ...,
+        description="The name and description of corpus to search for information, e.g. Multilingual Wikipedia.",
+    )
+    retriever_endpoint: str = Field(
+        ..., description="The endpoint to send retrieval requests to."
+    )
+    do_reranking: bool = Field(
+        ..., description="Whether we should rerank the search results."
+    )
+    query_pre_reranking_num: int = Field(
+        ...,
+        description="Number of passages to retrieve before reranking. Will have no effect if `do_reranking` is False.",
+    )
+    query_post_reranking_num: int = Field(
+        ...,
+        description="Number of passages to retrieve when searching for information.",
+    )
+    claim_pre_reranking_num: int = Field(
+        ...,
+        description="Number of evidences to retrieve per LLM claim before reranking. Will have no effect if `do_reranking` is False.",
+    )
+    claim_post_reranking_num: int = Field(
+        ..., description="Number of evidences to retrieve per claim."
     )
 
 
-def clear_current_turn(state: DialogueState):
-    state["new_agent_utterance"] = ""
-    state["new_user_utterance"] = ""
-    state["generate_stage_output"] = ""
-    state["generation_claims"] = []
-    state["draft_stage_output"] = ""
-    state["refine_stage_output"] = ""
-    state["initial_search_query"] = None
-    state["feedback"] = None
+class DialogueState(BaseModel):
+    """A class to represent the state of a dialogue with a chatbot."""
+
+    config: ChatbotConfig
+    turns: list[DialogueTurn]
+
+    @property
+    def current_turn(self) -> DialogueTurn:
+        return self.turns[-1]
+
+    def history(self, num_turns: int) -> str:
+        history = ""
+        for t in self.turns[:-1][-num_turns:]:
+            if t.user_utterance:
+                history += "User: " + t.user_utterance + "\n"
+            if t.agent_utterance:
+                history += "Chatbot: " + t.agent_utterance + "\n"
+        history += (
+            "User: " + self.current_turn.user_utterance
+        )  # current turn's user utterance
+
+        # remove all citations, otherwise, chatbot might try to recite them
+        citations = re.findall(r"\[\d+\]", history)
+        for citation in citations:
+            history = history.replace(citation, "")
+        return history

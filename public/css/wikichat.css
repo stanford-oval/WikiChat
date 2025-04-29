@@ -1,0 +1,44 @@
+/* Hide the logo at the top left of the page */
+img[alt="logo"] {
+    visibility: hidden;
+}
+
+/* Hide the chainlit logo from the bottom of the page */
+div.watermark {
+    visibility: hidden;
+}
+
+div.MuiAvatar-root.MuiAvatar-circular.css-m2icte {
+    height: 90px;
+    width: 90px;
+}
+
+img[height="20"] {
+    width: 45px;
+    height: 45px;
+}
+
+p.MuiTypography-root.MuiTypography-body1.css-i212uf {
+    overflow: visible;
+    text-align: center;
+}
+
+/* Hide the side bar */
+div.MuiBox-root.css-kjafn5 {
+    visibility: hidden;
+}
+
+/* Improve the starter icons */
+div.css-ptht6r{
+    flex-direction: row;
+    align-items: center;
+}
+
+span.MuiSkeleton-root.MuiSkeleton-text.MuiSkeleton-pulse {
+    display: none;
+}
+
+img[src$="/avatars/Steps"] {
+    display: none;
+}
+

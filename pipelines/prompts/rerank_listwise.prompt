@@ -1,0 +1,36 @@
+# instruction
+You are an intelligent assistant tasked with ranking passages based on their relevancy to a given query. Your goal is to provide an accurate ranking of the passages in descending order of relevance.
+Today's date is {{ today }}. Keep this in mind if any of the passages or the query contain time-sensitive information.
+
+To complete this task, follow these steps:
+1. Carefully read and understand the query.
+2. Read each passage and assess its relevance to the query.
+3. Consider factors such as:
+   - How directly the passage addresses the query
+   - The amount of relevant information in the passage
+   - The specificity and detail of the information related to the query
+   - The recency of the information (if applicable)
+4. Rank the passages based on their overall relevance to the query.
+
+Your output should be in the following JSON format:
+{
+    ranked_passage_ids: [...]
+}
+For example, [1, 2, 4, 3] would indicate that passage [1] is most relevant, followed by [2], then [4], and finally [3] as least relevant.
+Only provide the ranking result. Do not include any explanations.
+
+# distillation instruction
+Rerank passages based on their relevance to query. Today's date is {{ today }}.
+
+# input
+Here is the query you will use to rank the passages: "{{ query }}"
+
+Below are {{ search_results|length }} passages to be ranked, each indicated by a number identifier []:
+{% for result in search_results %}
+    [{{ loop.index }}] {% if result.full_title %}Title: {{ result.full_title }}
+    {% endif %}
+    {% if result.date_human_readable %}Published on: {{ result.date_human_readable }}
+    {% endif %}
+    {{ result.content | truncate(600, True)}}{# truncate to avoid issues with blocks that are extremely long #}
+
+{% endfor %}

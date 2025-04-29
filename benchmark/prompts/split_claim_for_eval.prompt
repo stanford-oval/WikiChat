@@ -1,7 +1,6 @@
 # instruction
 You are chatting with a user. Fact-check your response in the last turn of the conversation with a Google search. Do not fact-check opinions, or subjective personal experiences.
 Today's date is {{ today }}.
-What year do you want the search results to be? Enter "recent" if you are looking for the newest results. Enter "none" if the date is not important.
 
 
 # input
@@ -12,7 +11,7 @@ You: It was on February 5th last year.
 The claims in your last response:
 
 # output
-- The Chinese New Year in 2022 was on February 5th. The year of the claim is "2022".
+- The Chinese New Year in 2022 was on February 5th.
 
 
 
@@ -26,8 +25,8 @@ You: I'm not sure. I think it was conducted in the basement of Encina Hall, Stan
 The claims in your last response:
 
 # output
-- The Stanford Prison Experiment was conducted in the basement of Encina Hall. The year of the claim is "1971".
-- Encina Hall is Stanford's psychology building. The year of the claim is "none".
+- The Stanford Prison Experiment was conducted in the basement of Encina Hall.
+- Encina Hall is Stanford's psychology building.
 
 
 
@@ -50,7 +49,7 @@ You: The current format of the Finals involves 32 teams competing for the title,
 The claims in your last response:
 
 # output
-- The current format of the FIFA world cup Finals involves 32 teams competing for the title. The year of the claims is "recent"
+- The current format of the FIFA world cup Finals involves 32 teams competing for the title.
 - The current format of the FIFA world cup Finals takes place at venues within the host nation(s) and takes about a month.
 
 
@@ -72,9 +71,9 @@ You: Queen Elizabeth II is the current monarch of the United Kingdom and the Com
 The claims in your last response:
 
 # output
-- Queen Elizabeth II is the current monarch of the United Kingdom and the Commonwealth realms as of {{ today }}. The year of the results is "recent".
-- Queen Elizabeth II was born in 1926. The year of the claim is "1926".
-- Queen Elizabeth II became queen in 1952. The year of the claim is "1952".
+- Queen Elizabeth II is the current monarch of the United Kingdom and the Commonwealth realms as of {{ today }}.
+- Queen Elizabeth II was born in 1926.
+- Queen Elizabeth II became queen in 1952.
 
 
 
@@ -84,8 +83,8 @@ You: Your 9-year old would be fascinated to hear that the James Webb Space Teles
 The claims in your last response:
 
 # output
-- The James Webb Space Telescope has discovered farthest galaxies ever found. The year of the claim is "recent".
-- The James Webb Space Telescope discovered galaxies whose light took 13.4 billion years to reach the telescope, which is light that started its journey just 300 million years after the Big Bang. The year of the claim is "none".
+- The James Webb Space Telescope has discovered farthest galaxies ever found.
+- The James Webb Space Telescope discovered galaxies whose light took 13.4 billion years to reach the telescope, which is light that started its journey just 300 million years after the Big Bang.
 
 
 
@@ -97,9 +96,9 @@ You: That's a tough question! It's hard to pick just one, but some of the most p
 The claims in your last response:
 
 # output
-- "The Crown" is a popular TV drama of 2022. The year of the claim is "2022".
-- "The Boys" is a popular TV drama of 2022. The year of the claim is "2022".
-- "The Queen's Gambit" is a popular TV drama of 2022. The year of the claim is "2022".
+- "The Crown" is a popular TV drama of 2022.
+- "The Boys" is a popular TV drama of 2022.
+- "The Queen's Gambit" is a popular TV drama of 2022.
 
 
 
@@ -110,11 +109,11 @@ You: Yes, I have heard about "Everything Everywhere All at Once". It is a 2022 A
 The claims in your last response:
 
 # output
-- "Everything Everywhere All at Once" is a 2022 American absurdist comedy-drama film. The year of the claim is "2022".
-- "Everything Everywhere All at Once" is directed by the Daniels. The year of the claim is "2022".
-- "Everything Everywhere All at Once" is produced by Anthony and Joe Russo. The year of the claim is "2022".
-- Michelle Yeoh plays the role of a Chinese-American immigrant in "Everything Everywhere All at Once". The year of the claim is "2022".
-- "Everything Everywhere All at Once" received critical acclaim. The year of the claim is "2022".
+- "Everything Everywhere All at Once" is a 2022 American absurdist comedy-drama film.
+- "Everything Everywhere All at Once" is directed by the Daniels.
+- "Everything Everywhere All at Once" is produced by Anthony and Joe Russo.
+- Michelle Yeoh plays the role of a Chinese-American immigrant in "Everything Everywhere All at Once".
+- "Everything Everywhere All at Once" received critical acclaim.
 
 
 

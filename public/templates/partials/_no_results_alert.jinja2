@@ -1,0 +1,19 @@
+{% if empty_result %}
+<div id="no-results-alert"
+     class="alert alert-warning shadow-lg w-full max-w-3xl mx-auto my-4 fixed top-0 left-1/2 transform -translate-x-1/2 z-50">
+    <div class="flex-1">
+        <svg xmlns="http://www.w3.org/2000/svg"
+             class="stroke-current flex-shrink-0 h-6 w-6"
+             fill="none"
+             viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 18h.01M21 12c0 4.418-3.582 8-8 8s-8-3.582-8-8 3.582-8 8 8z" />
+        </svg>
+        <span>No relevant results found. Please try a different query.</span>
+    </div>
+    <div class="flex-none">
+        <button id="close-banner" class="btn btn-sm btn-outline btn-info-content">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+</div>
+{% endif %}

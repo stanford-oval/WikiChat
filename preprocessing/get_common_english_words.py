@@ -1,8 +1,9 @@
+import requests
+from bs4 import BeautifulSoup
+
 word_frequency_page = (
     "https://en.wiktionary.org/wiki/Wiktionary:Frequency_lists/English/Wikipedia_(2016)"
 )
-import requests
-from bs4 import BeautifulSoup
 
 word_list = []
 
