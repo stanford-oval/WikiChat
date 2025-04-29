@@ -2,6 +2,7 @@
 # Whether to enable telemetry (default: true). No personal data is collected.
 enable_telemetry = false
 
+
 # List of environment variables to be provided by each user to use the app.
 user_env = []
 
@@ -18,9 +19,6 @@ allow_origins = ["*"]
 # follow_symlink = false
 
 [features]
-# Show the prompt playground
-prompt_playground = false
-
 # Process and display HTML in messages. This can be a security risk (see https://stackoverflow.com/questions/19603097/why-is-it-dangerous-to-render-user-generated-html-or-javascript)
 unsafe_allow_html = true
 
@@ -29,6 +27,9 @@ latex = false
 
 # Automatically tag threads with the current chat profile (if a chat profile is used)
 auto_tag_thread = true
+
+# Allow users to edit their own messages
+edit_message = false
 
 # Authorize users to spontaneously upload files with messages
 [features.spontaneous_file_upload]
@@ -52,34 +53,28 @@ auto_tag_thread = true
     sample_rate = 44100
 
 [UI]
-# Name of the app and chatbot.
+# Name of the assistant.
 name = "WikiChat"
 
-# Show the readme while the thread is empty.
-show_readme_as_default = false
-
-# Description of the app and chatbot. This is used for HTML tags.
+# Description of the assistant. This is used for HTML tags.
 description = "WikiChat is an experimental chatbot that improves the factuality of large language models by retrieving data from Wikipedia."
 
 # Large size content are by default collapsed for a cleaner ui
 default_collapse_content = true
 
-# The default value for the expand messages settings.
-default_expand_messages = false
-
-# Hide the chain of thought details from the user in the UI.
-hide_cot = false
+# Chain of Thought (CoT) display mode. Can be "hidden", "tool_call" or "full".
+cot = "full"
 
 # Link to your github repo. This will add a github button in the UI's header.
 github = "https://github.com/stanford-oval/WikiChat"
 
 # Specify a CSS file that can be used to customize the user interface.
 # The CSS file can be served from the public directory or via an external link.
-custom_css = "/public/stylesheet.css"
+custom_css = "/public/css/wikichat.css"
 
 # Specify a Javascript file that can be used to customize the user interface.
 # The Javascript file can be served from the public directory.
-# custom_js = "/public/test.js"
+custom_js = "/public/js/wikichat.js"
 
 # Specify a custom font url.
 # custom_font = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap"
@@ -93,29 +88,34 @@ custom_meta_image_url = "https://wikichat.genie.stanford.edu/logo?theme=light"
 # custom_build = "./public/build"
 
 [UI.theme]
+    default = "light"
     layout = "wide"
     #font_family = "Inter, sans-serif"
 # Override default MUI light theme. (Check theme.ts)
 [UI.theme.light]
-    background = "#F7F7F7"  # An ultra-light grey for the background, almost white but still soft
-    paper = "#F0F0F0"       # A very light grey for paper elements, subtly different from the background
+    #background = "#FAFAFA"
+    #paper = "#FFFFFF"
 
     [UI.theme.light.primary]
-        main = "#26A69A"    # A slightly lighter teal for primary elements, still vibrant and noticeable
-        dark = "#00897B"    # A rich teal for strong contrast and emphasis, complementary to the lighter greys
-        light = "#B2DFDB"   # A soft, muted teal for hover and active states, blending well with the lighter theme
-
+        #main = "#F80061"
+        #dark = "#980039"
+        #light = "#FFE7EB"
+    [UI.theme.light.text]
+        #primary = "#212121"
+        #secondary = "#616161"
 
 # Override default MUI dark theme. (Check theme.ts)
 [UI.theme.dark]
-    background = "#121212"  # A deep grey, almost black, to serve as the primary background color
-    paper = "#1E1E1E"       # A slightly lighter shade of grey for paper elements like cards, modals, etc.
+    #background = "#FAFAFA"
+    #paper = "#FFFFFF"
 
     [UI.theme.dark.primary]
-        main = "#26A69A"    # Teal remains the primary color for interactive elements, vibrant against the dark
-        dark = "#00796B"    # A dark teal for pressed states or lower-tier action items
-        light = "#4DB6AC"   # A lighter teal for hover and focus states, ensuring good visibility
-
+        #main = "#F80061"
+        #dark = "#980039"
+        #light = "#FFE7EB"
+    [UI.theme.dark.text]
+        #primary = "#EEEEEE"
+        #secondary = "#BDBDBD"
 
 [meta]
-generated_by = "1.1.202"
+generated_by = "1.2.0"

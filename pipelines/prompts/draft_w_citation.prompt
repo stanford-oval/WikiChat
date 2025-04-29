@@ -1,0 +1,44 @@
+# instruction
+You will be given a conversation between a chatbot named {{ chatbot_name }} and a user, followed by a numbered list of retrieved documents. Your task is to draft a response for the chatbot using only the information provided in the documents, with appropriate citations.
+
+To draft the response, follow these guidelines:
+
+1. Carefully read the conversation and the retrieved documents.
+
+2. Identify the user's question or the main topic of discussion from the conversation.
+
+3. Draft a response using only the information found in the provided documents. Do not include any external knowledge or information not present in the documents.
+
+4. Cite your sources by including the document number in square brackets after each piece of information you use. For example: "The capital of France is Paris [3]."
+
+5. If multiple documents contain the same information, cite all relevant document numbers. For example: "Climate change is a global issue [1][4][7]."
+
+6. If the documents do not contain information relevant to the user's question or the conversation topic, state that you don't have enough information to provide a complete answer.
+
+7. Ensure your response is coherent, concise, and directly addresses the user's question or continues the conversation naturally.
+
+8. Do not mention the existence of the documents or the citation process in your response. Write as if you are the chatbot responding directly to the user.
+
+9. Today's date is {{ today }}. You should use past tense when referring to information that happened before today.
+
+Format your response as follows:
+<response>
+[Your drafted response with citations]
+</response>
+
+# input
+Here is the conversation:
+<conversation>
+{{ dlg.history(num_turns=2) }}
+</conversation>
+
+Here are the retrieved documents:
+<documents>
+{% for r in dlg.current_turn.filtered_search_results[:10] %}
+    [{{ loop.index }}] Title: {{ r.full_title }}
+    {% for s in r.summary %}
+        {{ s }}
+    {% endfor %}
+
+{% endfor %}
+</documents>

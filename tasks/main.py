@@ -1,16 +1,14 @@
 import os
 
 import redis
-from invoke import task
+from invoke.tasks import task
 
-from pipelines.utils import get_logger
+from utils.logging import logger
 from tasks.defaults import (
     CHATBOT_DEFAULT_CONFIG,
     DEFAULT_BACKEND_PORT,
     DEFAULT_REDIS_PORT,
 )
-
-logger = get_logger(__name__)
 
 
 @task
@@ -37,12 +35,11 @@ def load_api_keys(c):
                     key, value = tuple(line.split("=", 1))
                     key, value = key.strip(), value.strip()
                     os.environ[key] = value
-                    logger.debug("Loaded API key named %s", key)
+                    logger.debug(f"Loaded API key named {key}")
 
     except Exception as e:
         logger.error(
-            "Error while loading API keys from API_KEY. Make sure this file exists, and has the correct format. %s",
-            str(e),
+            f"Error while loading API keys from API_KEY. Make sure this file exists, and has the correct format. {str(e)}"
         )
 
 
@@ -64,7 +61,9 @@ def start_redis(c, redis_port: int = DEFAULT_REDIS_PORT):
         r.ping()
     except redis.exceptions.ConnectionError:
         logger.info("Redis server not found, starting it now...")
-        c.run(f"redis-server --port {redis_port} --daemonize yes")
+        c.run(
+            f"docker run --rm -d --name redis-stack -p {redis_port}:6379 -p 8001:8001 redis/redis-stack:latest"
+        )
         return
 
     logger.debug("Redis server is already running.")
@@ -78,15 +77,16 @@ def start_backend(c, backend_port=DEFAULT_BACKEND_PORT):
 
 @task(pre=[load_api_keys, start_redis], aliases=["test"])
 def tests(c):
-    """Run tests using pytest"""
+    """Run tests using pytest (stop after first failure)"""
     c.run(
-        "pytest "
+        "pytest -x "
         "-rP "
         "--color=yes "
         "--disable-warnings "
         "./tests/test_pipelines.py "
         "./tests/test_wikipedia_preprocessing.py "
-        "./tests/test_retriever.py ",
+        "./tests/test_search_query.py "
+        "./tests/test_custom_docling.py ",
         pty=True,
     )
 
@@ -95,89 +95,54 @@ def tests(c):
 def demo(
     c,
     engine=CHATBOT_DEFAULT_CONFIG["engine"],
-    pipeline=CHATBOT_DEFAULT_CONFIG["pipeline"],
-    temperature=CHATBOT_DEFAULT_CONFIG["temperature"],
-    top_p=CHATBOT_DEFAULT_CONFIG["top_p"],
-    retriever_endpoint=CHATBOT_DEFAULT_CONFIG["retriever_endpoint"],
-    skip_verification=CHATBOT_DEFAULT_CONFIG["skip_verification"],
-    skip_query=CHATBOT_DEFAULT_CONFIG["skip_query"],
-    fuse_claim_splitting=CHATBOT_DEFAULT_CONFIG["fuse_claim_splitting"],
     do_refine=CHATBOT_DEFAULT_CONFIG["do_refine"],
-    generation_prompt=CHATBOT_DEFAULT_CONFIG["generation_prompt"],
-    refinement_prompt=CHATBOT_DEFAULT_CONFIG["refinement_prompt"],
-    draft_prompt=CHATBOT_DEFAULT_CONFIG["draft_prompt"],
-    retrieval_num=CHATBOT_DEFAULT_CONFIG["retrieval_num"],
-    retrieval_reranking_method=CHATBOT_DEFAULT_CONFIG["retrieval_reranking_method"],
-    retrieval_reranking_num=CHATBOT_DEFAULT_CONFIG["retrieval_reranking_num"],
-    evi_num=CHATBOT_DEFAULT_CONFIG["evi_num"],
-    evidence_reranking_method=CHATBOT_DEFAULT_CONFIG["evidence_reranking_method"],
-    evidence_reranking_num=CHATBOT_DEFAULT_CONFIG["evidence_reranking_num"],
-    generate_engine=CHATBOT_DEFAULT_CONFIG["generate_engine"],
-    draft_engine=CHATBOT_DEFAULT_CONFIG["draft_engine"],
-    refine_engine=CHATBOT_DEFAULT_CONFIG["refine_engine"],
+    query_post_reranking_num=CHATBOT_DEFAULT_CONFIG["query_post_reranking_num"],
+    do_reranking=CHATBOT_DEFAULT_CONFIG["do_reranking"],
+    query_pre_reranking_num=CHATBOT_DEFAULT_CONFIG["query_pre_reranking_num"],
+    claim_post_reranking_num=CHATBOT_DEFAULT_CONFIG["claim_post_reranking_num"],
+    claim_pre_reranking_num=CHATBOT_DEFAULT_CONFIG["claim_pre_reranking_num"],
+    corpus_id=CHATBOT_DEFAULT_CONFIG["corpus_id"],
 ):
     """
     Start a chatbot with the specified configurations, to interact with using the terminal.
 
     Parameters:
     - c: Context from invoke task.
-    - pipeline: Defines the pipeline to use for processing queries. One of: generate_and_correct, retrieve_and_generate, generate, retrieve_only, early_combine
     - engine: specifies the AI model to use.
-    - temperature: Controls randomness in generation for user-facing stages. 0 means greedy decoding.
-    - top_p: Top-p sampling for user-facing stages, high values (close to 1.0) mean more diversity.
-    - retriever_endpoint: The URL and port number to use for the retriever server.
-    - skip_verification: Skips the step of verifying claims (if applicable) and counts all claims as SUPPORTED.
-    - skip_query: Skips generating a query, and instead uses the user utterance as the query.
-    - fuse_claim_splitting: Determines if claim splitting should be fused with the `generate` stage, meaning that in the generate stage, the model outputs claims in bullet point format.
     - do_refine: Enables refining answers given by the chatbot.
-    - generation_prompt: Template file for the generation stage's prompt
-    - refinement_prompt: Template file for the refinement stage's prompt.
-    - draft_prompt: Template file for the draft stage's prompt.
-    - retrieval_reranking_num: Number of documents to be fed to the re-ranker.
-    - retrieval_reranking_method: Method to use for re-ranking retrieved documents.
-    - retrieval_num: Number of documents to initially retrieve.
-    - evidence_reranking_num: Number of evidences to be fed to the re-ranker for each claim.
-    - evidence_reranking_method: Method for re-ranking evidence documents. One of "none", "llm" or "date"
-    - evi_num: Number of evidences to consider for each sub-claim, after re-ranking is done.
-    - generate_engine, draft_engine, refine_engine: Optionally specify different AI models for different stages.
+    - query_pre_reranking_num: Number of documents to be fed to the re-ranker.
+    - do_reranking: Whether to do reranking for retrieved documents.
+    - query_post_reranking_num: Number of documents to retrieve.
+    - claim_pre_reranking_num: Number of evidences to be fed to the re-ranker for each claim.
+    - claim_post_reranking_num: Number of evidences to consider for each sub-claim, after reranking is done.
+    - corpus_id: The ID of the corpus to use.
     """
 
     pipeline_flags = (
-        f"--pipeline {pipeline} "
         f"--engine {engine} "
-        f"--claim_prompt split_claims.prompt "
-        f"--generation_prompt {generation_prompt} "
-        f"--refinement_prompt {refinement_prompt} "
-        f"--draft_prompt {draft_prompt} "
-        f"--retriever_endpoint {retriever_endpoint} "
-        f"--retrieval_num {retrieval_num} "
-        f"--retrieval_reranking_method {retrieval_reranking_method} "
-        f"--retrieval_reranking_num {retrieval_reranking_num} "
-        f"--evi_num {evi_num} "
-        f"--evidence_reranking_method {evidence_reranking_method} "
-        f"--evidence_reranking_num {evidence_reranking_num} "
-        f"--temperature {temperature} "
-        f"--top_p {top_p} "
+        f"--query_post_reranking_num {query_post_reranking_num} "
+        f"--query_pre_reranking_num {query_pre_reranking_num} "
+        f"--claim_post_reranking_num {claim_post_reranking_num} "
+        f"--claim_pre_reranking_num {claim_pre_reranking_num} "
+        f'--corpus_id "{corpus_id}" '
     )
-
-    if generate_engine:
-        pipeline_flags += f"--generate_engine {generate_engine} "
-    if draft_engine:
-        pipeline_flags += f"--draft_engine {draft_engine} "
-    if refine_engine:
-        pipeline_flags += f"--refine_engine {refine_engine} "
 
     boolean_pipeline_arguments = {
         "do_refine": do_refine,
-        "skip_verification": skip_verification,
-        "skip_query": skip_query,
-        "fuse_claim_splitting": fuse_claim_splitting,
+        "do_reranking": do_reranking,
     }
 
     for arg, enabled in boolean_pipeline_arguments.items():
         if enabled:
             pipeline_flags += f"--{arg} "
 
-    command = f"python command_line_chatbot.py {pipeline_flags}"
+    command = f"python -m command_line_chatbot {pipeline_flags}"
 
-    c.run(command)
+    c.run(command, pty=True)
+
+
+@task
+def format_code(c):
+    """Format code using black and isort, excluding folders that start with a dot"""
+    c.run("ruff format . --exclude '.*'", pty=True)
+    c.run("ruff check . --exclude '.*' --fix", pty=True)

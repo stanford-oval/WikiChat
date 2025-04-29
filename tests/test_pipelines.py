@@ -1,13 +1,15 @@
 import argparse
+import re
 import sys
 from typing import Callable
 
 import pytest
+from chainlite import write_prompt_logs_to_file
 
 sys.path.insert(0, "./")
-from backend_server import chat_profiles_dict
-from pipelines.chatbot import create_chain, run_one_turn
-from pipelines.dialogue_state import DialogueState
+from corpora import all_corpus_objects
+from pipelines.chatbot import create_chain
+from pipelines.dialogue_state import DialogueTurn
 from pipelines.pipeline_arguments import (
     add_pipeline_arguments,
     check_pipeline_arguments,
@@ -17,15 +19,15 @@ from tasks.defaults import CHATBOT_DEFAULT_CONFIG
 
 test_user_utterances = [
     "Hi",  # a turn that doesn't need retrieval
-    "Tell me about Yōko Ogawa",  # a turn that needs retrieval
-    "what is her latest book?",  # a turn that depends on the last turn
+    "Tell me about Jane Austen",  # a turn that needs retrieval
+    "what was her first book?",  # a turn that depends on the last turn
     "list all Blue Eye Samurai episodes",  # a turn that requires accessing Wikipedia tables
 ]
 
 
 async def pipeline_test_template(
     extra_arguments: dict,
-    pipeline_specific_assertions: Callable[[DialogueState, str], None],
+    pipeline_specific_assertions: Callable[[DialogueTurn, int], None] = None,
 ):
     parser = argparse.ArgumentParser()
     add_pipeline_arguments(parser)
@@ -39,121 +41,77 @@ async def pipeline_test_template(
     chatbot, dialogue_state = create_chain(args)
 
     output_agent_utterances = []
-    initial_search_queries = []
+    filtered_search_queries = []
 
     for turn_id in range(3):
         new_user_utterance = test_user_utterances[turn_id]
-        new_agent_utterance, dialogue_state = await run_one_turn(
-            chatbot, dialogue_state, new_user_utterance
-        )
+        dialogue_state.turns.append(DialogueTurn(user_utterance=new_user_utterance))
+        await chatbot.ainvoke(dialogue_state)
 
-        # print("=" * 40 + f"\nTurn {turn_id+1}\n" + state_to_string(dialogue_state))
-
+        current_turn = dialogue_state.current_turn
         # Specific assertions for each pipeline
-        pipeline_specific_assertions(dialogue_state, new_agent_utterance)
+        if pipeline_specific_assertions:
+            pipeline_specific_assertions(current_turn, turn_id)
 
         # Same for all pipelines
-        assert dialogue_state["new_user_utterance"] == new_user_utterance
-        assert new_agent_utterance
-        assert len(dialogue_state["dialogue_history"]) == turn_id + 1
+        assert current_turn.user_utterance == new_user_utterance
+        assert current_turn.agent_utterance
+        assert len(dialogue_state.turns) == turn_id + 1
+        assert len(current_turn.search_query) == len(current_turn.search_results)
+        assert len(current_turn.llm_claims) == len(
+            current_turn.llm_claim_search_results
+        )
+
+        # test that the dialogue history is carried over correctly
         if turn_id > 0:
-            previous_turn = dialogue_state["dialogue_history"][
-                -2
-            ]  # -1 is the current turn
+            previous_turn = dialogue_state.turns[-2]  # -1 is the current turn
             assert previous_turn.agent_utterance == output_agent_utterances[-1]
             assert previous_turn.user_utterance == test_user_utterances[turn_id - 1]
             assert (
-                previous_turn.initial_search_query
-                == initial_search_queries[turn_id - 1]
+                previous_turn.filtered_search_results
+                == filtered_search_queries[turn_id - 1]
             )
 
-        output_agent_utterances.append(new_agent_utterance)
-        initial_search_queries.append(dialogue_state["initial_search_query"])
+        output_agent_utterances.append(current_turn.agent_utterance)
+        filtered_search_queries.append(current_turn.filtered_search_results)
 
 
 @pytest.mark.asyncio(scope="session")
-async def test_generate_pipeline():
-    def pipeline_specific_assertions(
-        dialogue_state: DialogueState, new_agent_utterance: str
-    ):
-        assert not dialogue_state["draft_stage_output"]
-        assert dialogue_state["refine_stage_output"]
-        assert new_agent_utterance == dialogue_state["refine_stage_output"]
+async def test_no_refine_pipeline():
+    def pipeline_specific_assertions(dialogue_turn: DialogueTurn, turn_id: int) -> None:
+        assert dialogue_turn.draft_stage_output
+        assert dialogue_turn.agent_utterance
+
+        draft_citations = re.findall(r"\[\d+\]", dialogue_turn.agent_utterance)
+        agent_utterance_citations = re.findall(
+            r"\[\d+\]", dialogue_turn.agent_utterance
+        )
+        assert len(draft_citations) == len(agent_utterance_citations)
+
+        draft_without_citations = re.sub(
+            r"\[\d+\]", "", dialogue_turn.draft_stage_output
+        )
+        agent_utterance_without_citations = re.sub(
+            r"\[\d+\]", "", dialogue_turn.agent_utterance
+        )
+        assert (
+            draft_without_citations == agent_utterance_without_citations
+        )  # because we don't have a refine stage in this test
+
+        # We put these tests in a custom test function because other tests might use non-Wikipedia search corpora, for which the LLM might decide no to search at all
+        if turn_id == 0:
+            # turn 0 doesn't need retrieval, all other turns do
+            # We have already checked that the length of query and results are the same, so we only need to check one here
+            assert not dialogue_turn.search_query
+            assert not dialogue_turn.llm_claims
+            assert not dialogue_turn.filtered_search_results
+        else:
+            assert dialogue_turn.search_query
+            assert dialogue_turn.llm_claims
+            assert dialogue_turn.filtered_search_results
 
     await pipeline_test_template(
-        {
-            "pipeline": "generate",
-            "do_refine": True,
-            "fuse_claim_splitting": False,
-            "generation_prompt": "generate.prompt",
-            "refinement_prompt": "refine_w_feedback.prompt",
-        },
-        pipeline_specific_assertions,
-    )
-
-
-@pytest.mark.asyncio(scope="session")
-async def test_retrieve_and_generate_pipeline():
-    def pipeline_specific_assertions(
-        dialogue_state: DialogueState, new_agent_utterance: str
-    ):
-        assert dialogue_state["draft_stage_output"]
-        assert dialogue_state["refine_stage_output"]
-        assert new_agent_utterance == dialogue_state["refine_stage_output"]
-        assert not dialogue_state["generate_stage_output"]
-        assert not dialogue_state["generation_claims"]
-
-    await pipeline_test_template(
-        {
-            "pipeline": "retrieve_and_generate",
-            "do_refine": True,
-            "fuse_claim_splitting": False,
-            "generation_prompt": "generate.prompt",
-            "refinement_prompt": "refine_w_feedback.prompt",
-        },
-        pipeline_specific_assertions,
-    )
-
-
-@pytest.mark.asyncio(scope="session")
-async def test_distilled_pipeline():
-    def pipeline_specific_assertions(
-        dialogue_state: DialogueState, new_agent_utterance: str
-    ):
-        assert dialogue_state["draft_stage_output"]
-        assert not dialogue_state["refine_stage_output"]
-        assert new_agent_utterance == dialogue_state["draft_stage_output"]
-        assert dialogue_state["generate_stage_output"]
-
-    await pipeline_test_template(
-        {
-            "pipeline": "early_combine",
-            "do_refine": False,
-            "engine": "gpt-35-turbo-finetuned",
-            "fuse_claim_splitting": True,
-            "retrieval_reranking_method": "date",
-            "retrieval_reranking_num": 9,
-            "generation_prompt": "generate.prompt",
-            "refinement_prompt": "refine_w_feedback.prompt",
-        },
-        pipeline_specific_assertions,
-    )
-
-
-@pytest.mark.asyncio(scope="session")
-async def test_early_combine_pipeline():
-    def pipeline_specific_assertions(
-        dialogue_state: DialogueState, new_agent_utterance: str
-    ):
-        assert dialogue_state["draft_stage_output"]
-        assert not dialogue_state["refine_stage_output"]
-        assert new_agent_utterance == dialogue_state["draft_stage_output"]
-        assert dialogue_state["generate_stage_output"]
-        # assert not dialogue_state["generation_claims"]
-        assert dialogue_state["generate_stage_output"]
-
-    await pipeline_test_template(
-        {"pipeline": "early_combine", "do_refine": False},
+        {"do_refine": False},
         pipeline_specific_assertions,
     )
 
@@ -163,14 +121,13 @@ async def test_chatbot_profiles():
     """
     We just run the chatbot profiles used in the demo to make sure they don't crash
     """
-
-    def pipeline_specific_assertions(
-        dialogue_state: DialogueState, new_agent_utterance: str
-    ):
-        pass
-
-    for chat_profile in chat_profiles_dict:
+    for co in all_corpus_objects:
         await pipeline_test_template(
-            chat_profiles_dict[chat_profile]["overwritten_parameters"],
-            pipeline_specific_assertions,
+            co.overwritten_parameters,
         )
+
+
+@pytest.fixture(scope="session", autouse=True)
+def run_after_tests():
+    yield
+    write_prompt_logs_to_file()
