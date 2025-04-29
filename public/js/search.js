@@ -56,7 +56,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (words.length === 0) return snippet;
         const escapedWords = words.map(word => escapeRegExp(word));
         const regex = new RegExp(`\\b(${escapedWords.join('|')})\\b`, 'gi');
-        return snippet.replace(regex, '<mark class="bg-yellow-100">$1</mark>');
+        const highlightedSnippet = snippet.replace(regex, '<mark class="bg-yellow-100">$1</mark>');
+        return highlightedSnippet;
     }
 
     if (typeof window.toggleMetadata !== 'function') {
