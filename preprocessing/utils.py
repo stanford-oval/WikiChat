@@ -1,27 +1,25 @@
 import asyncio
+import os
 import sys
 from time import time
 from urllib.parse import quote
 
 import aiohttp
 import numpy as np
-import orjsonl
-from matplotlib import pyplot as plt
-from tqdm import tqdm, trange
+import pandas as pd
+import pyarrow as pa
+import pyarrow.parquet as pq
+from tqdm import trange
 from tqdm.contrib.logging import logging_redirect_tqdm
-from transformers import AutoTokenizer
+from transformers.models.auto.tokenization_auto import AutoTokenizer
+from retrieval.embedding_model_info import embedding_model_to_parameters
 
 sys.path.insert(0, "./")
-from pipelines.utils import get_logger
+from tasks.defaults import DEFAULT_EMBEDDING_MODEL_NAME
+from utils.logging import logger
 
-logger = get_logger(__name__)
 
-# Mapping for all languages to English. E.g. global_translation_map["fa"] is a dictionary of Farsi -> English translations
-# values can be the empty string "", which means we have already looked up the translations in Wikidata, but did not find the English translation
-# this is different from the case that the key is absent, which means we have never looked up that translation in Wikidata
-global_translation_map = {}
-
-tokenizer = AutoTokenizer.from_pretrained("BAAI/bge-m3", fast=True)
+tokenizer = None  # load when needed
 translation_prefix = "(in English: "
 
 
@@ -39,27 +37,31 @@ def extract_english_translations(text):
 
     translations = []
     i = 0
-    while True:
-        # Detect the start of a potential translation
-        i = text.find(translation_prefix, i)
-        if i < 0:
-            break
-        start_index = i
-        stack = []
-        stack.append("(")
-        i += len(translation_prefix)
+    try:
         while True:
-            if text[i] == "(":
-                stack.append(text[i])
-            elif text[i] == ")" and stack:
-                stack.pop()
-                # If the stack is empty, we've found a complete translation
-                if not stack:
-                    end_index = i + 1  # Include the closing parenthesis
-                    break
-            i += 1
-        translations.append(text[start_index:end_index])
-        i = end_index
+            # Detect the start of a potential translation
+            i = text.find(translation_prefix, i)
+            if i < 0:
+                break
+            start_index = i
+            stack = []
+            stack.append("(")
+            i += len(translation_prefix)
+            while True:
+                if text[i] == "(":
+                    stack.append(text[i])
+                elif text[i] == ")" and stack:
+                    stack.pop()
+                    # If the stack is empty, we've found a complete translation
+                    if not stack:
+                        end_index = i + 1  # Include the closing parenthesis
+                        break
+                i += 1
+            translations.append(text[start_index:end_index])
+            i = end_index
+    except IndexError:
+        # this can happen if we truncate section_title too short
+        logger.warning(f"Error while extracting English translations from text {text}")
 
     return translations
 
@@ -86,70 +88,111 @@ def replace_except_first(s, old, new):
 
 
 def get_from_translation_map(
-    source_language: str, entity: str, inverse_redirection_map: dict = {}
+    entity: str, inverse_redirection_map: dict, global_translation_map: dict
 ):
-    global global_translation_map
-    if source_language not in global_translation_map:
-        return None
-    if entity not in global_translation_map[source_language] and (
+    if entity not in global_translation_map and (
         entity not in inverse_redirection_map
-        or inverse_redirection_map[entity]
-        not in global_translation_map[source_language]
+        or inverse_redirection_map[entity] not in global_translation_map
     ):
         return None
-    if (
-        entity in global_translation_map[source_language]
-        and global_translation_map[source_language][entity] is not None
-    ):
-        return global_translation_map[source_language][entity]
+    if entity in global_translation_map and global_translation_map[entity] is not None:
+        return global_translation_map[entity]
     else:
-        return global_translation_map[source_language][
-            inverse_redirection_map[entity]
-        ]
+        return global_translation_map[inverse_redirection_map[entity]]
 
 
-def load_translation_map(file_name: str):
-    global global_translation_map
+def load_translation_map(parquet_dataset_dir: str, language: str) -> dict:
     try:
-        for language in tqdm(
-            orjsonl.stream(file_name), desc="Loading translation map", smoothing=0
-        ):
-            global_translation_map[language["language"]] = language["translations"]
-    except FileNotFoundError as e:
-        logger.warning(
-            "Could not find the Wikidata translation map file at %s. Initializing the translation map as an empty dictionary.",
-            file_name,
+        # Read the Parquet dataset, applying a filter for the 'language' partition
+        table = pq.read_table(
+            parquet_dataset_dir,
+            filters=[("language", "=", language)],
         )
-        global_translation_map = {}
+
+        # Extract the 'translation_key' and 'translation_value' columns directly from the PyArrow table
+        translation_keys = table.column("translation_key").to_pylist()
+        translation_values = table.column("translation_value").to_pylist()
+
+        # Build the dictionary directly from the PyArrow columns
+        translation_map = dict(zip(translation_keys, translation_values))
+
+        # Log the number of translations loaded
+        logger.info(
+            f"Loaded {len(translation_map):,} Wikidata entity translations for language {language}"
+        )
+    except FileNotFoundError:
+        logger.warning(
+            f"Could not find the Wikidata translation map file at '{parquet_dataset_dir}'. Initializing the translation map as an empty dict."
+        )
+        translation_map = {}
+    return translation_map
 
 
-def save_translation_map(file_name: str):
-    global global_translation_map
-    orjsonl.save(
-        file_name,
-        tqdm(
-            [
-                {
-                    "language": language,
-                    "translations": global_translation_map[language],
-                }
-                for language in global_translation_map
-            ],
-            desc="Saving translation map",
-            smoothing=0,
-        ),
-        compression_format="gz",
+def append_to_translation_map(parquet_dataset_dir: str, new_rows: list[dict]):
+    """
+    Appends new translation rows to the existing translation map in a Parquet dataset.
+    It doesn't deduplicate the new rows against the old rows due to efficiency reasons.
+    However, when we load the translation map, we use the newest row for each translation_key.
+    """
+    # Convert the list of dictionaries to a PyArrow Table
+    logger.info(
+        f"Saving {len(new_rows)} new translation rows to '{parquet_dataset_dir}'"
     )
 
+    # Convert the new rows to a pandas DataFrame and remove duplicates based on language and translation_key columns
+    new_df = (
+        pd.DataFrame(new_rows)
+        .drop_duplicates(subset=["language", "translation_key"])
+        .reset_index(drop=True)
+    )
 
-async def get_wikidata_english_name(article_title: str, session, language: str):
+    # Convert the DataFrame to a PyArrow Table
+    new_table = pa.Table.from_pandas(new_df)
+
+    try:
+        # Check if the dataset directory exists
+        if os.path.exists(parquet_dataset_dir):
+            logger.info(
+                f"Appending new rows to the existing Parquet dataset at '{parquet_dataset_dir}'"
+            )
+        else:
+            logger.info(f"Creating a new Parquet dataset at '{parquet_dataset_dir}'")
+
+        # Write the new rows to the Parquet dataset, partitioned by the 'language' column
+        pq.write_to_dataset(
+            new_table,
+            root_path=parquet_dataset_dir,
+            partition_cols=["language"],
+            use_dictionary=True,  # Use dictionary encoding for efficiency
+            compression="snappy",  # Use snappy compression for efficient storage
+        )
+
+        logger.info("Successfully appended new translation rows to the Parquet dataset")
+
+    except Exception as e:
+        logger.warning(f"Failed to save translation map to '{parquet_dataset_dir}'")
+        logger.exception(e)
+
+
+async def get_wikidata_english_name(
+    document_title: str, session, language: str, global_translation_map: dict
+):
     """
     Returns
         (english_name: str, new_translation_dict: dict)
     """
-    global global_translation_map
-    if get_from_translation_map(language, article_title) is not None:
-        return get_from_translation_map(language, article_title), {}
+    if (
+        get_from_translation_map(
+            document_title, {}, global_translation_map=global_translation_map
+        )
+        is not None
+    ):
+        return (
+            get_from_translation_map(
+                document_title, {}, global_translation_map=global_translation_map
+            ),
+            {},
+        )
     try:
         # the API expects a user agent
         # labels cover more entity-languages, but are sometimes ambiguous. Therefore, we give priority to sitelinks and fallback to labels if needed.
@@ -158,7 +201,7 @@ async def get_wikidata_english_name(article_title: str, session, language: str):
             f"action=wbgetentities&"
             f"normalize=0&"
             f"sites={language}wiki&"
-            f"titles={quote(article_title, safe='')}&"
+            f"titles={quote(document_title, safe='')}&"
             f"format=json&"
             f"props=sitelinks|labels"  # sitelinks are Wikipedia pages in other languages, lables are Entity translations
         )
@@ -195,10 +238,9 @@ async def get_wikidata_english_name(article_title: str, session, language: str):
             english_locale = None
             if "labels" not in wikidata_entity:
                 logger.debug(
-                    "Did not find any labels in the Wikidata entry %s",
-                    str(wikidata_entity),
+                    f"Did not find any labels in the Wikidata entry {wikidata_entity}"
                 )
-                return None, {language: {article_title: ""}}
+                return None, {language: {document_title: ""}}
 
             if "en" in sitelink_dict:
                 english_name = sitelink_dict["en"]
@@ -211,10 +253,9 @@ async def get_wikidata_english_name(article_title: str, session, language: str):
                     english_locale = "en-ca"
                 else:
                     logger.debug(
-                        "Did not find any English labels in Wikidata for %s",
-                        article_title,
+                        f"Did not find any English labels in Wikidata for {document_title}"
                     )
-                    return None, {language: {article_title: ""}}
+                    return None, {language: {document_title: ""}}
                 english_name = wikidata_entity["labels"][english_locale]["value"]
 
             new_translation_dict = {}
@@ -223,8 +264,8 @@ async def get_wikidata_english_name(article_title: str, session, language: str):
             )
 
             # No need to include these in the translation map
-            for l in ["en", "en-gb", "en-ca", "commons", "simple"]:
-                set_of_available_languages.discard(l)
+            for lang in ["en", "en-gb", "en-ca", "commons", "simple"]:
+                set_of_available_languages.discard(lang)
 
             for lang in set_of_available_languages:
                 if lang in sitelink_dict:
@@ -238,62 +279,79 @@ async def get_wikidata_english_name(article_title: str, session, language: str):
             if language not in new_translation_dict:
                 # this sometimes happens due to the Wikidata entry being incomplete
                 new_translation_dict[language] = {}
-            new_translation_dict[language][article_title] = english_name
+            new_translation_dict[language][document_title] = english_name
 
             return english_name, new_translation_dict
     except Exception as e:
         logger.warning(
-            "Unable to get entry for article '%s' due to error",
-            article_title,
+            f"Unable to get entry for article '{document_title}' due to error"
         )
         logger.exception(e)
-        return -1, {language: {article_title: ""}}
+        return -1, {language: {document_title: ""}}
 
 
-async def batch_get_wikidata_english_name(article_titles: list[str], language: str):
-    global global_translation_map
+async def batch_get_wikidata_english_name(
+    document_titles: list[str],
+    language: str,
+    wikidata_translation_map_path: str,
+    global_translation_map: dict,
+):
+    new_translation_rows = []
     async with aiohttp.ClientSession() as session:
         with logging_redirect_tqdm():
             minibatch_size = 100  # The wikipedia API only allows 100 requests per second, so we batch the requests.
             for i in trange(
                 0,
-                len(article_titles),
+                len(document_titles),
                 minibatch_size,
                 desc="Getting Wikidata entries",
                 smoothing=0,
                 unit="Batch",
             ):
                 start_time = time()
-                batch = article_titles[i : min(len(article_titles), i + minibatch_size)]
+                batch = document_titles[
+                    i : min(len(document_titles), i + minibatch_size)
+                ]
                 ret = await asyncio.gather(
                     *[
-                        get_wikidata_english_name(article_title, session, language)
-                        for article_title in batch
+                        get_wikidata_english_name(
+                            document_title, session, language, global_translation_map
+                        )
+                        for document_title in batch
                     ]
                 )  # ret is a list of tuples
 
                 # convert to two lists
                 batch_english_names, batch_new_translation_dicts = tuple(zip(*ret))
-                batch_english_names, batch_new_translation_dicts = list(
-                    batch_english_names
-                ), list(batch_new_translation_dicts)
+                batch_english_names, batch_new_translation_dicts = (
+                    list(batch_english_names),
+                    list(batch_new_translation_dicts),
+                )
 
                 if -1 in batch_english_names:
                     logger.debug("Reached the Wikidata rate limit. Will wait longer.")
-                    # -1 is used to signal a rate limit. wait for longer if we get an rate limit error
+                    # -1 is used to signal a rate limit. wait for longer if we get a rate limit error
                     await asyncio.sleep(2)
 
                 # Add to the global translation dictionary
                 for translation_dict in batch_new_translation_dicts:
                     for lang in translation_dict.keys():
-                        if lang not in global_translation_map:
-                            global_translation_map[lang] = {}
                         for k, v in translation_dict[lang].items():
-                            global_translation_map[lang][k] = v
+                            new_translation_rows.append(
+                                {
+                                    "language": lang,
+                                    "translation_key": k,
+                                    "translation_value": v,
+                                },
+                            )
                 time_passed = time() - start_time
                 time_to_wait = 1.1 - time_passed
                 if time_to_wait > 0:
                     await asyncio.sleep(time_to_wait)
+
+    append_to_translation_map(
+        parquet_dataset_dir=wikidata_translation_map_path, new_rows=new_translation_rows
+    )
 
 
 def print_histogram(data):
@@ -314,7 +372,18 @@ def print_histogram(data):
         logger.info(f"{bin_:<20}: ({count})")
 
 
+def remove_all_extensions(file_path):
+    base_name = file_path
+    while True:
+        base_name, ext = os.path.splitext(base_name)
+        if not ext:
+            break
+    return base_name
+
+
 def draw_and_save_histogram_log_bins(data, filename: str) -> None:
+    import matplotlib.pyplot as plt
+
     # Create logarithmically spaced bins
     bins = np.logspace(np.log10(min(data)), np.log10(max(data)), num=5000)
 
@@ -327,18 +396,38 @@ def draw_and_save_histogram_log_bins(data, filename: str) -> None:
     plt.xlabel("Passage Length (tokens)")
     plt.ylabel("Frequency (%)")
 
-    context_length = 8192  # for BAAI/bge-m3
-    # Draw a vertical line at x=context_length
+    context_length = embedding_model_to_parameters[DEFAULT_EMBEDDING_MODEL_NAME][
+        "max_sequence_length"
+    ]  # Draw a vertical line at x=context_length
     plt.axvline(x=context_length, color="red", linestyle="--", linewidth=1, alpha=0.5)
 
     # Label the line without rotating the label
     plt.text(
         context_length,
         max(plt.ylim()) * 0.85,
-        "BAAI/bge-m3\ncontext length",
+        f"{DEFAULT_EMBEDDING_MODEL_NAME}\ncontext length",
         color="red",
         ha="center",
     )
+    median = np.median(data)
+    plt.axvline(x=median, color="orange", linestyle="--", linewidth=1, alpha=0.5)
+    plt.text(
+        median,
+        max(plt.ylim()) * 0.75,
+        f"Median: {int(median)}",
+        color="orange",
+        ha="center",
+    )
+    percentile_99 = np.percentile(data, 99)
+    plt.axvline(x=percentile_99, color="green", linestyle="--", linewidth=1, alpha=0.5)
+    plt.text(
+        percentile_99,
+        max(plt.ylim()) * 0.65,
+        f"99th Percentile: {int(percentile_99)}",
+        color="green",
+        ha="center",
+    )
+    filename = remove_all_extensions(filename) + "_histogram.png"
     plt.savefig(filename)
 
 
@@ -374,5 +463,64 @@ def find_forest_roots_and_members(incoming_edges):
         trees[root] = find_tree_members(root, incoming_edges)
     return trees
 
-def num_tokens(text: str) -> int:
+
+def get_num_tokens(text: str) -> int:
+    global tokenizer
+    if not tokenizer:
+        tokenizer = AutoTokenizer.from_pretrained(
+            DEFAULT_EMBEDDING_MODEL_NAME, fast=True
+        )
     return len(tokenizer(text)["input_ids"])
+
+
+def batch_get_num_tokens(texts: list[str]) -> list[int]:
+    global tokenizer
+    if not tokenizer:
+        tokenizer = AutoTokenizer.from_pretrained(
+            DEFAULT_EMBEDDING_MODEL_NAME, fast=True
+        )
+    tokenized_texts = tokenizer(
+        texts, padding=False, truncation=False, return_length=True
+    )
+    return tokenized_texts["length"]
+
+
+def pack_blocks(blocks: list, pack_to_tokens: int) -> list:
+    """
+    This function concatenates consecutive Blocks from the same document with the same `section_title`
+    as long as their combined length does not exceed `pack_to_tokens` tokens.
+    """
+    if not blocks:
+        return []
+
+    assert all(
+        block.document_title == blocks[0].document_title for block in blocks
+    ), "All blocks must have the same document_title"
+
+    packed_blocks = []
+    current_block = blocks[0]
+
+    current_block.num_tokens = get_num_tokens(current_block.combined_text)
+    for next_block in blocks[1:]:
+        # Check if the next block has the exact same section title and does not exceed the character limit
+        num_tokens_after_merge = current_block.num_tokens + get_num_tokens(
+            "\n" + next_block.content
+        )
+        if (
+            next_block.section_title == current_block.section_title
+            and num_tokens_after_merge < pack_to_tokens
+        ):
+            current_block.content += (
+                " " + next_block.content
+            )  # Concatenate blocks with a space in between
+            current_block.num_tokens = num_tokens_after_merge
+        else:
+            # Once a block reaches the limit or a new title is found, append the current state and move on
+            packed_blocks.append(current_block)
+            current_block = next_block
+            current_block.num_tokens = get_num_tokens(current_block.combined_text)
+
+    # Adding the last accumulated paragraph
+    packed_blocks.append(current_block)
+
+    return packed_blocks

@@ -1,98 +1,86 @@
 # instruction
-You are chatting with a person. Search Wikipedia for information to form your response. You are both located in {{ location[:-1] if location.endswith('.') else location }}.
-- What should the search query be?
-- What date do you want the search results to be? Enter "recent" if you are looking for the newest results. Enter "none" if the date is not important.
-Today's date is {{ today }}.
-Here are a few examples:
+You are an AI assistant designed to provide helpful information to users. You have access to corpus of information, and you need to determine what, if any, information is relevant to the user's information needs.
+You are located in {{ location[:-1] if location.endswith('.') else location }}. Today's date is {{ today }}.
+
+When a user asks a question or makes a statement, follow these steps:
+
+1. Analyze the user's input to determine if a search of the corpus is necessary.
+2. If a search is needed, formulate appropriate search queries (consider multiple if relevant).
+3. Consider how the location and date information might be relevant to the response.
+
+Respond in the following format:
+
+<search_query>
+[The search query or queries to be used to search the corpus. If multiple queries are needed, separate them with a newline. If no search is needed, say "None".]
+</search_query>
 
 
 # distillation instruction
 What should you search? Today's date is {{ today }}.
 
-{# Note: "recent" means recent results are better. "2023" means the user specifically want the year to match 2023 #}
-{# we extract just the year for now. If needed, we can expand this to month and day as well. #}
+
+# input
+Corpus: Multilingual Wikipedia.
+User: do you know yoko ono?
+Chatbot: Yes, I know who Yoko Ono is. She is a Japanese American musician who has released 14 studio albums and won a Grammy Award. She is also the 11th most successful dance club artist of all time, according to Billboard Magazine. Ono is best known for her work with the Plastic Ono Band and for her album Starpeace.
+User: was she related to the beatles?
+Chatbot: Yes, she was married to John Lennon of the Beatles.
+User: really? why do people hate her so much?
+
+# output
+<search_query>
+Reasons people dislike Yoko Ono, the wife of John Lennon
+</search_query>
 
 
 # input
-Person: do you know yoko ono?
-Is it helpful to search Wikipedia? Yes. You search "who is yoko ono?". The year of the results is "none".
-You: Yes, I know who Yoko Ono is. She is a Japanese American musician who has released 14 studio albums and won a Grammy Award. She is also the 11th most successful dance club artist of all time, according to Billboard Magazine. Ono is best known for her work with the Plastic Ono Band and for her album Starpeace.
-Person: was she related to the beatles?
-Is it helpful to search Wikipedia? Yes. You search "was Yoko Ono related to the Beatles?". The year of the results is "none".
-You: Yes, she was married to John Lennon of the Beatles.
-Person: really? why do people hate her so much?
-Is it helpful to search Wikipedia?
+Corpus: Multilingual Wikipedia.
+User: Who made you?
 
 # output
-Yes. You search "reasons people dislike Yoko Ono". The year of the results is "none".
+<search_query>
+None
+</search_query>
 
 
 # input
-Person: Did you see how Brock Purdy was was drafted to NFL last year?
-Is it helpful to search Wikipedia?
+Corpus: Multilingual Wikipedia.
+User: Tell me about Murakami.
+Chatbot: Murakami is a Japanese author. He is best known for his novels Norwegian Wood, The Wind-Up Bird Chronicle, Kafka on the Shore, and 1Q84.
+User: I meant the baseball player.
 
 # output
-Yes. You search "how was Brock Purdy was drafted to NFL in 2023?". The year of the results is "2023".
+<search_query>
+who is Murakami the baseball player?
+村上という野球選手は誰ですか？
+</search_query>
 
 
 # input
-Person: Who made you?
-Is it helpful to search Wikipedia?
+Corpus: Multilingual Wikipedia.
+User: آیا فیلم شکسپیر عاشق را دیده ای؟
+Chatbot: بله، می دانستی که جایزهٔ اسکار بهترین فیلم را گرفته؟
+User: بله. آیا فیلم را دوست داشتی؟
 
 # output
-No.
+<search_query>
+نظرات درباره شکسپیر عاشق فیلم سال ۱٩٩٨
+</search_query>
 
 
 # input
-Person: Tell me about Murakami.
-Is it helpful to search Wikipedia? Yes. You search "who is Murakami?". The year of the results is "none".
-You: Murakami is a Japanese author. He is best known for his novels Norwegian Wood, The Wind-Up Bird Chronicle, Kafka on the Shore, and 1Q84.
-Person: I meant the baseball player.
-Is it helpful to search Wikipedia?
+Corpus: The African Times, a newspaper published in the late 19th century by correspondences from the global African diaspora.
+User: What was the role of women in West Africa during the 19th century?
 
 # output
-Yes. You search "who is Murakami the baseball player?". The year of the results is "none".
-
-
-# input
-Person: آیا فیلم شکسپیر عاشق را دیده ای؟
-Is it helpful to search Wikipedia? Yes. You search "شکسپیر عاشق فیلم سال ۱٩٩٨". The year of the results is "1998".
-You: بله، می دانستی که جایزهٔ اسکار بهترین فیلم را گرفته؟
-Person: بله. آیا فیلم را دوست داشتی؟
-Is it helpful to search Wikipedia?
-
-# output
-Yes. You search "نظرات درباره شکسپیر عاشق فیلم سال ۱٩٩٨". The year of the results is "none".
-
-
-# input
-Person: What new discoveries from James Webb Space telescope can I tell my 9 year old about?
-Is it helpful to search Wikipedia? Yes. You search "new discoveries from James Webb Space telescope for kids". The year of the results is "recent".
-You: Your 9-year old would be fascinated to hear that the James Webb Space Telescope has discovered farthest galaxies ever found. It has found galaxies so far away that it took 13.4 billion years for their lights to reach the telescope. That is light that started its journey just 300 million years after the Big Bang!
-Person: what is big bang?
-Is it helpful to search Wikipedia? Yes. You search "what is big bang of the universe?". The year of the results is "none".
-You: The Big Bang is the explosion that created our universe. The universe was filled with hot, dense, nearly homogeneous particles. As the universe expanded and cooled, particles, then nuclei, and finally atoms formed.
-Person: what else can I tell my child about?
-Is it helpful to search Wikipedia? Yes. You search "things about James Webb Space telescope other than the discovery of galaxies". The year of the results is "none".
-You: The James Webb Space telescope is named after James E. Webb, who was the administrator of NASA from 1961 to 1968 during the Mercury, Gemini, and Apollo programs.
-Person: what else did he do?
-Is it helpful to search Wikipedia?
-
-# output
-Yes. You search "what did James E. Webb do besides being the administrator of NASA?". The year of the results is "none".
+<search_query>
+women in West Africa in the 19th century
+women education in West Africa in the 19th century
+women rights in West Africa in the 19th century
+</search_query>
 
 
 {# The history of the conversation excluding the current turn. User starts first. #}
 # input
-{% for dlg_turn in dlg[-3:] %}
-    Person: {{ dlg_turn.user_utterance }}
-    {% if dlg_turn.initial_search_query is not none %}
-        Is it helpful to search Wikipedia? Yes. You search "{{ dlg_turn.initial_search_query.text }}". The year of the results is "{{ dlg_turn.initial_search_query.time }}".
-    {% else %}
-        {# including a "No" could bias subsequent turns to not search either. #}
-        {# Is it helpful to search? No. #}
-    {% endif %}
-    You: {{ dlg_turn.agent_utterance }}
-{% endfor %}
-Person: {{ new_user_utterance }}
-Is it helpful to search Wikipedia?{{' Yes. ' if force_search}}
+Corpus: {{ llm_corpus_description }}
+{{ dlg.history(num_turns=1) }}

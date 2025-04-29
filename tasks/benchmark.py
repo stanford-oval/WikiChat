@@ -2,7 +2,7 @@
 Benchmarking dialogue factual accuracy in the WikiChat paper
 """
 
-from invoke import task
+from invoke.tasks import task
 
 from tasks.defaults import CHATBOT_DEFAULT_CONFIG
 from tasks.main import load_api_keys
@@ -22,26 +22,15 @@ def simulate_users(
     user_temperature=1.0,
     # pipeline parameters:
     engine=CHATBOT_DEFAULT_CONFIG["engine"],
-    pipeline=CHATBOT_DEFAULT_CONFIG["pipeline"],
-    temperature=CHATBOT_DEFAULT_CONFIG["temperature"],
-    top_p=CHATBOT_DEFAULT_CONFIG["top_p"],
-    retriever_endpoint=CHATBOT_DEFAULT_CONFIG["retriever_endpoint"],
-    skip_verification=CHATBOT_DEFAULT_CONFIG["skip_verification"],
-    skip_query=CHATBOT_DEFAULT_CONFIG["skip_query"],
-    fuse_claim_splitting=CHATBOT_DEFAULT_CONFIG["fuse_claim_splitting"],
+    retriever_endpoint=CHATBOT_DEFAULT_CONFIG[
+        "retriever_endpoint"
+    ],  # TODO use corpus_id instead
     do_refine=CHATBOT_DEFAULT_CONFIG["do_refine"],
-    generation_prompt=CHATBOT_DEFAULT_CONFIG["generation_prompt"],
-    refinement_prompt=CHATBOT_DEFAULT_CONFIG["refinement_prompt"],
-    draft_prompt=CHATBOT_DEFAULT_CONFIG["draft_prompt"],
-    retrieval_num=CHATBOT_DEFAULT_CONFIG["retrieval_num"],
-    retrieval_reranking_method=CHATBOT_DEFAULT_CONFIG["retrieval_reranking_method"],
-    retrieval_reranking_num=CHATBOT_DEFAULT_CONFIG["retrieval_reranking_num"],
-    evi_num=CHATBOT_DEFAULT_CONFIG["evi_num"],
-    evidence_reranking_method=CHATBOT_DEFAULT_CONFIG["evidence_reranking_method"],
-    evidence_reranking_num=CHATBOT_DEFAULT_CONFIG["evidence_reranking_num"],
-    generate_engine=CHATBOT_DEFAULT_CONFIG["generate_engine"],
-    draft_engine=CHATBOT_DEFAULT_CONFIG["draft_engine"],
-    refine_engine=CHATBOT_DEFAULT_CONFIG["refine_engine"],
+    query_post_reranking_num=CHATBOT_DEFAULT_CONFIG["query_post_reranking_num"],
+    do_reranking=CHATBOT_DEFAULT_CONFIG["do_reranking"],
+    query_pre_reranking_num=CHATBOT_DEFAULT_CONFIG["query_pre_reranking_num"],
+    claim_post_reranking_num=CHATBOT_DEFAULT_CONFIG["claim_post_reranking_num"],
+    claim_pre_reranking_num=CHATBOT_DEFAULT_CONFIG["claim_pre_reranking_num"],
 ):
     """
     Simulate user dialogues with a chatbot using specified parameters.
@@ -53,44 +42,26 @@ def simulate_users(
         raise ValueError("Specify at least one --language and one --subset")
 
     pipeline_flags = (
-        f"--pipeline {pipeline} "
         f"--engine {engine} "
-        f"--claim_prompt split_claims.prompt "
-        f"--generation_prompt {generation_prompt} "
-        f"--refinement_prompt {refinement_prompt} "
-        f"--draft_prompt {draft_prompt} "
         f"--retriever_endpoint {retriever_endpoint} "
-        f"--retrieval_num {retrieval_num} "
-        f"--retrieval_reranking_method {retrieval_reranking_method} "
-        f"--retrieval_reranking_num {retrieval_reranking_num} "
-        f"--evi_num {evi_num} "
-        f"--evidence_reranking_method {evidence_reranking_method} "
-        f"--evidence_reranking_num {evidence_reranking_num} "
-        f"--temperature {temperature} "
-        f"--top_p {top_p} "
+        f"--query_post_reranking_num {query_post_reranking_num} "
+        f"--query_pre_reranking_num {query_pre_reranking_num} "
+        f"--claim_post_reranking_num {claim_post_reranking_num} "
+        f"--claim_pre_reranking_num {claim_pre_reranking_num} "
     )
-    if generate_engine:
-        pipeline_flags += f"--generate_engine {generate_engine} "
-    if draft_engine:
-        pipeline_flags += f"--draft_engine {draft_engine} "
-    if refine_engine:
-        pipeline_flags += f"--refine_engine {refine_engine} "
-
     boolean_pipeline_arguments = {
         "do_refine": do_refine,
-        "skip_verification": skip_verification,
-        "skip_query": skip_query,
-        "fuse_claim_splitting": fuse_claim_splitting,
+        "do_reranking": do_reranking,
     }
 
     for arg, enabled in boolean_pipeline_arguments.items():
         if enabled:
             pipeline_flags += f"--{arg} "
 
-    for l in language:
+    for lang in language:
         for s in subset:
             if not input_file:
-                input_file = f"{s}_articles_{l}.json"
+                input_file = f"{s}_articles_{lang}.json"
 
             c.run(
                 f"python benchmark/user_simulator.py {pipeline_flags} "
@@ -100,8 +71,8 @@ def simulate_users(
                 f"--mode {simulation_mode} "
                 f"--input_file benchmark/topics/{input_file} "
                 f"--num_turns {num_turns} "
-                f"--output_file benchmark/simulated_dialogues/{pipeline}_{s}_{l}_{engine}.txt "
-                f"--language {l} "
+                f"--output_file benchmark/simulated_dialogues/{s}_{lang}_{engine}.txt "
+                f"--language {lang} "
                 f"--no_logging"
             )
 

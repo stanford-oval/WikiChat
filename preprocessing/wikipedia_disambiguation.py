@@ -9,25 +9,137 @@ import re
 
 # used in titles to denote disambiguation pages
 # e.g. 'Football_(disambiguation)'
-# TODO add more languages
+
+disambiguation_indicator_in_titles = (
+    [
+        "disambigua",  # it
+        "消歧義",  # zh
+        "значения",  # ru
+        "dubbelsinnig",  # af
+        "այլ կիրառումներ",  # hy
+        "ujednoznacznienie",  # pl
+    ]
+    + [  # These are obtained from translations of https://en.wikipedia.org/wiki/Wikipedia:Disambiguation in 114 languages (then deduplicated). Might not be actually what is used in individual article's titles
+        "Dubbelsinnigheid",
+        "Pachina de desambigación",
+        "توضيح",
+        "দ্ব্যৰ্থতা দূৰীকৰণ",
+        "Páxina de dixebra",
+        "Dəqiqləşdirmə",
+        "دقیقلشدیرمه",
+        "Күп мәғәнәлелек",
+        "Begriffsklearung",
+        "Неадназначнасць",
+        "Неадназначнасьць",
+        "Пояснителна страница",
+        "बहुअर्थी-शब्द स्पष्टीकरण",
+        "দ্ব্যর্থতা নিরসন",
+        "Disheñvelout",
+        "Pàgina de desambiguació",
+        "Чолхалла",
+        "Mga pulong nga may labaw pa sa usa ka kahulogan",
+        "ڕوونکردنەوە",
+        "Rozcestníky",
+        "Gwahaniaethu",
+        "Flertydige titler",
+        "Begriffsklärung",
+        "Αποσαφήνιση",
+        "Ambigüedad en títulos",
+        "Täpsustuslehekülg",
+        "Argipen orri",
+        "ابهام‌زدایی",
+        "Täsmennyssivu",
+        "Homonymie",
+        "Homónimos",
+        "સંદિગ્ધ શીર્ષક",
+        "Reddaghey",
+        "פירושונים",
+        "बहुविकल्पी शब्द",
+        "Razdvojba",
+        "Wjacezmyslnosć",
+        "Egyértelműsítő lapok",
+        "Բազմիմաստության փարատում",
+        "Disambiguation",
+        "Disambiguasi",
+        "Panangilawlawag",
+        "Массехк маӀан хилар",
+        "Homonimo",
+        "Aðgreiningarsíður",
+        "曖昧さ回避",
+        "Dhisambiguasi",
+        "მრავალმნიშვნელოვანი",
+        "Айрық",
+        "អសង្ស័យកម្ម",
+        "ದ್ವಂದ್ವ ನಿವಾರಣೆ",
+        "동음이의어 문서",
+        "Watt ėßß mėd „(Watt ėßß datt?)“-Sigge?",
+        "Discretiva",
+        "Homonymie",
+        "Verdudelikingspazjena",
+        "Nuorodiniai straipsniai",
+        "Nozīmju atdalīšana",
+        "Disambiguasi",
+        "Лама смусть",
+        "Појаснување",
+        "വിവക്ഷകൾ",
+        "Disambiguation",
+        "Nyahkekaburan",
+        "Zambiguaçon",
+        "گجگجی بیتن",
+        "Mehrdüdig Begreep",
+        "अस्पष्ट पृष्ठहरू",
+        "Doorverwijspagina",
+        "Fleirtyding",
+        "Flertydige titler",
+        "Frouque",
+        "Strona ujednoznaczniająca",
+        "Ròbe parej",
+        "څومانيز",
+        "Desambiguação",
+        "Dudalipen",
+        "Dezambiguizare",
+        "Неоднозначность",
+        "Disambiguazzioni",
+        "سلجھائپ",
+        "Razvrstavanje",
+        "බහුරුත්හරණය",
+        "Disambiguation",
+        "Rozlišovacia stránka",
+        "Razločitev",
+        "Kthjellime",
+        "Вишезначна одредница",
+        "Begriepskloorenge",
+        "Disambiguasi",
+        "Särskiljning",
+        "Ujednoznaczńajůnco zajta",
+        "பக்கவழி நெறிப்படுத்தல்",
+        "అయోమయ నివృత్తి",
+        "Ибҳомзудоӣ",
+        "การแก้ความกำกวม",
+        "Paglilinaw",
+        "Anlam ayrımı",
+        "Күп мәгънәле мәкаләләр",
+        "Омонимия",
+        "Неоднозначність",
+        "ضد ابہام",
+        "Định hướng",
+        "Telplänov",
+        "Omonimeye",
+        "分清爽",
+        "באדייטן",
+        "Deurverwiespagina",
+        "消歧义",
+        "指津辨義",
+        "Khu-pia̍t",
+        "搞清楚",
+    ]
+)
 disambiguation_indicator_in_titles = [
-    "disambiguation",  # en
-    "homonymie",  # fr
-    "توضيح",  # ar
-    "desambiguação",  # pt
-    "Begriffsklärung",  # de
-    "disambigua",  # it
-    "曖昧さ回避",  # ja
-    "消歧義",  # zh
-    "搞清楚",  # zh-yue
-    "значения",  # ru
-    "ابهام‌زدایی",  # fa
-    "د ابہام",  # ur
-    "동음이의",  # ko
-    "dubbelsinnig",  # af
-    "այլ կիրառումներ",  # hy
-    "ujednoznacznienie",  # pl
-]
+    i.lower() for i in disambiguation_indicator_in_titles
+]  # disambiguation indicators in titles are often lowercase
+disambiguation_indicator_in_titles = list(
+    set(disambiguation_indicator_in_titles)
+)  # deduplicate
 
 multilingual_disambiguation_templates = {
     "dab",  # en
@@ -309,6 +421,7 @@ not_disambiguation_templates = {
 
 # TODO add more languages to this regex
 may_also_refer_to_regex = re.compile(r". may (also )?refer to\b", re.IGNORECASE)
+# Regex to detect disambiguation indicators in the title
 in_title_regex = re.compile(
     r". \((" + "|".join(disambiguation_indicator_in_titles) + r")\)$", re.IGNORECASE
 )

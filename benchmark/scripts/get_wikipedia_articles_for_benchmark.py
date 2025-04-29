@@ -13,9 +13,7 @@ from tqdm import tqdm, trange
 from tqdm.contrib.logging import logging_redirect_tqdm
 
 sys.path.insert(0, "./")
-from pipelines.utils import get_logger
-
-logger = get_logger(__name__)
+from utils.logging import logger
 
 
 def load_collection(collection_path: str, max_articles: int = None):
@@ -23,14 +21,14 @@ def load_collection(collection_path: str, max_articles: int = None):
     for line in tqdm(orjsonl.stream(collection_path), desc="Loading collection"):
         if (
             line["block_type"] != "text"
-            or line["article_title"] in all_wiki_titles_intros
+            or line["document_title"] in all_wiki_titles_intros
         ):
             continue
-        title = line["article_title"]
-        all_wiki_titles_intros[title] = line["content_string"]
+        title = line["document_title"]
+        all_wiki_titles_intros[title] = line["content"]
         if len(all_wiki_titles_intros) == max_articles:
             break
-    logger.info("Loaded %d articles from collection", len(all_wiki_titles_intros))
+    logger.info(f"Loaded {len(all_wiki_titles_intros)} articles from collection")
 
     return all_wiki_titles_intros
 
@@ -58,7 +56,7 @@ def get_most_edited_wikipedia_articles(language: str, all_wiki_titles_intros):
     most_edited_titles.extend(get_most_edited_wikipedia_titles(language, "2024", "03"))
     most_edited_titles.extend(get_most_edited_wikipedia_titles(language, "2024", "04"))
 
-    logger.info("most_edited_titles = %s", str(most_edited_titles))
+    logger.info(f"most_edited_titles = {most_edited_titles}")
 
     most_edited_titles_intros = {}
     for title in most_edited_titles:
@@ -67,12 +65,10 @@ def get_most_edited_wikipedia_articles(language: str, all_wiki_titles_intros):
         if title in all_wiki_titles_intros:
             most_edited_titles_intros[title] = all_wiki_titles_intros[title]
         else:
-            logger.info("Missing article in collection: %s", title)
+            logger.info(f"Missing article in collection: {title}")
 
     logger.info(
-        "Found %d articles out of %d",
-        len(most_edited_titles_intros),
-        len(most_edited_titles),
+        f"Found {len(most_edited_titles_intros)} articles out of {len(most_edited_titles)}"
     )
     return most_edited_titles_intros
 
@@ -96,9 +92,7 @@ async def get_total_views(article: str, session, end_date: str, language: str):
             views = [item["views"] for item in results]
             return sum(views)
     except Exception as e:
-        logger.error(
-            "Unable to get views for request '%s' due to error %s.", url, str(e)
-        )
+        logger.error(f"Unable to get views for request '{url}' due to error {str(e)}.")
         return -1
 
 

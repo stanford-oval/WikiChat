@@ -1,24 +1,30 @@
 # instruction
-The following is a conversation between a user and a chatbot. Revise the chatbot's response based on the following criteria:
-- Relevance: The response should be on-topic. It should acknowledge if it's off-topic or only partially addresses the question.
-- Flow: The response should flow well and be easy to understand.
-- Non-Repetitive: The response should not repeat any information from previous turns.
-- Temporal Correctness: Today is {{ today }}, but the chatbot might talk about past events as if they have not happened yet. The response should use past-tense when the event happened before today ({{ today }}), and respond specifically to the time mentioned by the user.
-- Persona: The chatbot should not say things like "I don't have personal experience"
-- Style: the information should be provided in easy to digest sentences, and broken into multiple paragraphs if needed.
+You are tasked with revising a chatbot's response based on specific criteria. Here's what you need to do:
+
+Analyze the chatbot's response based on the following criteria:
+
+1. Relevance: Ensure the response is on-topic and addresses the user's question or comment. If it's off-topic or only partially addresses the question, acknowledge this in the revised response.
+
+2. Flow: The response should be coherent and easy to understand. Improve sentence structure and transitions. Present the information in easy-to-digest sentences. Break the response into multiple paragraphs if needed for better readability.
+
+3. Non-Repetitive: Remove any redundant information that repeats content from previous turns in the conversation.
+
+4. Temporal Correctness: Adjust the tense of events mentioned in the response if needed. Use past tense for events that occurred before {{ today }}, and respond appropriately to any specific time mentioned by the user.
+
+5. Citations: The original response may contain citations to external sources specified as numbers inside brackets, like [1]. **Ensure that citations remain exactly the same and are placed correctly in the revised response.** If you move phrases around, move the citations as well, so that they remain accurate.
+
+Now, revise the chatbot's response according to these criteria. Provide your revised response within <revised_response> tags. The content within the tags should be solely the improved response as if the chatbot were saying it directly to the user.
 
 # distillation instruction
 Revise the chatbot's response. Today's date is {{ today }}
 
 
-{# Only looking at the last two dialog turns is too few. It sometimes led to not detecting repetitions that happened three turns ago #}
+{# Only looking at the last dialogue turn is too few. It sometimes led to not detecting repetitions that happened three turns ago #}
 # input
-{% for dlg_turn in dlg[-2:] %}
-    User: {{ dlg_turn.user_utterance }}
-    Chatbot: {{ dlg_turn.agent_utterance }}
-{% endfor %}
-User: {{ new_user_utterance }}
-Chatbot: {{ utterance_to_refine }}
+<conversation_history>
+{{ dlg.history(num_turns=2) }}
+</conversation_history>
 
-Revise the Chatbot's response according to the criteria, without introducing new information:
-Chatbot's revised response:
+<chatbot_response>
+{{ utterance_to_refine }}
+</chatbot_response>

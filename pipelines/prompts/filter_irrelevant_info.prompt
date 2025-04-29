@@ -1,0 +1,147 @@
+# instruction
+You are tasked with selecting the most relevant parts of a retrieved passage or table to help respond to a user's query in a conversation.
+Today's date is {{ today }}. Mention the date in the response if the information is time-sensitive.
+
+First, you will be presented with a conversation history between a user and a chatbot:
+
+<conversation_history>
+...
+</conversation_history>
+
+And a retrieved passage or table:
+
+<retrieved_passage>
+...
+</retrieved_passage>
+
+To select the relevant parts of the passage or table, follow these steps:
+
+1. Carefully read through the conversation history, paying special attention to the user's most recent query or statement.
+
+2. Analyze the retrieved passage or table, considering its content in relation to the user's latest input and the overall context of the conversation.
+
+3. Identify specific sentences, phrases, or data points from the retrieved passage or table that directly address or are closely related to the user's query or the conversation topic.
+
+4. If the retrieved content is a table, consider both the column headers and the specific data cells that might be relevant.
+
+5. Keep in mind that relevance can include:
+   - Direct answers to the user's question
+   - Supporting information that provides context or background
+   - Data or facts that could be used to formulate a response
+   - Information that clarifies or expands on previous points in the conversation
+
+6. Be selective: choose only the most pertinent information. It's better to select a few highly relevant parts than to include too much unnecessary information.
+
+Once you have identified the relevant parts, present your selection in the following format:
+
+<relevant_content>
+1. [First relevant part]
+2. [Second relevant part]
+3. [Third relevant part]
+...
+</relevant_content>
+
+If you find that none of the content in the retrieved passage or table is relevant to the conversation, state this explicitly:
+
+<relevant_content>
+None
+</relevant_content>
+
+Remember, your task is only to select and present the relevant parts of the retrieved content, not to formulate a response to the user or to add any additional information or interpretation. 
+
+# distillation instruction
+Break down the relevant parts of the articles you find or say None if the article is unrelated. Today's date is {{ today }}.
+
+
+# input
+<conversation_history>
+User: what was the worst earthquake ever?
+</conversation_history>
+
+<retrieved_passage>
+Title: 1934 Nepal–India earthquake > Earthquake
+The 1934 Nepal-India earthquake or 1934 Bihar-Nepal earthquake was one of the worst earthquakes in India's history. The towns of Munger and Muzaffarpur were completely destroyed. This 8.0 magnitude earthquake occurred on 15 January 1934 at around 2:13pm IST (08:43 UTC) and caused widespread damage in northern Bihar and in Nepal. Earthquake. The epicentre for this event was located in eastern Nepal about south of Mount Everest. The areas where the most damage to life and property occurred extended from Purnea in the east to Champaran in the west (a distance of nearly 320 km or 200 mi), and from Kathmandu in the north to Munger in the south (a distance of nearly 465 km or 289 mi)."
+</retrieved_passage>
+
+# output
+<relevant_content>
+- The 1934 Nepal-India earthquake, also known as the 1934 Bihar-Nepal earthquake, was one of the worst earthquakes in India's history.
+- The 1934 Nepal-India earthquake had a magnitude of 8.0 and occurred on 15 January 1934.
+- As a result of the 1934 Nepal-India earthquake, the towns of Munger and Muzaffarpur were completely destroyed.
+- As a result of the 1934 Nepal-India earthquake, widespread damage occurred in northern Bihar and Nepal, with the most damage extending from Purnea in the east to Champaran in the west, and from Kathmandu in the north to Munger in the south.
+</relevant_content>
+
+
+# input
+<conversation_history>
+User: Oscar winners 2022
+</conversation_history>
+
+<retrieved_passage>
+Title: Governors Awards
+On June 21, 2022, the Academy announced its winners of the 13th annual Governors Awards ceremony. It was held on November 19, 2022, and during the event, the Academy Honorary Awards and the Jean Hersholt Humanitarian Award were presented to the following recipients: Presenters and performers. The following presented awards and performed musical numbers. Ceremony information.
+</retrieved_passage>
+
+# output
+<relevant_content>
+None
+</relevant_content>
+
+
+
+# input
+<conversation_history>
+User: What shows do you recommend to watch?
+Chatbot: I recommend watching the Blue Eyed Samurai series. It has a great storyline and engaging characters.
+User: What episodes are there?
+</conversation_history>
+
+<retrieved_passage>
+Title: Blue Eye Samurai > Épisodes
+| No. | Titre en Français | Titre Original | Réalisateur | **Scénario** | Date de Diffusion |
+| --- | --- | --- | --- | --- | --- |
+| 1 | Scories | Hammerscale | Jane Wu | Amber Noizumi & Michael Green | 3 novembre 2023 |
+| 2 | Un élément inattendu | An Unexpected Element | Ryan O'Loughlin | Michael Green & Amber Noizumi | 3 novembre 2023 |
+| 3 | Un nombre limité de chemins | A Fixed Number of Paths | Earl A. Hibbert Alan Wan | Michael Green & Amber Noizumi | 3 novembre 2023 |
+| 4 | Particularités | Peculiarities | Ryan O'Loughlin | Michael Green & Amber Noizumi | 3 novembre 2023 |
+| 5 | Le conte du ronin et de la mariée | The Tale of the Ronin and the Bride | Michael Green | Amber Noizumi | 3 novembre 2023 |
+| 6 | Les rêves maléfiques et les mots durs | All Evil Dreams and Angry Words | Earl A. Hibbert Sunny Sun | Amber Noizumi & Michael Green | 3 novembre 2023 |
+| 7 | Sans annihilation | Nothing Broken | Alan Taylor | Yana Bille-Chung | 3 novembre 2023 |
+| 8 | Le grand incendie de 1657 | The Great Fire of 1657 | Jane Wu | Michael Green & Amber Noizumi | 3 novembre 2023
+</retrieved_passage>
+
+# output
+<relevant_content>
+- Blue Eyed Samurai has 8 episodes: "Hammerscale", "An Unexpected Element", "A Fixed Number of Paths", "Peculiarities", "The Tale of the Ronin and the Bride", "All Evil Dreams and Angry Words", "Nothing Broken", and "The Great Fire of 1657"
+</relevant_content>
+
+# input
+<conversation_history>
+User: Are there any active wild fires in California?
+</conversation_history>
+
+<retrieved_passage>
+Title: California wildfires
+Published on: Novermber, 30, 2023
+Yeah, there are currently a few active wildfires in California. The largest one is the Big Sur fire, which has been burning for several days and has already consumed over 10,000 acres of land. The fire is threatening several communities in the area, and firefighters are working around the clock to contain it.
+</retrieved_passage>
+
+# output
+<relevant_content>
+- As of Novermber, 30, 2023, there were active wildfires in California, with the largest one being the Big Sur fire.
+- As of Novermber, 30, 2023, the Big Sur fire consumed over 10,000 acres of land and was threatening several communities in the area.
+- As of Novermber, 30, 2023, Firefighters were working around the clock to contain the Big Sur fire.
+</relevant_content>
+
+
+# input
+<conversation_history>
+{{ dlg.history(num_turns=2) }}
+</conversation_history>
+
+<retrieved_passage>
+Title: {{ result.full_title }}
+{% if result.date_human_readable %}Published on: {{ result.date_human_readable }}
+{% endif %}
+{{ result.content  | truncate(3000, False)}}{# truncate to avoid edge case where some paragraphs are extremely long #}
+</retrieved_passage>

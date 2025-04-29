@@ -1,0 +1,44 @@
+{% extends "templates/base.jinja2" %}
+{% block content %}
+    {% include "templates/partials/_no_results_alert.jinja2" %}
+    {% include "templates/partials/_loading_spinner.jinja2" %}
+    <div class="container mx-auto p-8 flex flex-col justify-center items-center">
+        {% if not result_urls %}<span class="text-primary font-bold text-5xl mb-12">Genie, Search!</span>{% endif %}
+        <div class="flex justify-center mb-8 w-full">
+            <div class="form-control w-full max-w-2xl">
+                {% include "templates/partials/_search_form.jinja2" %}
+            </div>
+        </div>
+        {% if result_urls %}
+            <h2 class="text-2xl font-bold text-primary mb-2">Results for "{{ query }}"</h2>
+            <div class="mt-8 w-full max-w-3xl">
+                <p class="mb-4 font-semibold text-secondary text-lg">
+                    Found {{ result_titles | length }} result{{ 's' if
+                    result_titles|length > 1 else '' }}:
+                </p>
+                <!-- Results Container -->
+                <div id="results-container" class="grid grid-cols-1 gap-6 bg-white p-4 rounded-lg shadow divide-y divide-gray-200"></div>
+                <!-- Pagination Controls -->
+                <div class="mt-8 flex justify-center">
+                    <div id="pagination-group" class="btn-group"> <!-- Add an ID to the main group for easier JS selection -->
+                        <button id="prev-page" class="btn btn-outline btn-primary transition-colors duration-200 hover:bg-primary hover:text-white" disabled>
+                            <i class="fas fa-chevron-left mr-2"></i> Prev
+                        </button>
+                        <!-- Page numbers will be inserted here directly by JavaScript -->
+                        <button id="next-page" class="btn btn-outline btn-primary transition-colors duration-200 hover:bg-primary hover:text-white">
+                            Next <i class="fas fa-chevron-right ml-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    {% if result_urls %}
+        <script type="application/json" id="js-data-titles">{{ result_titles | tojson }}</script>
+        <script type="application/json" id="js-data-snippets">{{ result_snippets | tojson }}</script>
+        <script type="application/json" id="js-data-urls">{{ result_urls | tojson }}</script>
+        <script type="application/json" id="js-data-dates">{{ result_dates | tojson }}</script>
+        <script type="application/json" id="js-data-metadata">{{ result_metadata | tojson }}</script>
+        <script type="application/json" id="js-data-query">{{ query | tojson }}</script>
+    {% endif %}
+{% endblock content %}

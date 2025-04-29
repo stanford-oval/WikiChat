@@ -32,7 +32,7 @@ def RougeL(pred, label):
 
 
 def metric_for_initial_search(prediction, gold):
-    search_pattern = 'Yes\. You.*"([^"]*)".* The year of the results is "([^=]*)"\.]?'
+    search_pattern = 'Yes\. You.*"([^"]*)".*'
 
     def extract_parts(o):
         search_prompt_output = o.strip()
@@ -40,18 +40,15 @@ def metric_for_initial_search(prediction, gold):
         if search_match:
             classification = "Yes"
             search_query = search_match.group(1)
-            search_query_time = search_match.group(2)
         else:
             if o.startswith("No"):
                 classification = "No"
                 search_query = ""
-                search_query_time = ""
             else:
                 print("Malformed search_prompt_output: ", search_prompt_output)
                 classification = ""
                 search_query = ""
-                search_query_time = ""
-        return classification, search_query, search_query_time
+        return classification, search_query
 
     p_c, p_q, p_t = extract_parts(prediction)
     g_c, g_q, g_t = extract_parts(gold)
@@ -96,9 +93,7 @@ def metrics_for_refine(prediction, gold):
             print("Feedback malformatted: ", feedback_lines)
             return []
 
-        scores = (
-            []
-        )  # Relevant, Informative, Conversational, Non-Redundant, Temporally Correct scores
+        scores = []  # Relevant, Informative, Conversational, Non-Redundant, Temporally Correct scores
         for line in feedback_lines:
             score = line.strip().split(" ")[-1].strip()
             if (
@@ -108,7 +103,7 @@ def metrics_for_refine(prediction, gold):
             else:
                 try:
                     score = int(score.split("/")[0])
-                except:
+                except Exception:
                     print(f"Feedback line malformatted: {line}")
                     score = 100
             scores.append(score)
@@ -164,7 +159,6 @@ if __name__ == "__main__":
             "metric_names": [
                 "initial_search_classification_accuracy",
                 "initial_search_rougeL",
-                "initial_search_time_accuracy",
             ],
         },
         "summarize_and_filter.prompt": {
@@ -224,7 +218,7 @@ if __name__ == "__main__":
         else:
             for i, metric_name in enumerate(prompt_matrics[prompt]["metric_names"]):
                 print(
-                    f"%-40s=%.2f"
+                    "%-40s=%.2f"
                     % (
                         # prompt,
                         metric_name,

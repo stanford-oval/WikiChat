@@ -1,101 +1,47 @@
-import json
-import time
-from typing import Any, Dict, List, Optional
+from typing import Optional
 
-from chainlit import (
-    ChatGeneration,
-    CompletionGeneration,
-    LangchainCallbackHandler,
-    Step,
-    Text,
-)
+from chainlit import LangchainCallbackHandler, Step
 from chainlit.context import context_var
 from langchain.callbacks.tracers.schemas import Run
 from literalai.helper import utc_now
-from literalai.step import TrueStepType
 
-from pipelines.dialogue_state import Claim, ClaimLabel, SearchQuery
-from pipelines.retriever import RetrievalResult
+from pipelines.dialogue_state import DialogueState
+from retrieval.retrieval_commons import QueryResult
+
+step_name_mapping = {
+    "LangGraph": "Steps",
+    "query_stage": "Query",
+    "generate_stage": "Generate Claims w/ LLM",
+    "search_stage": "Search",
+    "llm_claim_search_stage": "Search Claims",
+    "filter_information_stage": "Filter Information",
+    "draft_stage": "Draft",
+    # "refine_stage": "Refine",
+}
 
 
 class ChainlitCallbackHandler(LangchainCallbackHandler):
     def __init__(
         self,
-        answer_prefix_tokens: Optional[List[str]] = None,
-        stream_final_answer: bool = False,
-        force_stream_final_answer: bool = False,
-        step_name_mapping: Dict[str, str] = {},
-        **kwargs: Any,
+        dialogue_state: DialogueState,
     ):
         """
         step_name_mapping: Steps without a mapping are excluded from the front-end
         """
 
         super().__init__(
-            answer_prefix_tokens=answer_prefix_tokens,
-            stream_final_answer=stream_final_answer,
-            force_stream_final_answer=force_stream_final_answer,
             to_ignore=None,
             to_keep=None,
-            **kwargs,
         )
-        self.step_name_mapping = step_name_mapping
-        self.query_step = None
-        self.claim_step = None
+        self.dialogue_state = dialogue_state
 
-    def _display_claims(self, claims: list[Claim], show_with_color: bool) -> None:
-        ret = []
-        for c in claims:
-            if c.label == ClaimLabel.supported:
-                color = "#b2d8d8"
-            elif c.label == ClaimLabel.refuted:
-                color = "#ffcccc"
-            else:
-                # NEI or not done verifying yet
-                color = "lightyellow"
-            ret.append(
-                "- <span"
-                + (f" style='background-color: {color};'" if show_with_color else "")
-                + f">{c.text}</span>"
-            )
-        self.claim_step.output = "\n".join(ret)
-
-    def _display_search_results(self, retrieval_results: list[RetrievalResult]) -> None:
-        new_elements = []
-        for result in retrieval_results:
-            retrieval_result_element = Text(
-                content=result.to_markdown(),
-                display="inline",
-            )
-            new_elements.append(retrieval_result_element)
-        self.query_step.elements = new_elements
-        self._run_sync(self.query_step.update())
-
-    def _update_search_with_summaries(self, retrieval_results: list[RetrievalResult]):
-        summary_elements = []
-        for r, element in zip(retrieval_results, self.query_step.elements):
-            # print(element.content)
-            summary_elements.append(
-                Text(
-                    content=element.content
-                    + " \n\n**Summary:**\n"
-                    + (
-                        "\n".join([f"- {b}" for b in r.content_summary])
-                        if r.content_summary
-                        else "None"
-                    ),
-                    display="inline",
-                )
-            )
-            self._run_sync(element.remove())
-        self.query_step.elements = summary_elements
-        self._run_sync(self.query_step.update())
-
-    def _should_ignore_run(self, run: Run):
-        if run.name not in self.step_name_mapping and run.name not in self.to_ignore:
-            self.to_ignore.append(run.name)
-        ignore, parent_id = super()._should_ignore_run(run)
-        return ignore, parent_id
+    def _should_ignore_run(self, run: Run) -> tuple[bool, Optional[str]]:
+        if run.name not in step_name_mapping or (
+            run.tags and not run.tags[0].startswith("graph:")
+        ):
+            # steps that don't start with graph: are function names associated with graph steps, and are therefore duplicates
+            return True, None
+        return super()._should_ignore_run(run)
 
     def _start_trace(self, run: Run) -> None:
         super()._start_trace(run)
@@ -111,7 +57,7 @@ class ChainlitCallbackHandler(LangchainCallbackHandler):
         if ignore:
             return
 
-        step_type: "TrueStepType" = "undefined"
+        step_type = "undefined"
         if run.run_type == "agent":
             step_type = "run"
         elif run.run_type == "chain":
@@ -128,17 +74,18 @@ class ChainlitCallbackHandler(LangchainCallbackHandler):
         if not self.steps:
             step_type = "run"
 
-        disable_feedback = not self._is_annotable(run)
-
         step = Step(
             id=str(run.id),
-            name=self.step_name_mapping[run.name],
+            name=(
+                step_name_mapping[run.name]
+                if run.name in step_name_mapping
+                else run.name
+            ),
             type=step_type,
             parent_id=parent_id,
-            disable_feedback=disable_feedback,
+            show_input=False,
         )
         step.start = utc_now()
-        step.input = run.inputs
 
         self.steps[str(run.id)] = step
 
@@ -155,117 +102,47 @@ class ChainlitCallbackHandler(LangchainCallbackHandler):
 
         current_step = self.steps.get(str(run.id), None)
 
-        if run.run_type == "llm" and current_step:
-            provider, model, tools, llm_settings = self._build_llm_settings(
-                (run.serialized or {}), (run.extra or {}).get("invocation_params")
-            )
-            generations = (run.outputs or {}).get("generations", [])
-            generation = generations[0][0]
-            variables = self.generation_inputs.get(str(run.parent_run_id), {})
-            if message := generation.get("message"):
-                chat_start = self.chat_generations[str(run.id)]
-                duration = time.time() - chat_start["start"]
-                if duration and chat_start["token_count"]:
-                    throughput = chat_start["token_count"] / duration
-                else:
-                    throughput = None
-                message_completion = self._convert_message(message)
-                current_step.generation = ChatGeneration(
-                    provider=provider,
-                    model=model,
-                    tools=tools,
-                    variables=variables,
-                    settings=llm_settings,
-                    duration=duration,
-                    token_throughput_in_s=throughput,
-                    tt_first_token=chat_start.get("tt_first_token"),
-                    messages=[
-                        self._convert_message(m) for m in chat_start["input_messages"]
-                    ],
-                    message_completion=message_completion,
+        if current_step:
+            step_output = None
+            if run.name == "query_stage":
+                step_output = "\n".join(self.dialogue_state.current_turn.search_query)
+                if not step_output:
+                    step_output = "_Did not search for anything._"
+            elif run.name == "generate_stage":
+                step_output = "\n".join(
+                    [f"- {c}" for c in self.dialogue_state.current_turn.llm_claims]
                 )
-
-                # find first message with prompt_id
-                for m in chat_start["input_messages"]:
-                    if m.additional_kwargs.get("prompt_id"):
-                        current_step.generation.prompt_id = m.additional_kwargs[
-                            "prompt_id"
-                        ]
-                        if custom_variables := m.additional_kwargs.get("variables"):
-                            current_step.generation.variables = custom_variables
-                    break
-
-                current_step.language = "json"
-                current_step.output = json.dumps(
-                    message_completion, indent=4, ensure_ascii=False
+                if not step_output:
+                    step_output = "_LLM did not generate any claims._"
+            elif run.name == "search_stage":
+                step_output = "\n".join(
+                    [
+                        QueryResult.to_markdown(r)
+                        for r in self.dialogue_state.current_turn.search_results
+                    ]
                 )
-            else:
-                completion_start = self.completion_generations[str(run.id)]
-                completion = generation.get("text", "")
-                duration = time.time() - completion_start["start"]
-                if duration and completion_start["token_count"]:
-                    throughput = completion_start["token_count"] / duration
-                else:
-                    throughput = None
-                current_step.generation = CompletionGeneration(
-                    provider=provider,
-                    model=model,
-                    settings=llm_settings,
-                    variables=variables,
-                    duration=duration,
-                    token_throughput_in_s=throughput,
-                    tt_first_token=completion_start.get("tt_first_token"),
-                    prompt=completion_start["prompt"],
-                    completion=completion,
-                )
-                current_step.output = completion
+                if not step_output:
+                    step_output = "_No search results._"
+            elif run.name == "llm_claim_search_stage":
+                step_output = ""
+                for claim, search_result in zip(
+                    self.dialogue_state.current_turn.llm_claims,
+                    self.dialogue_state.current_turn.llm_claim_search_results,
+                ):
+                    step_output += f"### Claim: {claim}\n{QueryResult.to_markdown(search_result)}\n\n"
+                if not step_output:
+                    step_output = "_No search results for LLM claims._"
+            elif run.name == "filter_information_stage":
+                step_output = ""
+                for ref in self.dialogue_state.current_turn.filtered_search_results:
+                    summary = "\n".join(
+                        [f"- {s}" for s in ref.summary]
+                    )  # add bullet points
+                    step_output += f"#### [{ref.full_title}]({ref.url})\n\n**Summary:**\n{summary}\n\n**Full text:**\n\n{ref.content}\n\n"
+            elif run.name == "draft_stage":
+                step_output = self.dialogue_state.current_turn.draft_stage_output
 
-            if current_step:
-                current_step.end = utc_now()
-                self._run_sync(current_step.update())
-
-            if self.final_stream and self.has_streamed_final_answer:
-                self._run_sync(self.final_stream.update())
-
-            return
-
-        outputs = run.outputs or {}
-        output_keys = list(outputs.keys())
-        output = outputs
-        if output_keys:
-            output = outputs.get(output_keys[0], outputs)
-
-        if current_step and output:
-            assert run.name in self.step_name_mapping
-
-            if run.name == "query":
-                assert isinstance(output, SearchQuery)
-                self.query_step = current_step
-                self.query_step.output = output.to_markdown()
-                self._run_sync(self.query_step.update())
-            elif run.name == "search":
-                assert isinstance(output, SearchQuery)
-                self._display_search_results(output.retrieval_results)
-                self._run_sync(self.query_step.update())
-            elif run.name == "summarize":
-                assert isinstance(output, SearchQuery)
-                self._update_search_with_summaries(output.retrieval_results)
-                self._run_sync(self.query_step.update())
-            elif run.name == "split_claims":
-                self.claim_step = current_step
-                self._display_claims(output, show_with_color=False)
-                self._run_sync(self.claim_step.update())
-            elif run.name == "verify":
-                self._display_claims(output, show_with_color=True)
-                self._run_sync(self.claim_step.update())
-
-            else:
-                assert run.name in [
-                    "generate",
-                    "draft",
-                    "refine",
-                ], f"Unknown run name in chainlit: {run.name}"
-                current_step.output = str(output)
-
+            if step_output:
+                current_step.output = step_output
                 self._run_sync(current_step.update())
             current_step.end = utc_now()

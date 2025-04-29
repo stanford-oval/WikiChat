@@ -1,0 +1,35 @@
+#collection-select {
+    /* max-width: 170px; */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#collection-nonselect {
+    /* overflow: hidden; */
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Styling for tables within search result snippets */
+.snippet-content table {
+    border-collapse: collapse;
+    width: auto;
+    max-width: 100%;
+    margin-top: 0.75rem;
+    margin-bottom: 1.25rem;
+    border: 1px solid hsl(var(--bc) / 0.2);
+    font-size: 0.875em;
+}
+
+.snippet-content th,
+.snippet-content td {
+    border: 1px solid hsl(var(--bc) / 0.2);
+    padding: 0.25rem 0.5rem;
+    text-align: inherit;
+}
+
+.snippet-content th {
+    background-color: hsl(var(--b2) / 1);
+    font-weight: 600;
+}

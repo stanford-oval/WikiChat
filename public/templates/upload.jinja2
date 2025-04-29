@@ -1,0 +1,288 @@
+{% extends "templates/base.jinja2" %}
+{% block content %}
+    <div class="container mx-auto py-10">
+        <div class="mb-8 max-w-xl mx-auto">
+            <h1 class="text-3xl font-bold mb-4 text-gray-900">Upload Your Document Collection</h1>
+            <p class="text-gray-700 mb-6">
+                Follow the steps below to prepare and upload your document collection. This guide will help you extract
+                text, structure your documents, chunk the content, and save it in the required format before uploading.
+                This guide uses <a href="https://en.wikipedia.org/wiki/Stanford_University"
+    class="text-blue-600 hover:underline">The Wikipedia article for Stanford University</a> as an example,
+                but you can use any document collection of any type.
+            </p>
+        </div>
+        <div class="card bg-base-100 shadow-xl p-8 max-w-2xl mx-auto rounded-lg">
+            {% if index_path %}
+                <div class="alert alert-success my-8 p-4 rounded-lg bg-success text-success-content">
+                    <div class="flex items-center">
+                        <svg class="w-6 h-6 mr-2 text-success-content"
+                             fill="none"
+                             stroke="currentColor"
+                             viewBox="0 0 24 24"
+                             xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        <span>File uploaded successfully!</span>
+                    </div>
+                </div>
+                <p class="mt-4 text-center text-gray-700">
+                    If indexed, you will receive an email with instructions on how to use the index.
+                </p>
+            {% elif error %}
+                <div class="alert alert-error my-8 p-4 rounded-lg bg-error text-error-content">
+                    <div class="flex flex-column items-center justify-between">
+                        <div class="m-2">
+                            <div class="text-lg">
+                                <button class="text-error-content hover:text-error-dark"
+                                        onclick="this.parentElement.parentElement.parentElement.parentElement.style.display='none';">
+                                    <svg class="w-6 h-6"
+                                         fill="none"
+                                         stroke="currentColor"
+                                         viewBox="0 0 26 26"
+                                         xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <pre class="whitespace-pre-wrap">{{ error }}</pre>
+                            <p class="mt-6">
+                                <span class="font-semibold mt-4">Please correct this issue and try uploading again.</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+            <div class="mb-8">
+                <div tabindex="0"
+                     class="collapse collapse-arrow border border-base-300 bg-base-100 rounded-box">
+                    <input type="checkbox" class="peer" />
+                    <!-- This input controls the collapse state -->
+                    <div class="collapse-title text-xl font-medium text-gray-800 peer-checked:text-primary">
+                        Step 1: Extract Text from Your Documents
+                    </div>
+                    <div class="collapse-content peer-checked:block">
+                        <p class="text-gray-600 mb-4">
+                            If your documents are not already in text form, you need to extract their text. Use
+                            <a href="https://github.com/DS4SD/docling"
+                               class="text-blue-600 hover:underline">Docling</a>, a
+                            simple tool to extract text from PDFs, DOCX files, and more. While it may struggle with complex
+                            scanned
+                            documents, it works well for most standard documents. Be sure to use the "Export to Markdown"
+                            option.
+                        </p>
+                        <p class="text-gray-600 mb-4">Now each document in your collection should have the following fields:</p>
+                        <ul class="list-disc list-inside text-gray-600 mb-4">
+                            <li>
+                                <strong>document_title</strong>, for example:
+                                <br>
+                                <div class="bg-gray-100 p-4 rounded-lg text-gray-700 italic my-4">Stanford University</div>
+                            </li>
+                            <li>
+                                <strong>content</strong>, for example:
+                                <br>
+                                <div class="bg-gray-100 p-4 rounded-lg text-gray-700 italic my-4">
+                                    Stanford University (officially Leland Stanford Junior University) is a private research
+                                    university in Stanford, California, United States. ...
+                                    <br>
+                                    <strong># History</strong>
+                                    <br>
+                                    Stanford University was founded in 1885. ... <strong>
+                                    <br>
+                                # Land</strong>
+                                <br>
+                                Most of Stanford is on an 8,180-acre (12.8 sq mi; 33.1 km2) campus ...
+                                <br>
+                                <strong>## Central campus</strong>
+                                <br>
+                                The central campus is adjacent to Palo Alto ...
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="mb-8">
+            <div tabindex="0"
+                 class="collapse collapse-arrow border border-base-300 bg-base-100 rounded-box">
+                <input type="checkbox" class="peer" />
+                <!-- This input controls the collapse state -->
+                <div class="collapse-title text-xl font-medium text-gray-800 peer-checked:text-primary">
+                    Step 2: Chunk the Document Content
+                </div>
+                <div class="collapse-content peer-checked:block">
+                    <p class="text-gray-600 mb-4">
+                        Breaking each document into smaller chunks (e.g., individual paragraphs, tables, infoboxes) can
+                        make it
+                        easier for retrieval systems to process.
+                    </p>
+                    <p class="text-gray-600 mb-4">
+                        Refer to this guide on chunking methods:
+                        <a href="https://python.langchain.com/docs/concepts/text_splitters/"
+                           class="text-blue-600 hover:underline">Text Splitters</a>. For most use cases, simple
+                        <a href="https://python.langchain.com/docs/concepts/text_splitters/#length-based"
+                           class="text-blue-600 hover:underline">length-based chunking</a> with chunk sizes between
+                        200-800
+                        tokens (roughly 150-600 words) works well.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <!-- Step 3 -->
+        <div class="mb-8">
+            <div tabindex="0"
+                 class="collapse collapse-arrow border border-base-300 bg-base-100 rounded-box">
+                <input type="checkbox" class="peer" />
+                <!-- This input controls the collapse state -->
+                <div class="collapse-title text-xl font-medium text-gray-800 peer-checked:text-primary">
+                    Step 3: Extract Section Structure
+                </div>
+                <div class="collapse-content peer-checked:block">
+                    <p class="text-gray-600 mb-4">
+                        Extracting the section structure can improve search results. Aim to capture the structure in the
+                        format
+                        "document title > section level 1 > section level 2 > ...". For example:
+                    </p>
+                    <blockquote class="bg-gray-100 p-4 rounded-lg text-gray-700 italic my-4">
+                        Stanford University > Land > Central campus
+                    </blockquote>
+                    <p class="text-gray-600 mb-4">
+                        You can derive this structure from the text extracted in the previous steps. By now, each
+                        document in
+                        your collection should have one or more blocks with the following fields:
+                    </p>
+                    <pre class="bg-gray-100 p-4 rounded-lg text-sm text-gray-800 whitespace-pre-wrap break-words max-w-full shadow-inner border border-gray-300">
+{
+    "document_title": "Stanford University",
+    "section_title": "Land > Central campus",
+    "content": "The central campus is adjacent to Palo Alto ..."
+}
+</pre>
+                    <p class="text-gray-600 m-4">
+                        These three fields are the minimum required fields for each block. Together, they will be used to find the most relevant blocks for a given query.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <!-- Step 4 -->
+        <div class="mb-8">
+            <div tabindex="0"
+                 class="collapse collapse-arrow border border-base-300 bg-base-100 rounded-box">
+                <input type="checkbox" class="peer" />
+                <!-- This input controls the collapse state -->
+                <div class="collapse-title text-xl font-medium text-gray-800 peer-checked:text-primary">
+                    Step 4: Save Your Collection in JSON Lines Format
+                </div>
+                <div class="collapse-content peer-checked:block">
+                    <p class="text-gray-600 mb-4">
+                        <a href="https://jsonlines.org/" class="text-blue-600 hover:underline">JSON Lines</a> is a
+                        convenient format for storing structured data. Each line in a JSON Lines file is a valid JSON
+                        object.
+                    </p>
+                    <p class="text-gray-600 mb-4">
+                        Here you can add optional fields <code class="bg-gray-600 text-white px-1 py-0 rounded">last_edit_date</code> and <code class="bg-gray-600 text-white px-1 py-0 rounded">url</code> to each block. 
+                        You may set these fields to <code class="bg-gray-600 text-white px-1 py-0 rounded">null</code> if they are not available. The <code class="bg-gray-600 text-white px-1 py-0 rounded">url</code> field 
+                        can be used to link back to the original document, for instance, the specific Wikipedia article for Stanford University. 
+                        The <code class="bg-gray-600 text-white px-1 py-0 rounded">last_edit_date</code> is the date the document was published or, if known, the last date the information 
+                        in the document was considered up-to-date. This field can be used to obtain better search results for time-sensitive queries.
+                    </p>
+                    <p class="text-gray-600 mb-4">
+                        You can also add other custom metadata fields to each block by providing a JSON object as <code class="bg-gray-600 text-white px-1 py-0 rounded">block_metadata</code>. 
+                        All these fields will be returned to you in the search results. Each line in your JSON Lines file should follow this format. 
+                        All metadata fields in all blocks should be consistent. This applies even to their types. For instance, if you want a metadata 
+                        field to be a <code class="bg-gray-600 text-white px-1 py-0 rounded">float</code> in one block, it should be explicitly set to <code class="bg-gray-600 text-white px-1 py-0 rounded">float</code> in all blocks by using <code class="bg-gray-600 text-white px-1 py-0 rounded">5.0</code> 
+                        instead of <code class="bg-gray-600 text-white px-1 py-0 rounded">5</code>.
+                        The following example includes the optional metadata fields <code class="bg-gray-600 text-white px-1 py-0 rounded">block_type</code> and <code class="bg-gray-600 text-white px-1 py-0 rounded">language</code>.
+                    </p>
+                    <p class="text-gray-600 mb-4">
+                        <strong>Note:</strong> Line breaks outside quotes are for readability and should not be included.
+                    </p>
+                    <pre class="bg-gray-100 p-4 rounded-lg text-sm text-gray-800 whitespace-pre-wrap break-words max-w-full shadow-inner border border-gray-300">
+{
+    "document_title",
+    "section_title",
+    "content",
+    "last_edit_date": "The last edit date of the block in YYYY-MM-DD format",
+    "url": "The URL of the block, e.g. https://en.wikipedia.org/wiki/Stanford_University"
+    "block_metadata": {
+        "block_type": "The type of the block, e.g. 'text', 'table', 'infobox'",
+        "language": "The language of the block, e.g. 'en' for English",
+    }
+}</pre>
+                </div>
+            </div>
+        </div>
+        <!-- Step 5 -->
+        <div class="mb-8">
+            <div tabindex="0"
+                 class="collapse collapse-arrow border border-base-300 bg-base-100 rounded-box">
+                <input type="checkbox" class="peer" />
+                <!-- This input controls the collapse state -->
+                <div class="collapse-title text-xl font-medium text-gray-800 peer-checked:text-primary">
+                    Step 5: Upload Your JSON Lines File
+                </div>
+                <div class="collapse-content peer-checked:block">
+                    <p class="text-gray-600 mb-4">
+                        If there are any formatting errors, an error message will appear. Please correct the
+                        issues and
+                        try uploading again.
+                    </p>
+                    <form action="{{ url_for('upload_collection') }}"
+                          method="post"
+                          enctype="multipart/form-data"
+                          class="space-y-6">
+                        <div class="form-control">
+                            <!-- Flex container to align the button and file name side by side -->
+                            <div class="flex items-center space-x-4">
+                                <!-- Custom file input button -->
+                                <label for="file"
+                                       class="btn btn-outline py-3 text-xl font-semibold rounded-lg cursor-pointer">
+                                    Choose File
+                                </label>
+                                <!-- Display selected file name -->
+                                <span id="file-name" class="text-gray-500">No file chosen</span>
+                            </div>
+                            <!-- Hidden file input -->
+                            <input type="file"
+                                   id="file"
+                                   name="file"
+                                   accept=".jsonl"
+                                   required
+                                   class="hidden"
+                                   onchange="updateFileName()">
+                        </div>
+                        <div class="form-control">
+                            <button type="submit"
+                                    class="btn btn-primary w-full py-3 text-2xl font-semibold rounded-lg hover:bg-primary-dark transition duration-300">
+                                Upload File
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <!-- Step 6 -->
+        <div class="mb-8">
+            <div tabindex="0"
+                 class="collapse collapse-arrow border border-base-300 bg-base-100 rounded-box">
+                <input type="checkbox" class="peer" />
+                <!-- This input controls the collapse state -->
+                <div class="collapse-title text-xl font-medium text-gray-800 peer-checked:text-primary">
+                    Step 6: Request Collection Addition
+                </div>
+                <div class="collapse-content peer-checked:block">
+                    <p class="text-gray-600 mb-4">
+                        After uploading your file, email
+                        <a href="mailto:genie@cs.stanford.edu"
+                           class="text-blue-600 hover:underline font-semibold">genie@cs.stanford.edu</a> to request the
+                        addition of your collection. You will receive a confirmation email with details on how to access
+                        the
+                        search API once your collection is added.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- external upload page script -->
+<script src="/public/js/upload.js" defer></script>
+{% endblock content %}

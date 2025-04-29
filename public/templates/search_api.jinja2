@@ -1,0 +1,180 @@
+# Available Knowledge Corpora
+
+{% for corpus in all_corpora %}
+## {{ corpus.name }}
+
+**Endpoint**: `{{ corpus.overwritten_parameters["retriever_endpoint"] }}`
+
+<img src="{{ corpus.icon_path }}" alt="{{ corpus.name }}" width="100px">
+
+{{ corpus.human_description_markdown }}
+
+---
+
+{% endfor %}
+
+# How to Use the API
+
+## Request Body
+The request body should be a JSON object with the following fields:
+
+- `query`: A string or a list of strings representing the search queries.
+- `num_blocks`: An integer representing the number of search results for each query.
+- `rerank`: (Optional) A boolean value to enable or disable the LLM reranking of search results. Default is `false`.
+- `num_blocks_to_rerank`: (Optional) An integer representing the number of items to retrieve before reranking. The default is set to `num_blocks`, but it is usually beneficial to set it to a higher value for better search results.
+
+## Example 1: Simple Search
+Search for the 10 most relevant text, table or infobox in the any of the 25 Wikipedia languages, then rerank them using LLM and return top 3. Note: it is important to use `https` not `http` in the URL.
+
+```http
+POST https://search.genie.stanford.edu/wikipedia_20250320
+Content-Type: application/json
+
+{
+  "query": ["What is GPT-4?", "What is LLaMA-3?"],
+  "rerank": true,
+  "num_blocks_to_rerank": 10,
+  "num_blocks": 3
+}
+```
+
+or equivalently:
+
+```
+curl -X POST https://search.genie.stanford.edu/wikipedia_20250320 \
+-H "Content-Type: application/json" \
+-d '{
+  "query": ["What is GPT-4?", "What is LLaMA-3?"],
+  "rerank": true,
+  "num_blocks_to_rerank": 10,
+  "num_blocks": 3
+}'
+```
+
+Response:
+```json
+[
+  {
+    "results": [
+      {
+        "document_title": "GPT-4",
+        "section_title": "",
+        "content": "GPT-4（ジーピーティーフォー、Generative Pre-trained Transformer 4）とは、OpenAI (in English: OpenAI)によって開発されたマルチモーダル (in English: Multimodal learning)（英語版）大規模言語モデル (in English: Large language model)である。2023年3月14日に公開された。自然言語処理 (in English: Natural language processing)にTransformer (機械学習モデル) (in English: Transformer)を採用しており、教師なし学習 (in English: Unsupervised learning)によって大規模なニューラルネットワーク (in English: Neural network)を学習させ、その後、人間のフィードバックからの強化学習 (in English: Reinforcement learning from human feedback)（RLHF）を行っている。",
+        "block_type": "text",
+        "language": "ja",
+        "url": "https://ja.wikipedia.org/wiki/GPT-4",
+        "last_edit_date": "2024-07-30T07:33:16Z",
+        "similarity_score": 0.690,
+        "probability_score": 0.333
+      },
+      {
+        "document_title": "GPT-4o",
+        "section_title": "",
+        "content": "GPT-4o (siglas de «GPT-4» y «omni») es un Transformador generativo preentrenado (in English: Generative pre-trained transformer) Inteligencia artificial multimodal (in English: Multimodal artificial intelligence) y multilingüe preentrenado, diseñado por OpenAI 3324493820. Fue anunciado por la Director de tecnología (in English: Chief technology officer) de OpenAI, Mira Murati (in English: Mira Murati), durante una demostración transmitida en vivo el 13 de mayo de 2024 y fue lanzado ese mismo día. GPT-4o es de uso gratuito,solo para el dispositivo móvil 3324493820 aunque los suscriptores de no tienen acseso ChatGPT (in English: ChatGPT) Plus tienen un límite de uso . Puede procesar y generar texto,entregar. Documentos. imágenes y audio. Su API (in English: API) es dos veces más rápida y la mitad de precio que su predecesor, GPT-4.",
+        "block_type": "text",
+        "language": "es",
+        "url": "https://es.wikipedia.org/wiki/GPT-4o",
+        "last_edit_date": "2024-07-17T02:29:12Z",
+        "similarity_score": 0.690,
+        "probability_score": 0.333
+      },
+      {
+        "document_title": "GPT-4",
+        "section_title": "",
+        "content": "Generative Pre-trained Transformer 4 (GPT-4) é um Modelo de linguagem grande (in English: Large language model) multimodal criado pela OpenAI (in English: OpenAI) e o quarto modelo da série GPT.  Foi lançado em 14 de março de 2023, e se tornou publicamente aberto de forma limitada por meio do ChatGPT (in English: ChatGPT) Plus, com o seu acesso à API comercial sendo provido por uma lista de espera. Sendo um Transformador (in English: Transformer), foi pré-treinado para prever o próximo Token (informática) (usando dados públicos e \"licenciados de provedores terceirizados\"), e então foi aperfeiçoado através de uma técnica de aprendizagem por reforço com humanos.",
+        "block_type": "text",
+        "language": "pt",
+        "url": "https://pt.wikipedia.org/wiki/GPT-4",
+        "last_edit_date": "2024-06-26T11:23:31Z",
+        "similarity_score": 0.689,
+        "probability_score": 0.333
+      }
+    ]
+  },
+  {
+    "results": [
+      {
+        "document_title": "LLaMA",
+        "section_title": "",
+        "content": "LLaMA (Large Language Model Meta AI) — Большая языковая модель (in English: Large language model) (LLM), выпущенная Meta AI в феврале 2023 года. Были обучены модели различных размеров в диапазоне от 7 до 65 миллиардов весов. Разработчики LLaMA сообщили, что производительность модели с 13 миллиардами весов в большинстве тестов Обработка естественного языка (in English: Natural language processing) превышает производительность гораздо более крупной GPT-3 (in English: GPT-3) (со 175 миллиардами весов) и что самая большая модель может конкурировать с современными моделями, такими как PaLM и Chinchilla AI (in English: Chinchilla).  В то время как самые мощные LLM как правило были доступны только через ограниченные API (in English: API) (если вообще были доступны), Meta предоставила исследовательскому сообществу веса моделей LLaMA под некоммерческой лицензией. В течение недели после выпуска LLaMA её веса были выложены в открытый доступ на 4chan через BitTorrent (in English: BitTorrent).",
+        "block_type": "text",
+        "language": "ru",
+        "url": "https://ru.wikipedia.org/wiki/LLaMA",
+        "last_edit_date": "2024-07-23T21:02:58Z",
+        "similarity_score": 0.548,
+        "probability_score": 0.336
+      },
+      {
+        "document_title": "LLaMA",
+        "section_title": "Llama 3",
+        "content": "2024年4月18日，Meta发布了Llama-3，有两种尺寸：8B和70B参数。  这些模型已经根据从“公开可用来源”收集的大约 15 万亿个文本标记进行了预训练，并且指导模型根据“公开可用的指令数据集以及超过 1000 万个人工注释的示例”进行了微调。 计划发布多模式模型、能够以多种语言进行对话的模型以及具有更大上下文窗口的模型。 于2024年7月23日增量更新至Llama-3.1。具有8B、70B、405B参数三种尺寸。 Meta AI 的测试表明，Llama 3 70B 在大多数基准测试中都击败了 Gemini (聊天機器人) (in English: Gemini) 和 Claude (聊天機器人) (in English: Claude)。",
+        "block_type": "text",
+        "language": "zh",
+        "url": "https://zh.wikipedia.org/wiki/LLaMA#Llama_3",
+        "last_edit_date": "2024-07-25T05:52:33Z",
+        "similarity_score": 0.537,
+        "probability_score": 0.332
+      },
+      {
+        "document_title": "Laminin, beta 3",
+        "section_title": "",
+        "content": "Laminin subunit beta-3 is a protein that in humans is encoded by the LAMB3 gene. LAMB3 encodes the beta 3 subunit of laminin. Laminin is composed of three subunits (alpha, beta, and gamma), and refers to a family of basement membrane proteins. For example, LAMB3 serves as the beta chain in laminin-5. Mutations in LAMB3 have been identified as the cause of various types of epidermolysis bullosa. Two alternatively spliced transcript variants encoding the same protein have been found for this gene.",
+        "block_type": "text",
+        "language": "en",
+        "url": "https://en.wikipedia.org/wiki/Laminin,_beta_3",
+        "last_edit_date": "2023-01-29T23:05:16Z",
+        "similarity_score": 0.537,
+        "probability_score": 0.332
+      }
+    ]
+  }
+]
+```
+
+## Example 2: Search with filtering on certain fields
+Search for the 3 most relevant text, table or infobox in the English Wikipedia that were edited after July 1, 2024.
+
+```http
+POST https://search.genie.stanford.edu/wikipedia_20250320
+Content-Type: application/json
+
+{
+  "query": ["What is GPT-4?", "What is LLaMA-3?"],
+  "num_blocks": 3,
+  "search_filters": [
+    {
+      "field_name": "language", 
+      "filter_type": "eq", 
+      "field_value": "en"
+    },
+    {
+      "field_name": "last_edit_date", 
+      "filter_type": "gt", 
+      "field_value": "2024-07-01"
+    }
+  ]
+}
+```
+
+or equivalently:
+
+```
+curl -X POST https://search.genie.stanford.edu/wikipedia_20250320 \
+-H "Content-Type: application/json" \
+-d '{
+  "query": ["What is GPT-4?", "What is LLaMA-3?"], 
+  "num_blocks": 3, 
+  "search_filters": [
+    {
+      "field_name": "language", 
+      "filter_type": "eq", 
+      "field_value": "en"
+    }, 
+    {
+      "field_name": "last_edit_date", 
+      "filter_type": "gt", 
+      "field_value": "2024-07-01"
+    }
+  ]
+}'
+```

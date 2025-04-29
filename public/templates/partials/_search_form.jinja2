@@ -1,0 +1,38 @@
+<form action="{{ url_for('search_via_frontend') }}"
+      method="get"
+      class="input-group"
+      onsubmit="showLoadingSpinner()">
+    {% if collection_name %}
+        <span id="collection-nonselect"
+              class="inline-block text-sm bg-base-200 text-base-content rounded-full px-4 py-2 border border-primary font-medium focus:outline-none focus:ring-2 focus:ring-primary">
+            {% if collection_name in public_collections %}
+                {{ public_collection_names[public_collections.index(collection_name) ] }}
+            {% else %}
+                {{ collection_name }}
+            {% endif %}
+        </span>
+        <input type="hidden" name="collection_name" value="{{ collection_name }}">
+    {% else %}
+        <select id="collection-select"
+                name="collection_name"
+                class="select select-bordered select-primary text-lg bg-base-200 text-base-content focus:outline-none focus:ring-2 focus:ring-primary w-auto">
+            {% for collection in public_collections %}
+                <option value="{{ collection }}"
+                        title="{{ human_description_markdown[loop.index0] }}">
+                    {{ public_collection_names[loop.index0] }}
+                </option>
+            {% endfor %}
+        </select>
+        <div id="description-area" class="mt-2 text-sm text-gray-600"></div>
+    {% endif %}
+    <input type="text"
+           name="query"
+           placeholder=""
+           value="{{ query if query else '' }}"
+           class="input input-bordered w-full bg-base-200 text-base-content text-2xl focus:outline-none focus:ring-2 focus:ring-primary"
+           required>
+    <button type="submit"
+            class="btn btn-primary rounded-r-full bg-primary text-primary-content hover:bg-primary-focus text-xl">
+        <i class="fas fa-search p-1"></i>
+    </button>
+</form>

@@ -1,0 +1,10 @@
+# instruction
+You will be given a list of utterances from a conversatoin. Determine the language of the conversation and return the language code of the conversation.
+If there are multiple languages in the conversation, return the language code of the majority language.
+Only return the language code, do not say anything else.
+
+# input
+Conversation:
+{% for sentence in sentences %}
+"{{ sentence }}"
+{% endfor %}

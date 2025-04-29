@@ -5,9 +5,7 @@
 
 from invoke import task
 
-from pipelines.utils import get_logger
-
-logger = get_logger(__name__)
+from utils.logging import logger
 
 
 @task
@@ -50,20 +48,33 @@ def setup_nvme(c):
     # Use the first NVMe device found
     nvme_device = nvme_devices[0]
 
-    logger.info(f"Formatting and mounting the NVMe drive: {nvme_device}")
-    # Format it with XFS
-    c.run(f"sudo mkfs.xfs {nvme_device}")
+    logger.info(f"Checking if the NVMe drive {nvme_device} is already formatted")
+    # Check if the NVMe device is already formatted
+    format_check = c.run(f"sudo file -s {nvme_device}", hide=True).stdout
+    if "filesystem" in format_check:
+        logger.info(
+            f"The NVMe drive {nvme_device} is already formatted. Skipping formatting."
+        )
+    else:
+        logger.info(f"Formatting the NVMe drive: {nvme_device}")
+        # Format it with XFS
+        c.run(f"sudo mkfs.xfs {nvme_device}")
 
     # Mount it
-    c.run("sudo mkdir -p /mnt/ephemeral_nvme")
+    if not c.run("sudo test -d /mnt/ephemeral_nvme", warn=True).ok:
+        c.run("sudo mkdir -p /mnt/ephemeral_nvme")
     c.run(f"sudo mount {nvme_device} /mnt/ephemeral_nvme")
 
     # Enable read and write to this disk for the user
     c.run("sudo chown $USER /mnt/ephemeral_nvme")
-    c.run("mkdir -p /mnt/ephemeral_nvme/workdir/")
+    if not c.run("sudo test -d /mnt/ephemeral_nvme/workdir", warn=True).ok:
+        c.run("mkdir -p /mnt/ephemeral_nvme/workdir/")
 
-    # Link ./workdir to point to a folder on the NVMe
-    c.run("ln -sfn /mnt/ephemeral_nvme/workdir/ ./workdir")
+    # Link ./workdir_nvme to point to a folder on the NVMe
+    if not c.run("test -L ./workdir_nvme", warn=True).ok:
+        c.run("ln -sfn /mnt/ephemeral_nvme/workdir/ ./workdir_nvme")
+    else:
+        logger.info("Symbolic link ./workdir_nvme already exists. Skipping.")
 
 
 @task
@@ -104,44 +115,21 @@ def install_docker(c):
 
 
 @task
-def install_anaconda(c):
+def install_pixi(c):
     """
-    Install Anaconda if it is not already installed.
+    Install Pixi if it is not already installed.
 
-    This task checks if Anaconda (conda) is already installed on the system. If it is not installed,
-    it downloads the Anaconda installer for Linux, runs the installer, and then removes the installer file.
+    This task checks if Pixi is already installed on the system. If it is not installed,
+    it downloads the Pixi installer for Linux and runs the installer.
 
     Args:
         c (invoke.context.Context): The context instance (passed automatically by the @task decorator).
     """
-    if c.run("conda", hide=True, warn=True).ok:
-        logger.info("Conda is already installed.")
+    if c.run("pixi", hide=True, warn=True).ok:
+        logger.info("Pixi is already installed.")
         return
-    logger.info("Installing Anaconda")
-    c.run(
-        "curl -o Anaconda-latest-Linux-x86_64.sh "
-        "https://repo.anaconda.com/archive/Anaconda3-2024.06-1-Linux-x86_64.sh"
-    )
-    c.run("bash Anaconda-latest-Linux-x86_64.sh")
-    c.run("rm Anaconda-latest-Linux-x86_64.sh")
-
-
-@task(pre=[install_anaconda])
-def setup_conda_env(c):
-    """
-    Set up the Conda environment using the environment file.
-
-    This task creates a Conda environment based on the specifications in the 'conda_env.yaml' file.
-    After creating the environment, it activates the environment named 'wikichat' and downloads
-    the 'en_core_web_sm' model for spaCy.
-
-    Args:
-        c (invoke.context.Context): The context instance (passed automatically by the @task decorator).
-    """
-    logger.info("Creating the Conda environment")
-    c.run("conda env create --file conda_env.yaml")
-    c.run("conda activate wikichat")
-    c.run("python -m spacy download en_core_web_sm")
+    logger.info("Installing Pixi")
+    c.run("curl -fsSL https://pixi.sh/install.sh | sh")
 
 
 @task
@@ -176,8 +164,7 @@ def download_azcopy(c):
 @task(
     post=[
         download_azcopy,
-        setup_conda_env,
-        install_anaconda,
+        install_pixi,
         install_docker,
         setup_nvme,
     ]

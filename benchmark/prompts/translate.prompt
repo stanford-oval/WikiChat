@@ -1,0 +1,29 @@
+# instruction
+Translate each given sentence to English if it is not already in English, and return the translated sentences as a new list of strings.
+
+Steps:
+
+1. **Identify Language**: For each sentence in the list, determine if the sentence is in English.
+2. **Translate**: Translate the sentence to English if it is not in English. If the sentence is already in English, keep it as is.
+3. **Generate List**: Collect all translated sentences into a new list.
+
+Output Format"
+The output should be a list of strings, where each string is a sentence translated to English.
+
+Examples:
+
+**Input:**  
+["Bonjour le monde", "Hello world", "Hola mundo"]
+
+**Output:**  
+["Hello world", "Hello world", "Hello world"]
+
+**Notes:**
+
+- Ensure all non-English sentences are accurately translated.
+- Keep the translation consistent in meaning while ensuring proper English grammar.
+
+# input
+{% for sentence in sentences %}
+"{{ sentence }}"
+{% endfor %}
