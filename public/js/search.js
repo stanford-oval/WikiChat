@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', function () {
         words = words.filter(word => word.length >= 3 && !['the', 'he', 'she', 'and', 'or', 'but', 'if', 'then', 'else', 'when', 'at', 'by', 'for', 'with', 'about', 'against', 'between', 'into', 'through', 'during', 'before', 'after', 'above', 'below', 'to', 'from', 'up', 'down', 'in', 'out', 'on', 'off', 'over', 'under', 'again', 'further', 'then', 'once', 'here', 'there', 'all', 'any', 'both', 'each', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very'].includes(word.toLowerCase()));
         if (words.length === 0) return snippet;
         const escapedWords = words.map(word => escapeRegExp(word));
-        const regex = new RegExp(`\b(${escapedWords.join('|')})\b`, 'gi');
+        const regex = new RegExp(`\\b(${escapedWords.join('|')})\\b`, 'gi');
         return snippet.replace(regex, '<mark class="bg-yellow-100">$1</mark>');
     }
 
