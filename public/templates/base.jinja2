@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="cupcake">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description"
+              content="High quality search in several knowledge corpora including Wikipedia and Semantic Scholar">
+        <meta name="keywords"
+              content="Search API, Knowledge, Wikipedia, Large Language Models">
+        <title>{{ title }}</title>
+        <link rel="icon" href="/public/img/favicon.png" type="image/x-icon">
+        <!-- Include Tailwind CSS CDN -->
+        <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.0.2/dist/tailwind.min.css"
+              rel="stylesheet">
+        <!-- Include DaisyUI CDN -->
+        <link href="https://cdn.jsdelivr.net/npm/daisyui@2.10.0/dist/full.css"
+              rel="stylesheet">
+        <!-- Include Font Awesome CDN -->
+        <link rel="stylesheet"
+              href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/css/flag-icon.min.css"
+              rel="stylesheet">
+        <!-- Include Google Fonts -->
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
+              rel="stylesheet">
+        <link rel="stylesheet" href="/public/css/search.css">
+        <script src="/public/js/search.js" defer></script>
+    </head>
+    <body class="min-h-screen flex items-center justify-center">
+        <div class="absolute top-4 left-4 flex">
+            <div>
+                <label tabindex="0"
+                       class="btn btn-circle btn-outline m-1 p-4"
+                       onclick="window.location.href='/'">
+                    <i class="fas fa-home text-l"></i>
+                </label>
+            </div>
+            <div>
+                <label tabindex="0"
+                       class="btn btn-circle btn-outline m-1 p-4"
+                       onclick="document.getElementById('faq-modal').classList.remove('hidden')">
+                    <i class="fas fa-info text-l"></i>
+                </label>
+            </div>
+        </div>
+        <div id="faq-modal"
+             class="hidden fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center z-50 p-4 pt-16">
+            <div class="bg-white rounded-lg shadow-lg w-1/2 relative p-12 max-h-[90vh] overflow-y-auto">
+            <button class="btn btn-circle btn-secondary absolute top-2 right-2 p-0.5 max-w-8 z-10"
+                onclick="document.getElementById('faq-modal').classList.add('hidden')">
+                <i class="fas fa-times"></i>
+            </button>
+            <ul class="list-disc list-inside space-y-4">
+                <li class="mb-2 list-none">
+                <h2 class="text-lg font-bold">What is this website?</h2>
+                This website enables high quality search in several knowledge corpora.
+                </li>
+                <li class="mb-2 list-none">
+                <h2 class="text-lg font-bold">What knowledge corpora?</h2>
+                <div class="pl-8 pt-4">
+                    <strong class="text-lg font-semibold">Wikipedia in 25 languages:</strong>
+                    <br>
+                    <div class="flex flex-wrap gap-2 mt-2">
+                    <div class="tooltip" data-tip="English">
+                        <span class="flag-icon flag-icon-us"></span>
+                        <span class="badge badge-outline">English</span>
+                    </div>
+                    <div class="tooltip" data-tip="French">
+                        <span class="flag-icon flag-icon-fr"></span>
+                        <span class="badge badge-outline">French</span>
+                    </div>
+                    <div class="tooltip" data-tip="German">
+                        <span class="flag-icon flag-icon-de"></span>
+                        <span class="badge badge-outline">German</span>
+                    </div>
+                    <div class="tooltip" data-tip="Spanish">
+                        <span class="flag-icon flag-icon-es"></span>
+                        <span class="badge badge-outline">Spanish</span>
+                    </div>
+                    <div class="tooltip" data-tip="Japanese">
+                        <span class="flag-icon flag-icon-jp"></span>
+                        <span class="badge badge-outline">Japanese</span>
+                    </div>
+                    <div class="tooltip" data-tip="Russian">
+                        <span class="flag-icon flag-icon-ru"></span>
+                        <span class="badge badge-outline">Russian</span>
+                    </div>
+                    <div class="tooltip" data-tip="Portuguese">
+                        <span class="flag-icon flag-icon-pt"></span>
+                        <span class="badge badge-outline">Portuguese</span>
+                    </div>
+                    <div class="tooltip" data-tip="Chinese">
+                        <span class="flag-icon flag-icon-cn"></span>
+                        <span class="badge badge-outline">Chinese</span>
+                    </div>
+                    <div class="tooltip" data-tip="Italian">
+                        <span class="flag-icon flag-icon-it"></span>
+                        <span class="badge badge-outline">Italian</span>
+                    </div>
+                    <div class="tooltip" data-tip="Arabic">
+                        <span class="flag-icon flag-icon-sa"></span>
+                        <span class="badge badge-outline">Arabic</span>
+                    </div>
+                    <div class="tooltip" data-tip="Persian">
+                        <span class="flag-icon flag-icon-ir"></span>
+                        <span class="badge badge-outline">Persian</span>
+                    </div>
+                    <div class="tooltip" data-tip="Polish">
+                        <span class="flag-icon flag-icon-pl"></span>
+                        <span class="badge badge-outline">Polish</span>
+                    </div>
+                    <div class="tooltip" data-tip="Dutch">
+                        <span class="flag-icon flag-icon-nl"></span>
+                        <span class="badge badge-outline">Dutch</span>
+                    </div>
+                    <div class="tooltip" data-tip="Ukrainian">
+                        <span class="flag-icon flag-icon-ua"></span>
+                        <span class="badge badge-outline">Ukrainian</span>
+                    </div>
+                    <div class="tooltip" data-tip="Hebrew">
+                        <span class="flag-icon flag-icon-il"></span>
+                        <span class="badge badge-outline">Hebrew</span>
+                    </div>
+                    <div class="tooltip" data-tip="Indonesian">
+                        <span class="flag-icon flag-icon-id"></span>
+                        <span class="badge badge-outline">Indonesian</span>
+                    </div>
+                    <div class="tooltip" data-tip="Turkish">
+                        <span class="flag-icon flag-icon-tr"></span>
+                        <span class="badge badge-outline">Turkish</span>
+                    </div>
+                    <div class="tooltip" data-tip="Czech">
+                        <span class="flag-icon flag-icon-cz"></span>
+                        <span class="badge badge-outline">Czech</span>
+                    </div>
+                    <div class="tooltip" data-tip="Swedish">
+                        <span class="flag-icon flag-icon-se"></span>
+                        <span class="badge badge-outline">Swedish</span>
+                    </div>
+                    <div class="tooltip" data-tip="Korean">
+                        <span class="flag-icon flag-icon-kr"></span>
+                        <span class="badge badge-outline">Korean</span>
+                    </div>
+                    <div class="tooltip" data-tip="Finnish">
+                        <span class="flag-icon flag-icon-fi"></span>
+                        <span class="badge badge-outline">Finnish</span>
+                    </div>
+                    <div class="tooltip" data-tip="Vietnamese">
+                        <span class="flag-icon flag-icon-vn"></span>
+                        <span class="badge badge-outline">Vietnamese</span>
+                    </div>
+                    <div class="tooltip" data-tip="Hungarian">
+                        <span class="flag-icon flag-icon-hu"></span>
+                        <span class="badge badge-outline">Hungarian</span>
+                    </div>
+                    <div class="tooltip" data-tip="Catalan">
+                        <img src="https://em-content.zobj.net/source/openmoji/384/flag-for-catalonia-esct_1f3f4-e0065-e0073-e0063-e0074-e007f.png"
+                         alt="Catalan flag"
+                         class="inline-block h-7 align-top">
+                        <span class="badge badge-outline">Catalan</span>
+                    </div>
+                    <div class="tooltip" data-tip="Thai">
+                        <span class="flag-icon flag-icon-th"></span>
+                        <span class="badge badge-outline">Thai</span>
+                    </div>
+                    </div>
+                    <br>
+                    <strong class="text-lg font-semibold mt-4">Semantic Scholar:</strong>
+                    <div class="flex flex-wrap gap-2 mt-2">
+                    <div class="tooltip" data-tip="arXiv">
+                        <i class="fas fa-file-alt"></i>
+                        <span class="badge badge-outline">arXiv</span>
+                    </div>
+                    <div class="tooltip" data-tip="ACL">
+                        <i class="fas fa-book"></i>
+                        <span class="badge badge-outline">ACL</span>
+                    </div>
+                    <div class="tooltip" data-tip="PubMed">
+                        <i class="fas fa-stethoscope"></i>
+                        <span class="badge badge-outline">PubMed</span>
+                    </div>
+                    <div class="tooltip" data-tip="PubMed Central">
+                        <i class="fas fa-hospital"></i>
+                        <span class="badge badge-outline">PubMed Central</span>
+                    </div>
+                    <div class="tooltip" data-tip="dblp">
+                        <i class="fas fa-database"></i>
+                        <span class="badge badge-outline">dblp</span>
+                    </div>
+                    </div>
+                    <br>
+                    <strong class="text-lg font-semibold mt-4">The African Times:</strong>
+                    <p class="mt-2">
+                    A collection of articles from The African Times newspaper, written by members of the African diaspora in the late 19th century.
+                    </p>
+                </div>
+                </li>
+                <li class="mb-2 list-none">
+                <h2 class="text-lg font-bold">Is there an API?</h2>
+                Yes, and it's free! Please refer to the <a href="/redoc"
+        target="_blank"
+        class="text-blue-500 hover:text-blue-700">API Documentation</a> for details.
+                </li>
+                <li class="mb-2 list-none">
+                <h2 class="text-lg font-bold">Can I add a new collection?</h2>
+                Yes, please visit <a href="{{ url_for('upload_collection') }}"
+        target="_blank"
+        class="text-blue-500 hover:text-blue-700">Upload Collection</a> for details.
+                </li>
+            </ul>
+            </div>
+        </div>
+        {% block content %}
+        {% endblock content %}
+    </body>
+</html>

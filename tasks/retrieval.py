@@ -1,336 +1,213 @@
-import glob
-import os
-import pathlib
 import sys
-import threading
-from concurrent.futures import ThreadPoolExecutor
-import concurrent
-from datetime import datetime
 from typing import Optional
+import os
+import signal
+from invoke.tasks import task
 
-import requests
-from bs4 import BeautifulSoup
-from huggingface_hub import snapshot_download
-from invoke import task
-from tqdm import tqdm
-
-from tasks.docker_utils import (
+from tasks.docker_tasks import (
     start_embedding_docker_container,
     start_qdrant_docker_container,
-    stop_all_docker_containers,
 )
 from tasks.main import load_api_keys, start_redis
+from tasks.preprocessing import (
+    get_latest_wikipedia_dump_date,
+    get_wikipedia_collection_path,
+    preprocess_wikipedia_dump,
+)
 
 sys.path.insert(0, "./")
-from pipelines.utils import get_logger
+import json
+
+from utils.logging import logger
 from tasks.defaults import (
     DEFAULT_EMBEDDING_MODEL_NAME,
     DEFAULT_EMBEDDING_MODEL_PORT,
+    DEFAULT_EMBEDDING_MODEL_URL,
     DEFAULT_EMBEDDING_USE_ONNX,
     DEFAULT_NUM_GPUS,
-    DEFAULT_QDRANT_COLLECTION_NAME,
     DEFAULT_RETRIEVER_PORT,
-    DEFAULT_WIKIPEDIA_DUMP_LANGUAGE,
+    DEFAULT_RETRIEVER_RERANKER_ENGINE,
+    DEFAULT_VECTORDB_COLLECTION_NAME,
+    DEFAULT_VECTORDB_TYPE,
     DEFAULT_WORKDIR,
 )
 
-logger = get_logger(__name__)
 
-
-def get_latest_wikipedia_dump_date() -> str:
-    """
-    Fetches the latest Wikipedia HTML dump date from the Wikimedia dumps page.
-
-    The function makes an HTTP request to the Wikimedia dumps page, parses the returned HTML to extract available
-    dump dates, and determines the latest date based on the available dates listed.
-
-    Returns:
-        str: The latest Wikipedia dump date in YYYYMMDD format.
-
-    Notes:
-        The function assumes the availability of dump dates in a specific format (YYYYMMDD/) and relies on the
-        structure of the dumps page remaining consistent over time.
-    """
-    response = requests.get("https://dumps.wikimedia.org/other/enterprise_html/runs/")
-    soup = BeautifulSoup(response.text, "html.parser")
-    available_html_dump_dates = []
-    for tag in soup.find_all("a"):
-        if len(tag.text) == 9:
-            # tag.text looks like 20240201/
-            available_html_dump_dates.append(tag.text[:-1])
-    dates = sorted(available_html_dump_dates)
-    if not dates:
-        raise ValueError(
-            "Could not fetch the latest date from wikimedia.org. Please specify the date manually, e.g. by adding --wiki-date=20240201"
-        )
-    latest_date = dates[-1]
-    logger.info(
-        "Available dates: %s. Choosing the latest one %s", ", ".join(dates), latest_date
-    )
-    return latest_date
-
-
-def get_wikipedia_collection_dir(workdir, language, wikipedia_date) -> str:
-    return os.path.join(workdir, language, f"wikipedia_{wikipedia_date}")
-
-
-def get_wikipedia_collection_path(workdir, language, wikipedia_date) -> str:
-    collection_dir = get_wikipedia_collection_dir(workdir, language, wikipedia_date)
-    return os.path.join(collection_dir, "collection.jsonl.gz")
-
-
-def download_chunk_from_url(
-    url, start, end, output_path, pbar, file_lock, num_retries=3
-):
-    """
-    Download a chunk of data from a specific URL, within a given byte range, and write it to a part of a file.
-
-    This function attempts to download a specified range of bytes from a given URL and write this data into a part
-    of a file denoted by the start byte. If the download fails due to a ChunkedEncodingError, it will retry up to
-    a specified number of retries before raising the last encountered error.
-
-    Args:
-        url (str): The URL from where to download the chunk.
-        start (int): The starting byte in the range request.
-        end (int): The ending byte in the range request.
-        output_path (Path-like object): The file path where the chunk will be written.
-        pbar (tqdm.tqdm): A tqdm progress bar instance to update the download progress.
-        file_lock (threading.Lock): A lock to ensure thread-safe writes to the file and updates to the progress bar.
-        num_retries (int, optional): The number of times to retry the download in case of failure. Defaults to 3.
-
-    Raises:
-        requests.exceptions.ChunkedEncodingError: If downloading the chunk fails after the specified number of retries.
-    """
-    headers = {"Range": f"bytes={start}-{end}"}
-    for retries in range(num_retries):
-        try:
-            response = requests.get(url, headers=headers, stream=True)
-            break
-        except requests.exceptions.ChunkedEncodingError:
-            logger.warning("Downloading a chunk cause an error. Retrying...")
-            if retries == num_retries:
-                raise
-    with open(output_path, "r+b") as f:
-        f.seek(start)  # Move to the correct position in file.
-        for chunk in response.iter_content(1024):
-            with file_lock:
-                f.write(chunk)  # Write the chunk data.
-                pbar.update(len(chunk))
-
-
-def multithreaded_download(
-    url: str, output_path: str, num_parts: int = 3, disable_tqdm=False
-) -> None:
-    """
-    Download a file in parts concurrently using multiple threads to optimize the download process.
-
-    This function breaks the download into several parts and downloads each part in parallel, thus potentially
-    improving the download speed. It is especially useful when dealing with large files and/or rate-limited servers.
-    The function ensures the integrity of the downloaded file by preallocating the total expected size and having
-    each thread write to its corresponding part of the file.
-
-    Args:
-        url (str): The URL of the file to be downloaded.
-        output_path (str): The path to which the file will be downloaded.
-        num_parts (int, optional): The number of parts into which the download will be split. Defaults to 3, based
-        on the typical rate limiting encountered from servers.
-        disable_tqdm (bool, optional): Whether to disable showing a progress bar
-
-    Note:
-        The server from which files are being downloaded must support range requests, as the function relies on
-        making byte range requests to download different parts of the file concurrently.
-    """
-    response = requests.head(url)
-    total_size = int(response.headers.get("content-length", 0))
-    part_size = total_size // num_parts
-
-    # Preallocate file with total size.
-    with open(output_path, "wb") as f:
-        f.truncate(total_size)
-
-    # Use a threading.Lock to synchronize file access
-    file_lock = threading.Lock()
-
-    futures = []
-    with ThreadPoolExecutor(max_workers=num_parts) as executor:
-        # Initialize progress bar
-        pbar = tqdm(
-            total=total_size,
-            unit="iB",
-            unit_scale=True,
-            desc="Downloading file",
-            smoothing=0,
-            disable=disable_tqdm,
-        )
-
-        for i in range(num_parts):
-            start = i * part_size
-            # Ensure the last part gets any remainder
-            end = (start + part_size - 1) if i < num_parts - 1 else ""
-
-            # Submit download tasks
-            futures.append(
-                executor.submit(
-                    download_chunk_from_url,
-                    url,
-                    start,
-                    end,
-                    output_path,
-                    pbar,
-                    file_lock,
-                )
-            )
-
-        # Wait for all futures to complete
-        for future in futures:
-            future.result()
-
-        pbar.close()
-
-
-@task
-def download_wikipedia_index(
-    c,
-    repo_id: str = "stanford-oval/wikipedia_20240401_10-languages_bge-m3_qdrant_index",
-    workdir: str = DEFAULT_WORKDIR,
-    num_threads: int = 8,
-):
-    """
-    Download and extract a pre-built Qdrant index for Wikipedia from a 🤗 Hub.
-
-    Args:
-    - c: Context, automatically passed by invoke.
-    - repo_id (str): The 🤗 Hub repository ID from which to download the index files.
-    - workdir (str): The working directory where the files will be downloaded and extracted. Defaults to DEFAULT_WORKDIR.
-    - num_threads (int): The number of threads to use for downloading and decompressing the files. Defaults to 8.
-
-    Raises:
-    - FileNotFoundError: If no part files are found in the specified directory.
-    """
-    # Download the files
-    snapshot_download(
-        repo_id=repo_id,
-        repo_type="dataset",
-        local_dir=workdir,
-        allow_patterns="*.tar.*",
-        max_workers=num_threads,
-    )
-
-    # Find the part files
-    part_files = " ".join(sorted(glob.glob(os.path.join(workdir, "*.tar.*"))))
-
-    # Ensure part_files is not empty
-    if not part_files:
-        raise FileNotFoundError("No part files found in the specified directory.")
-
-    # Decompress and extract the files
-    c.run(
-        f"cat {part_files} | pigz -d -p {num_threads} | tar --strip-components=2 -xv -C {os.path.join(workdir, 'qdrant_index')}"
-    )  # strip-components gets rid of the extra workdir/
-
-
-@task
-def print_wikipedia_dump_date(c, date: Optional[str] = None):
-    """
-    Prints the specified date in a human-readable format.
-
-    This function takes an optional date string in the format "%Y%m%d" and prints it out in a more
-    human-friendly format, "%B %d, %Y". If no date is provided, it defaults to using the date of the latest
-    available Wikipedia HTML dump.
-
-    Args:
-        c: The context parameter for Invoke tasks, automatically passed by Invoke.
-        date (str, optional): The date string in the format "%Y%m%d". If not provided, the latest wikipedia
-                              date is used.
-    """
-    if not date:
-        date = get_latest_wikipedia_dump_date()
-    print(datetime.strptime(date, "%Y%m%d").strftime("%B %d, %Y"))
-
-
-@task(pre=[start_qdrant_docker_container, start_redis])  # Run redis for rate limiting
+@task(
+    pre=[start_redis, load_api_keys]
+)  # Run redis for rate limiting, load API keys for LLM reranker
 def start_retriever(
     c,
-    collection_name=DEFAULT_QDRANT_COLLECTION_NAME,
-    embedding_model_name=DEFAULT_EMBEDDING_MODEL_NAME,
-    use_onnx=DEFAULT_EMBEDDING_USE_ONNX,
-    retriever_port=DEFAULT_RETRIEVER_PORT,
+    vector_db_type: str = DEFAULT_VECTORDB_TYPE,
+    workdir: str = DEFAULT_WORKDIR,
+    embedding_model_name: str = DEFAULT_EMBEDDING_MODEL_NAME,
+    use_onnx: bool = DEFAULT_EMBEDDING_USE_ONNX,
+    retriever_port: int = DEFAULT_RETRIEVER_PORT,
+    reranker_engine: str = DEFAULT_RETRIEVER_RERANKER_ENGINE,
 ):
     """
     Starts the retriever server.
 
     This task runs the retriever server, which is responsible for handling
     retrieval requests. It uses Gunicorn to manage Uvicorn workers for asynchronous processing.
-    The retriever server sends search requests to the Qdrant docker container.
+    The retriever server sends search requests to the vector DB Docker container.
 
     Args:
     - c: Context, automatically passed by invoke.
-    - collection_name (str): The name of the Qdrant collection to query. Defaults to DEFAULT_QDRANT_COLLECTION_NAME.
+    - vector_db_type (str): The type of vector database to use for indexing.
+    - workdir (str): The working directory where the retriever server will run. Defaults to DEFAULT_WORKDIR.
     - embedding_model_name (str): The HuggingFace ID of the embedding model to use for retrieval. Defaults to DEFAULT_EMBEDDING_MODEL_NAME.
     - use_onnx (bool): Flag indicating whether to use the ONNX version of the embedding model. Defaults to DEFAULT_EMBEDDING_USE_ONNX.
     - retriever_port (int): The port on which the retriever server will listen. Defaults to DEFAULT_RETRIEVER_PORT.
+    - reranker_engine (str): The LLM to use for reranking. Defaults to DEFAULT_RETRIEVER_RERANKER_ENGINE.
     """
+
+    if vector_db_type == "qdrant":
+        start_qdrant_docker_container(c, workdir=workdir)
+    else:
+        raise ValueError(f"Invalid vector_db_type {vector_db_type}")
+
     command = (
         f"gunicorn -k uvicorn.workers.UvicornWorker 'retrieval.retriever_server:gunicorn_app("
         f'embedding_model_name="{embedding_model_name}", '
         f'use_onnx="{use_onnx}", '
-        f'collection_name="{collection_name}")\' '
+        f'reranker_engine="{reranker_engine}", '
+        f'vector_db_type="{vector_db_type}")\' '
         f"--access-logfile=- "
         f"--bind 0.0.0.0:{retriever_port} "
-        f"--workers 1 --threads 4 "
+        f"--workers 2 --threads 8 "
+        f"--pid /tmp/gunicorn.pid "  # Save the PID of the Gunicorn master process to file
         f"--timeout 0"
     )
     c.run(command, pty=False)
 
 
-@task(pre=[start_qdrant_docker_container])
+def get_gunicorn_pid(pid_file="/tmp/gunicorn.pid"):
+    """
+    Get the Gunicorn master process ID.
+    """
+    try:
+        with open(pid_file, "r") as f:
+            return int(f.read().strip())
+    except FileNotFoundError:
+        print(f"PID file {pid_file} not found.")
+        return None
+    except Exception as e:
+        print(f"Error reading PID file: {e}")
+        return None
+
+
+@task
+def reload_retriever(c):
+    """
+    Gracefully reload the Gunicorn retriever server by sending a SIGHUP signal to the master process.
+    """
+    pid = get_gunicorn_pid()
+    if pid:
+        try:
+            os.kill(pid, signal.SIGHUP)
+            print(f"Sent SIGHUP to Gunicorn master process (PID: {pid})")
+        except ProcessLookupError:
+            print(f"Process with PID {pid} not found.")
+        except Exception as e:
+            print(f"Error sending SIGHUP: {e}")
+    else:
+        print("Could not find Gunicorn master PID. Reload aborted.")
+
+
+@task
 def test_index(
     c,
-    collection_name: str = DEFAULT_QDRANT_COLLECTION_NAME,
-    embedding_model_name: str = DEFAULT_EMBEDDING_MODEL_NAME,
+    workdir=DEFAULT_WORKDIR,
+    embedding_model_url=DEFAULT_EMBEDDING_MODEL_URL,
+    embedding_model_port=DEFAULT_EMBEDDING_MODEL_PORT,
+    embedding_model_name=DEFAULT_EMBEDDING_MODEL_NAME,
+    num_gpus=DEFAULT_NUM_GPUS,
 ):
-    """
-    Test a Qdrant index.
-
-    This task starts a Qdrant Docker container and then runs a test query to ensure that the index is working correctly.
-    Note that this task does not perform the actual indexing; it only tests an index that already exists.
-
-    Args:
-    - c: Context, automatically passed by invoke.
-    - collection_name (str): Name of the Qdrant collection to test. Defaults to DEFAULT_QDRANT_COLLECTION_NAME.
-    - embedding_model_name (str): Name of the embedding model to use for testing. Defaults to DEFAULT_EMBEDDING_MODEL_NAME.
-    """
-    cmd = (
-        f"python retrieval/create_index.py "
-        f"--collection_name {collection_name}"
-        f"--embedding_model_name {embedding_model_name} "
-        f"--test"  # Just test, don't index
+    start_qdrant_docker_container(c, workdir=workdir)
+    if (
+        "localhost" in embedding_model_url
+        or "0.0.0.0" in embedding_model_url
+        or "127.0.0.1" in embedding_model_url
+    ):
+        start_embedding_docker_container(
+            c,
+            port=embedding_model_port,
+            embedding_model=embedding_model_name,
+            num_gpus=num_gpus,
+        )
+    c.run(
+        "pytest -rP --color=yes --disable-warnings ./tests/test_index.py ",
+        pty=True,
     )
-    c.run(cmd, pty=True)
+
+
+@task
+def test_retriever(c, retriever_port=DEFAULT_RETRIEVER_PORT):
+    logger.info("Testing the retriever server without LLM reranking...")
+    result = c.run(
+        f"curl -X POST 0.0.0.0:{retriever_port}/wikipedia "
+        f'-H "Content-Type: application/json" '
+        f"""-d '{{
+            "query": ["What is GPT-4?", "What is LLaMA-3?"],
+            "num_blocks": 3
+        }}'""",
+        pty=True,
+        hide=True,
+    )
+    logger.info(json.dumps(json.loads(result.stdout), indent=2, ensure_ascii=False))
+
+    logger.info("Testing the retriever server with LLM reranking...")
+    result = c.run(
+        f"curl -X POST 0.0.0.0:{retriever_port}/wikipedia "
+        f'-H "Content-Type: application/json" '
+        f'-d \'{{"query": ["What is GPT-4?", "What is LLaMA-3?"], "num_blocks": 3, "rerank": true}}\'',
+        pty=True,
+        hide=True,
+    )
+    logger.info(json.dumps(json.loads(result.stdout), indent=2, ensure_ascii=False))
+
+    logger.info(
+        "Testing the retriever server with LLM reranking and `num_blocks_to_rerank` ..."
+    )
+    result = c.run(
+        f"curl -X POST 0.0.0.0:{retriever_port}/wikipedia "
+        f'-H "Content-Type: application/json" '
+        f'-d \'{{"query": ["What is GPT-4?", "What is LLaMA-3?"], '
+        f'"num_blocks": 3, "rerank": true, "num_blocks_to_rerank": 20}}\'',
+        pty=True,
+        hide=True,
+    )
+    logger.info(json.dumps(json.loads(result.stdout), indent=2, ensure_ascii=False))
 
 
 @task(
     pre=[
-        stop_all_docker_containers,
-        start_qdrant_docker_container,
+        load_api_keys,
     ],
-    post=[stop_all_docker_containers],
 )
 def index_collection(
     c,
     collection_path,
-    collection_name: str = DEFAULT_QDRANT_COLLECTION_NAME,
+    vector_db_type: str = DEFAULT_VECTORDB_TYPE,
+    workdir: str = DEFAULT_WORKDIR,
+    collection_name: str = DEFAULT_VECTORDB_COLLECTION_NAME,
+    embedding_model_url: str = DEFAULT_EMBEDDING_MODEL_URL,
     embedding_model_port: int = DEFAULT_EMBEDDING_MODEL_PORT,
     embedding_model_name: str = DEFAULT_EMBEDDING_MODEL_NAME,
+    num_gpus: int = DEFAULT_NUM_GPUS,
+    num_skip: int = 0,
+    high_memory: bool = False,
+    index_metadata: bool = False,
 ):
     """
-    Creates a Qdrant index from a collection file using a specified embedding model.
+    Creates a vector index from a collection file using a specified embedding model.
 
-    This task starts required Docker containers for the text-embedding service and the Qdrant vector database,
+    This task starts required Docker containers for the text-embedding service and the vector database,
     then indexes the collection file using the specified
     embedding model, and finally stops the Docker containers.
 
-    For reference, indexing the entire English Wikipedia (~52M vectors) takes around 9.5 hours when using an A100 GPU
+    For reference, indexing the entire English Wikipedia (~50M vectors) takes around 9.5 hours when using an A100 GPU
     Meaning the throughput is about 1.4K vectors per second.
     The actual duration can vary based on the size of your collection file,
     the computational resources available, and the efficiency of the embedding model.
@@ -339,124 +216,81 @@ def index_collection(
         - c (Context): Invoke context, automatically passed by the invoke framework, used for executing shell commands.
         - collection_path (str): Path to a JSONL file (.jsonl or .jsonl.gz file extension) with the appropriate format
         that contains the chunked text of documents you want to index.
-        - collection_name (str): The name of the Qdrant collection where the indexed data will be stored.
+        - vector_db_type (str): The type of vector database to use for indexing.
+        - workdir (str): The working directory where the retriever server will run. Defaults to DEFAULT_WORKDIR.
+        - collection_name (str): The name of the vector DB collection where the indexed data will be stored.
         This parameter allows you to specify a custom name for the collection, which can be useful for organizing multiple indexes or distinguishing between different versions of the same dataset.
+        - embedding_model_url (str): The URL at which the embedding model is accessible will be embedding_model_url:embedding_model_port/embed.
         - embedding_model_port (int): The port on which the embedding model server is running.
         - embedding_model_name (str): The HuggingFace ID of the embedding model to use for indexing.
+        - num_gpus (int): The number of GPUs to use for indexing. Defaults to DEFAULT_NUM_GPUS.
+        - num_skip (int): Number of blocks to skip in the collection file. Useful for resuming indexing.
+        - high_memory (bool): Whether to use a high-RAM configuration for the vector database. Defaults to False.
+        - index_metadata (bool): Whether to index metadata fields. Defaults to False.
     """
-    start_embedding_docker_container(
-        c, port=embedding_model_port, embedding_model=embedding_model_name
-    )
+    if (
+        "localhost" in embedding_model_url
+        or "0.0.0.0" in embedding_model_url
+        or "127.0.0.1" in embedding_model_url
+    ):
+        start_embedding_docker_container(
+            c,
+            port=embedding_model_port,
+            embedding_model=embedding_model_name,
+            num_gpus=num_gpus,
+        )
+    if vector_db_type == "qdrant":
+        start_qdrant_docker_container(c, workdir=workdir)
+    else:
+        raise ValueError(f"Invalid vector_db_type {vector_db_type}")
+
+    if high_memory:
+        high_memory_flag = "--high_memory"
+    else:
+        high_memory_flag = ""
+
+    if index_metadata:
+        index_metadata_flag = "--index_metadata"
+    else:
+        index_metadata_flag = ""
+
     c.run(
         f"python retrieval/create_index.py "
         f"--collection_file {collection_path} "
         f"--collection_name {collection_name} "
         f"--embedding_model_name {embedding_model_name} "
-        f"--model_port {embedding_model_port} "
-        f"--index",  # But don't test, because it takes time for Qdrant to optimize the index after we have inserted vectors in bulk.
+        f"--embedding_model_port {' '.join([str(embedding_model_port + i) for i in range(num_gpus)])} "
+        f"--embedding_model_url {embedding_model_url} "
+        f"--vector_db_type {vector_db_type} "
+        f"--num_skip {num_skip} "
+        f"{high_memory_flag} "
+        f"{index_metadata_flag} ",
         pty=True,
     )
 
 
-@task
-def download_wikipedia_dump(
-    c,
-    workdir: str = DEFAULT_WORKDIR,
-    language: str = DEFAULT_WIKIPEDIA_DUMP_LANGUAGE,
-    wikipedia_date: Optional[str] = None,
-):
-    """
-    Download a Wikipedia HTML dump from https://dumps.wikimedia.org/other/enterprise_html/runs/
-
-    Args:
-    - c: Context, automatically passed by invoke.
-    - wikipedia_date (str, optional): The date of the Wikipedia dump to use. If not provided, the latest available dump is used.
-    - language: Language edition of Wikipedia.
-    """
-    if not wikipedia_date:
-        wikipedia_date = get_latest_wikipedia_dump_date()
-    index_dir = get_wikipedia_collection_dir(workdir, language, wikipedia_date)
-    output_path = os.path.join(index_dir, "articles-html.json.tar.gz")
-    if os.path.exists(output_path):
-        logger.info("Wikipedia dump already exists at %s", output_path)
-        return
-    download_url = f"https://dumps.wikimedia.org/other/enterprise_html/runs/{wikipedia_date}/{language}wiki-NS0-{wikipedia_date}-ENTERPRISE-HTML.json.tar.gz"
-
-    pathlib.Path(index_dir).mkdir(parents=True, exist_ok=True)
-    multithreaded_download(download_url, output_path)
-
-
-@task
-def preprocess_wikipedia_dump(
-    c,
-    workdir: str = DEFAULT_WORKDIR,
-    language: str = DEFAULT_WIKIPEDIA_DUMP_LANGUAGE,
-    wikipedia_date: Optional[str] = None,
-    pack_to_tokens: int = 200,
-    num_exclude_frequent_words_from_translation: int = 1000,
-):
-    """
-    Process Wikipedia HTML dump into a JSONL collection file.
-    This takes ~4 hours for English on a 24-core CPU VM. Processing is fully parallelizable so the time is proportional to number of cores available.
-    It might take more for other languages, if we need to also get entity translations from Wikidata. This is because of Wikidata's rate limit.
-
-
-    Args:
-    - workdir (str): Working directory for processing
-    - language (str): Language of the dump to process
-    - wikipedia_date (str, optional): The date of the Wikipedia dump to use. If not provided, the latest available dump is used.
-    - pack_to_tokens(int): We try to pack smaller text chunks to get to this number of tokens.
-    - num_exclude_frequent_words_from_translation (int): For non-English Wikipedia dumps, we try to find English translations of all article names
-    in Wikidata. We will exclude the `num_exclude_frequent_words_from_translation` most common words because neural models are already familiar with these.
-    """
-    output_path = get_wikipedia_collection_path(workdir, language, wikipedia_date)
-    if os.path.exists(output_path):
-        logger.info("Collection already exists at %s", output_path)
-        return
-    download_wikipedia_dump(c, workdir, language, wikipedia_date)
-
-    index_dir = get_wikipedia_collection_dir(workdir, language, wikipedia_date)
-    input_path = os.path.join(index_dir, "articles-html.json.tar.gz")
-    wikidata_translation_map = os.path.join(
-        workdir, "wikidata_translation_map.jsonl.gz"
-    )
-
-    # Constructing the command with parameters
-    command = (
-        f"python preprocessing/preprocess_wikipedia_html_dump.py "
-        f"--input_path {input_path} "
-        f"--output_path {output_path} "
-        f"--wikidata_translation_map {wikidata_translation_map} "
-        f"--language {language} "
-        f"--should_translate "
-        f"--pack_to_tokens {pack_to_tokens} "
-        f"--num_exclude_frequent_words_from_translation {num_exclude_frequent_words_from_translation}"
-    )
-
-    # Running the command
-    c.run(command)
-
-
 @task(
-    pre=[
-        stop_all_docker_containers,
-        start_qdrant_docker_container,
-    ],
-    post=[stop_all_docker_containers],
+    pre=[load_api_keys],
+    iterable=["language"],
 )
 def index_wikipedia_dump(
     c,
-    collection_name: str = DEFAULT_QDRANT_COLLECTION_NAME,
+    language,
+    collection_name: str = DEFAULT_VECTORDB_COLLECTION_NAME,
+    vector_db_type: str = DEFAULT_VECTORDB_TYPE,
+    workdir: str = DEFAULT_WORKDIR,
+    wikipedia_date: Optional[str] = None,
+    embedding_model_url: str = DEFAULT_EMBEDDING_MODEL_URL,
     embedding_model_port: int = DEFAULT_EMBEDDING_MODEL_PORT,
     embedding_model_name: str = DEFAULT_EMBEDDING_MODEL_NAME,
-    workdir: str = DEFAULT_WORKDIR,
-    language: str = DEFAULT_WIKIPEDIA_DUMP_LANGUAGE,
-    wikipedia_date: Optional[str] = None,
+    num_gpus: int = DEFAULT_NUM_GPUS,
+    num_skip: int = 0,
+    high_memory: bool = False,
 ):
     """
-    Orchestrates the indexing of a Wikipedia collection using a specified embedding model.
+    Orchestrates the indexing of one or more Wikipedia collections using a specified embedding model.
 
-    This task starts required Docker containers for the text-embedding service and the Qdrant vector database,
+    This task starts required Docker containers for the text-embedding service and the vector DB vector database,
     processes a Wikipedia dump to create a collection, indexes the collection using the specified
     embedding model, and finally stops the Docker containers.
 
@@ -466,144 +300,58 @@ def index_wikipedia_dump(
 
     Args:
         - c (Context): Invoke context, automatically passed by the invoke framework, used for executing shell commands.
-        - collection_name (str): The name of the Qdrant collection where the indexed data will be stored.
+        - language (str): The language edition of Wikipedia to index. Can provide multiple languages to index sequentially, e.g., `--language en --language de`.
+        - vector_db_type (str): The type of vector database to use for indexing.
+        - collection_name (str): The name of the vector DB collection where the indexed data will be stored.
         This parameter allows you to specify a custom name for the collection, which can be useful for organizing multiple indexes or distinguishing between different versions of the same dataset.
         - embedding_model_port (int): The port on which the embedding model server is running.
         - embedding_model_name (str): The HuggingFace ID of the embedding model to use for indexing.
         - workdir (str): The working directory where intermediate and final files are stored.
-        - language (str): The language edition of Wikipedia to index (e.g., "en" for English).
         - wikipedia_date (str, optional): The date of the Wikipedia dump to use. If not provided, the latest available dump is used.
+        - num_gpus (int): The number of GPUs to use for indexing. Defaults to DEFAULT_NUM_GPUS.
+        - num_skip (int): Number of blocks to skip in the collection file. Useful for resuming indexing.
+        - high_memory (bool): Whether to use a high-RAM configuration for the vector database. Defaults to False.
     """
-    start_embedding_docker_container(
-        c,
-        workdir=workdir,
-        port=embedding_model_port,
-        embedding_model=embedding_model_name,
-    )
+    assert isinstance(language, list), "language should be a list of languages"
+
+    if vector_db_type == "qdrant":
+        start_qdrant_docker_container(c, workdir=workdir)
+    else:
+        raise ValueError(f"Invalid vector_db_type {vector_db_type}")
+    if (
+        "localhost" in embedding_model_url
+        or "0.0.0.0" in embedding_model_url
+        or "127.0.0.1" in embedding_model_url
+    ):
+        start_embedding_docker_container(
+            c,
+            workdir=workdir,
+            port=embedding_model_port,
+            embedding_model=embedding_model_name,
+        )
 
     if not wikipedia_date:
         wikipedia_date = get_latest_wikipedia_dump_date()
-    preprocess_wikipedia_dump(
-        c, workdir=workdir, language=language, wikipedia_date=wikipedia_date
-    )
-    collection_path = get_wikipedia_collection_path(
-        workdir=workdir, language=language, wikipedia_date=wikipedia_date
-    )
-    embedding_model_port_list = []
-    for gpu_id in range(DEFAULT_NUM_GPUS):
-        embedding_model_port_list.append(str(embedding_model_port + gpu_id))
-    embedding_model_port = " ".join(embedding_model_port_list)
 
-    index_collection(
-        c,
-        collection_path=collection_path,
-        collection_name=collection_name,
-        embedding_model_port=embedding_model_port,
-        embedding_model_name=embedding_model_name,
-    )
-
-
-@task(
-    pre=[
-        stop_all_docker_containers,
-        start_qdrant_docker_container,
-    ],
-    post=[stop_all_docker_containers],
-    iterable=["language"],
-)
-def index_multiple_wikipedia_dumps(
-    c,
-    language,
-    workdir: str = DEFAULT_WORKDIR,
-    wikipedia_date: Optional[str] = None,
-    embedding_model_port: int = DEFAULT_EMBEDDING_MODEL_PORT,
-    embedding_model_name: str = DEFAULT_EMBEDDING_MODEL_NAME,
-):
-    """
-    Index multiple Wikipedia dumps from different languages in a for loop.
-    """
-    start_embedding_docker_container(
-        c,
-        workdir=workdir,
-        port=embedding_model_port,
-        embedding_model=embedding_model_name,
-    )
-
-    if not wikipedia_date:
-        wikipedia_date = get_latest_wikipedia_dump_date()
-    for l in language:
-        logger.info("Started indexing for language %s", l)
-        index_wikipedia_dump(
-            c, workdir=workdir, language=l, wikipedia_date=wikipedia_date
+    for lang in language:
+        logger.info(f"Started indexing for language {lang}")
+        preprocess_wikipedia_dump(
+            c, workdir=workdir, language=lang, wikipedia_date=wikipedia_date
+        )
+        collection_path = get_wikipedia_collection_path(
+            workdir=workdir, language=lang, wikipedia_date=wikipedia_date
         )
 
-
-@task(pre=[load_api_keys])
-def download_semantic_scholar_dump(
-    c, workdir: str = DEFAULT_WORKDIR, num_threads: int = 8
-):
-    # Read the API key from environment variables
-    api_key = os.environ.get("SEMANTIC_SCHOLAR_API_KEY")
-    if not api_key:
-        raise ValueError("SEMANTIC_SCHOLAR_API_KEY environment variable is not set")
-
-    # Set up headers with the API key
-    headers = {"x-api-key": api_key}
-
-    # Call the Semantic Scholar API to get the latest release information
-    response = requests.get("https://api.semanticscholar.org/datasets/v1/release/")
-
-    if response.status_code != 200:
-        raise Exception(
-            f"Failed to fetch release information. Status code: {response.status_code}"
+        index_collection(
+            c,
+            collection_path=collection_path,
+            collection_name=collection_name,
+            vector_db_type=vector_db_type,
+            workdir=workdir,
+            embedding_model_url=embedding_model_url,
+            embedding_model_port=embedding_model_port,
+            embedding_model_name=embedding_model_name,
+            num_gpus=num_gpus,
+            num_skip=num_skip,
+            high_memory=high_memory,
         )
-
-    latest_release = response.json()[-1]
-
-    response = requests.get(
-        f"https://api.semanticscholar.org/datasets/v1/release/{latest_release}/dataset/s2orc",
-        headers=headers,
-    )
-    if response.status_code != 200:
-        raise Exception(
-            f"Failed to fetch release details. Status code: {response.status_code}"
-        )
-    release_details = response.json()
-    # logger.info(release_details)
-    file_urls = release_details["files"]
-
-    # Download all files
-    with ThreadPoolExecutor(max_workers=8) as executor:
-        futures = []
-        for file_idx, url in enumerate(file_urls):
-            file_path = os.path.join(
-                workdir, f"semantic_scholar_dump_{file_idx:03d}.jsonl.gz"
-            )
-            future = executor.submit(
-                multithreaded_download, url, file_path, num_parts=1
-            )
-            futures.append(future)
-
-        for future in tqdm(
-            concurrent.futures.as_completed(futures), total=len(futures), desc="Files"
-        ):
-            future.result()  # This will raise any exceptions that occurred during download
-
-    logger.info("All files have been downloaded.")
-
-    # Find the part files
-    part_files = glob.glob(
-        os.path.join(workdir, "semantic_scholar_dump_part*.jsonl.gz")
-    )
-
-    # Ensure part_files is not empty
-    if not part_files:
-        raise FileNotFoundError("No part files found in the specified directory.")
-
-    # Unzip part files
-    for file in tqdm(part_files, desc="Running gunzip"):
-        output_file = file[:-3]  # Remove the .gz extension
-        c.run(f"gunzip -c {file} > {output_file}", pty=True)
-        logger.info(f"Unzipped {file} to {output_file}")
-
-    logger.info("All part files have been unzipped.")

@@ -1,0 +1,25 @@
+# instruction
+You are an intelligent assistant tasked with determining if a passage is relevant to a given query.
+Today's date is {{ today }}. Keep this in mind if any of the passages or the query contain time-sensitive information.
+
+To complete this task, follow these steps:
+1. Carefully read and understand the query.
+2. Read the passage and assess its relevance to the query.
+3. Consider factors such as:
+   - How directly the passage addresses the query
+   - The amount of relevant information in the passage
+   - The specificity and detail of the information related to the query
+   - The recency of the information (if applicable)
+4. Determine if the passage is relevant to the query. Your output should be either "Yes" or "No".
+
+
+# input
+<query>
+{{ query }}
+</query>
+
+<passage>
+{% if search_result.full_title %}Title: {{ search_result.full_title }}{% endif %}
+{% if search_result.date_human_readable %}Published on: {{ search_result.date_human_readable }}{% endif %}
+{{ search_result.content | truncate(3000, True)}}{# truncate to avoid issues with blocks that are extremely long #}
+</passage>

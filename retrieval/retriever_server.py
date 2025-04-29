@@ -1,215 +1,270 @@
 import argparse
-import asyncio
-import atexit
 import sys
-from enum import Enum
-from pathlib import Path
-from typing import Optional, Union
+from typing import Optional
 
 from async_lru import alru_cache
-from fastapi import FastAPI, Request, Response
-from pydantic import BaseModel, ConfigDict, Field, field_validator
-from slowapi import Limiter, _rate_limit_exceeded_handler
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.concurrency import asynccontextmanager
+from fastapi.staticfiles import StaticFiles
+from jinja2 import Template
+from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
-from slowapi.util import get_remote_address
+import langcodes
+from corpora import all_corpus_objects, get_public_indices
+from retrieval.llm_reranker import batch_llm_rerank, initialize_llm_reranker
+from retrieval.retrieval_commons import QueryResult
+from retrieval.search_query import SearchQuery
+from retrieval.upload_collection import upload_router
 
 sys.path.insert(0, "./")
-from pipelines.utils import get_logger
-from retrieval.qdrant_index import QdrantIndex, SearchResult
 
-limiter = Limiter(key_func=get_remote_address, storage_uri="redis://localhost:6379")
+from retrieval.qdrant_index import AsyncQdrantVectorDB
+from utils.logging import logger
 
-app = FastAPI(
-    title="Wikipedia Search API",
-    description="An API for retrieving information from 10 Wikipedia languages from the Wikipedia dump of August 1, 2024.",
-    version="1.0.0",
-    docs_url="/search/docs",
-    redoc_url="/search/redoc",
-    openapi_url="/search/openapi.json",
-    contact={
-        "name": "Stanford Open Virtual Assistant Lab",
-        "url": "https://oval.cs.stanford.edu",
-        "email": "genie@cs.stanford.edu",
-    },
+from .server_utils import (
+    exempt_from_rate_limit_when,
+    limiter,
+    markdown_to_html,
+    templates,
 )
-app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-logger = get_logger(__name__)
+vector_db = None
 
 
-class Language(str, Enum):
-    ENGLISH = "en"
-    SPANISH = "es"
-    PERSIAN = "fa"
-    GERMAN = "de"
-    ITALIAN = "it"
-    CHINESE = "zh"
-    FRENCH = "fr"
-    RUSSIAN = "ru"
-    PORTUGUESE = "pt"
-    JAPANESE = "ja"
+@alru_cache(ttl=60)  # get newly added collections from the vector database every minute
+async def get_available_collections():
+    assert vector_db
+    return await vector_db.list_collections()
 
 
-class BlockType(str, Enum):
-    TEXT = "text"
-    TABLE = "table"
-    INFOBOX = "infobox"
-
-
-class QueryData(BaseModel):
-    query: Union[list[str], str] = Field(
-        ...,  # This means the field is required
-        description="Query or a list of queries in natural language",
-        json_schema_extra={"example": ["What is GPT-4?", "What is LLaMA-3?"]},
-    )
-    num_blocks: int = Field(
-        ...,
-        description="Number of results to return",
-        gt=0,
-        le=50,
-        json_schema_extra={"example": 3},
-    )
-    languages: Optional[Union[list[Language], Language]] = Field(
-        default=None, description="The language codes of the results you want"
-    )
-
-    @field_validator("query")
-    def validate_query(cls, value):
-        if isinstance(value, str):
-            if len(value) < 1:
-                raise ValueError("String query must be non-empty")
-        elif isinstance(value, list):
-            if len(value) < 1:
-                raise ValueError("List query must contain at least one item")
-            if len(value) > 100:
-                raise ValueError("List query must contain at most 100 items")
-            for item in value:
-                if not isinstance(item, str) or len(item) < 1:
-                    raise ValueError("Each item in the list must be a non-empty string")
-        else:
-            raise TypeError("Query must be either a string or a list of strings")
-        return value
-
-    model_config = ConfigDict(
-        extra="forbid",
-        use_enum_values=True,  # This allows the API to accept string values for enums
-    )
-
-
-qdrant_index = None
-
-
-@alru_cache(maxsize=10000)
-async def qdrant_search(
-    queries: tuple[str],
-    k: int,
-    languages: tuple[str] = None,
-    block_types: tuple[str] = None,
-) -> list[SearchResult]:
-    filters = {}
-    if languages:
-        filters["language"] = languages
-    if block_types:
-        filters["block_types"] = block_types
-    return await qdrant_index.search(queries, k, filters=filters)
-
-
-def exempt_from_rate_limit_when(request: Request):
-    sender_ip = request.client.host
-    if sender_ip in [
-        "127.0.0.1",
-        "20.83.187.209",
-    ]:  # Exempt requests from the front-end
-        logger.debug("Exempt from rate limit")
-        return True
-    return False
-
-
-@app.post(
-    "/search",
-    description=Path("docs/search_api.md").read_text(),
-    summary="High-quality Wikipedia Search",
-    response_model=list[SearchResult],
-)
-@limiter.limit("20/minute", exempt_when=exempt_from_rate_limit_when)
-async def search(request: Request, query_data: QueryData):
-    queries = query_data.query
-    if isinstance(queries, str):
-        queries = [queries]
-    evi_num = query_data.num_blocks
-    languages = query_data.languages
-    if isinstance(languages, str):
-        languages = [languages]
-
-    try:
-        results = await qdrant_search(
-            tuple(queries),
-            evi_num,
-            languages=tuple(languages) if languages else None,
-            block_types=None,
-        )
-    except Exception as e:
-        logger.error(str(e))
-        return Response(status_code=500)
-
-    return results
-
-
-def init():
-    arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument(
+@asynccontextmanager
+async def init(app: FastAPI):
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
         "--embedding_model_name",
         type=str,
         required=True,
         help="Path or the HuggingFace model name for the model used to encode the query.",
     )
-    arg_parser.add_argument(
-        "--collection_name", type=str, help="The name of the Qdrant collection"
-    )
-    arg_parser.add_argument(
+    parser.add_argument(
         "--use_onnx", default=False, type=lambda x: (str(x).lower() == "true")
     )
+    parser.add_argument(
+        "--vector_db_type",
+        type=str,
+        choices=["qdrant"],
+        required=True,
+        help="The type of vector database to use for indexing.",
+    )
+    parser.add_argument(
+        "--reranker_engine",
+        type=str,
+        required=True,
+        help="The LLM to use for reranking.",
+    )
+    parser.add_argument("--vector_db_url", type=str, default="http://localhost")
 
-    args = arg_parser.parse_args()
+    args = parser.parse_args()
 
-    global qdrant_index
+    global vector_db
 
-    if args.use_onnx:
-        logger.info("Using ONNX for the embedding model.")
-    qdrant_index = QdrantIndex(
+    if args.vector_db_type == "qdrant":
+        vector_db_class = AsyncQdrantVectorDB
+    else:
+        raise ValueError("Invalid vector_db_type")
+
+    # Initialize the vector database asynchronously
+    vector_db = vector_db_class(
+        vector_db_url=args.vector_db_url,
         embedding_model_name=args.embedding_model_name,
-        collection_name=args.collection_name,
         use_onnx=args.use_onnx,
     )
 
-    # logger.info("Running a test query.")
-    # asyncio.run(
-    #     search(
-    #         QueryData(
-    #             **{
-    #                 "query": [
-    #                     "Tell me about Haruki Murakami.",
-    #                     "who is the current monarch of the UK?",
-    #                 ],
-    #                 "num_blocks": 5,
-    #                 "languages": [],
-    #                 "block_types": [],
-    #             }
-    #         )
-    #     )
-    # )
+    available_collections = await vector_db.list_collections()
+    logger.info(f"All available collections: {available_collections}")
+    logger.info(f"Out of which, these will be public: {get_public_indices()[0]}")
+
+    initialize_llm_reranker(engine=args.reranker_engine, reranker_type="pointwise")
+
+    if available_collections:
+        logger.info("Running a test query.")
+        test_queries = [
+            "Tell me about Haruki Murakami.",
+            "who is the current monarch of the UK?",
+            "شهرستان مرند کجاست؟",  # Query in Farsi, to test multilingual support
+        ]
+        results = await vector_db.search(
+            collection_name=available_collections[-1],
+            search_query=SearchQuery(query=test_queries, num_blocks=3),
+        )
+        for q, r in zip(test_queries, results):
+            logger.info(f"Test Query: {q}")
+            logger.info(f"Results: {r.model_dump_json(indent=2)}")
 
     logger.info("Retrieval server is ready.")
 
-    return args
+    # Yield control back to FastAPI (this is where the app will start serving requests)
+    yield
+
+    # Shutdown logic (cleanup)
+    if vector_db:
+        await vector_db.close_connections()
+        logger.info("Vector DB connections closed.")
 
 
-@atexit.register
-def cleanup():
-    # Cleanup qdrant_index here
-    if qdrant_index:
-        asyncio.run(qdrant_index.qdrant_client.close())
+app = FastAPI(
+    title="Genie Search API",
+    description="""An API for high-quality search in knowledge corpora. This API is a hosted version of [WikiChat](https://github.com/stanford-oval/WikiChat)'s search subsystem.
+Specifically, it uses state-of-the-art multilingual vector embedding models and LLM reranking for highest quality search results.""",
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
+    contact={
+        "name": "Stanford Open Virtual Assistant Lab",
+        "url": "https://oval.cs.stanford.edu",
+        "email": "genie@cs.stanford.edu",
+    },
+    lifespan=init,
+)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore
+app.mount("/public", StaticFiles(directory="public"), name="public")
+
+# app.add_middleware(MaxSizeLimitMiddleware, max_body_size=MAX_FILE_SIZE)
+app.include_router(upload_router)
+
+
+search_api_docs = Template(open("public/templates/search_api.jinja2").read()).render(
+    all_corpora=all_corpus_objects
+)
+
+
+@app.get("/upload_collection", include_in_schema=False)
+async def upload_collection(request: Request):
+    return templates.TemplateResponse(
+        "templates/upload.jinja2", {"title": "Upload Collection", "request": request}
+    )
+
+
+@app.post(
+    "/{collection_name}",
+    description=search_api_docs,
+    summary="A High-Quality Multilingual LLM-Based Search Endpoint",
+    response_model=list[QueryResult],
+)
+@limiter.limit("50/minute", exempt_when=exempt_from_rate_limit_when)
+async def search(request: Request, collection_name: str, search_query: SearchQuery):
+    assert vector_db is not None
+    try:
+        results: list[QueryResult] = await vector_db.search(
+            collection_name=collection_name,
+            search_query=search_query,
+        )
+        assert len(results) == len(search_query.query)
+        if search_query.rerank:
+            results = await batch_llm_rerank(search_query.query, results)
+            assert len(results) == len(search_query.query)
+            for r in results:
+                r.results = r.results[
+                    : search_query.num_blocks
+                ]  # truncate to the desired number of blocks
+    except Exception as e:
+        logger.exception(e)
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
+
+    assert len(results) == len(search_query.query)
+
+    return results
+
+
+@app.get("/{collection_name}", include_in_schema=False)
+async def search_via_frontend_redirect(
+    request: Request, collection_name: str, query: Optional[str] = None
+):
+    assert vector_db
+    if not await vector_db.collection_exists(collection_name):
+        raise HTTPException(
+            status_code=404, detail=f"Collection {collection_name} not found."
+        )
+    return await search_via_frontend(request, collection_name, query)
+
+
+@app.get("/", include_in_schema=False)
+async def search_via_frontend(
+    request: Request, collection_name: Optional[str] = None, query: Optional[str] = None
+):
+    assert vector_db
+    result_urls = []
+    result_titles = []
+    result_snippets = []
+    result_dates = []
+    result_metadata = []
+    if query:
+        try:
+            search_results: list = await vector_db.search(
+                collection_name,
+                SearchQuery(query=[query], num_blocks=100),
+            )
+        except Exception as e:
+            logger.exception(e)
+            raise HTTPException(
+                status_code=500, detail="Internal Server Error. Please try again later."
+            )
+        try:
+            search_results = await batch_llm_rerank([query], search_results)
+        except Exception as e:
+            # likely due to the content filter of the LLM API
+            logger.exception(e)
+
+        search_results: list = search_results[0].results  # one query at a time
+
+        for result in search_results:
+            result_urls.append(result.url)
+            result_titles.append(result.full_title)
+            result_snippets.append(markdown_to_html(result.content))
+            date = result.last_edit_date
+            if date is not None:
+                date = date.strftime("%B %d, %Y")
+            result_dates.append(date)
+            metadata = result.block_metadata
+            if metadata and "language" in metadata:
+                try:
+                    # TODO why is language sometimes not a language code?
+                    # convert language code to human-readable format
+                    metadata["language"] = langcodes.Language.get(
+                        metadata["language"]
+                    ).display_name()
+                except Exception as e:
+                    logger.warning(
+                        f"Failed to convert language code {metadata['language']}: {e}"
+                    )
+            result_metadata.append(metadata)
+        logger.info(f"Returning {len(search_results)} results.")
+
+    public_collections, public_collection_names, human_description_markdown = (
+        get_public_indices()
+    )
+
+    return templates.TemplateResponse(
+        "templates/search.jinja2",
+        {
+            "request": request,
+            "public_collections": public_collections,
+            "public_collection_names": public_collection_names,
+            "human_description_markdown": human_description_markdown,
+            "collection_name": collection_name,
+            "title": f"{query} - Search Results" if query else "Search",
+            "empty_result": query and len(result_urls) == 0,
+            "query": query,
+            # Search results:
+            "result_urls": result_urls,
+            "result_titles": result_titles,
+            "result_snippets": result_snippets,
+            "result_dates": result_dates,
+            "result_metadata": result_metadata,
+        },
+    )
 
 
 # used as a way to pass commandline arguments to gunicorn
@@ -225,10 +280,5 @@ def gunicorn_app(*args, **kwargs):
     for k in kwargs:
         sys.argv.append("--" + k)
         sys.argv.extend(kwargs[k].split())  # split to support list arguments
-    init()
+    # No need to call init() here, FastAPI will handle it via the lifespan event
     return app
-
-
-if __name__ == "__main__":
-    args = init()
-    app.run(port=args.port, debug=False, use_reloader=False)

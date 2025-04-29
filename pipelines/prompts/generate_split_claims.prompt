@@ -1,7 +1,7 @@
 # instruction
-The following is a conversation between a user and a knowledgeable and truthful chabot named {{ chatbot_name }}.
-{{ chatbot_name }} only responds with a list of relevant facts. Each item on the list should be self-contained, meaning it does not use pronouns and includes all the context necessary to be understood on its own.
-{{ chatbot_name }} says "None" if there is no need for facts, or it doesn't know something. It excludes facts after its knowledge cut-off date.
+The following is a conversation between a user and a knowledgeable and truthful chatbot.
+The chatbot only responds with a list of relevant facts. Each item on the list should be self-contained, meaning it does not use pronouns and includes all the context necessary to be understood on its own.
+The chatbot says "None" if there is no need for facts, or it doesn't know something. It excludes facts after its knowledge cut-off date.
 Today's date is {{ today }}.
 Here are a few examples:
 
@@ -11,7 +11,7 @@ List relevant facts or say "None". Today's date is {{ today }}.
 
 # input
 User: When was chinese new year last year?
-{{ chatbot_name }}:
+Chatbot:
 
 # output
 - Chinese New Year in 2023 began on January 22.
@@ -20,7 +20,7 @@ User: When was chinese new year last year?
 
 # input
 User: Hayao Miyazaki is a master of his craft.
-{{ chatbot_name }}:
+Chatbot:
 
 # output
 - Hayao Miyazaki is a renowned Japanese film director, producer, screenwriter, animator, author, and manga artist.
@@ -39,11 +39,11 @@ User: Hayao Miyazaki is a master of his craft.
 {# Claims should be split with regards to their parent claim. For example, here the first claim should NOT be "The Stanford Prison Experiment was conducted in the basement of Encina Hall." If it is, and if only the first claim passes fact-checking, we will be left with a fact that is too specific to be helpful. #}
 # input
 User: Tell me about the Stanford Prison Experiment.
-{{ chatbot_name }}: It was conducted at Stanford University in 1971, by a research group led by psychology professor Philip Zimbardo using college students. In the study, volunteers were randomly assigned to be either guards or prisoners in a mock prison, with Zimbardo himself serving as the superintendent.
+Chatbot: It was conducted at Stanford University in 1971, by a research group led by psychology professor Philip Zimbardo using college students. In the study, volunteers were randomly assigned to be either guards or prisoners in a mock prison, with Zimbardo himself serving as the superintendent.
 User: How long did the experiment last?
-{{ chatbot_name }}: Zimbardo ended it on the sixth day.
+Chatbot: Zimbardo ended it on the sixth day.
 User: Do you know where the experiment was conducted?
-{{ chatbot_name }}:
+Chatbot:
 
 # output
 - The Stanford Prison Experiment was conducted in the basement of Stanford's psychology building.
@@ -53,7 +53,7 @@ User: Do you know where the experiment was conducted?
 
 # input
 User: Can you tell me more about the twenty second season of American Idol?
-{{ chatbot_name }}:
+Chatbot:
 
 # output
 None
@@ -62,9 +62,9 @@ None
 
 # input
 User: I just watched chopped for 3 hours straight. The baskets were hard in some of them.
-{{ chatbot_name }}: "Chopped" certainly puts the contestants' culinary skills and creativity to the test. With the mystery baskets often containing a mix of seemingly incompatible ingredients, it's fascinating to see how each chef manages to incorporate everything into their dishes.
+Chatbot: "Chopped" certainly puts the contestants' culinary skills and creativity to the test. With the mystery baskets often containing a mix of seemingly incompatible ingredients, it's fascinating to see how each chef manages to incorporate everything into their dishes.
 User: Absolutely, it's always interesting to see how they manage to create something delicious out of such unusual combinations. Have you ever thought about what you would do if you were given a mystery basket?
-{{ chatbot_name }}:
+Chatbot:
 
 # output
 None
@@ -73,7 +73,7 @@ None
 
 # input
 User: Do you know about Queen Elizabeth II? I was just reading about her.
-{{ chatbot_name }}:
+Chatbot:
 
 # output
 - Queen Elizabeth II was born on April 21, 1926.
@@ -93,7 +93,7 @@ User: Do you know about Queen Elizabeth II? I was just reading about her.
 
 # input
 User: who is the current Prime Minister of the United Kingdom?
-{{ chatbot_name }}:
+Chatbot:
 
 # output
 - As of my cut-off knowledge date of 2021, the Prime Minister of the United Kingdom was Boris Johnson.
@@ -102,9 +102,9 @@ User: who is the current Prime Minister of the United Kingdom?
 
 # input
 User: What happened with Football at the 2020 olympics?
-{{ chatbot_name }}: Two events were contested: a men's and women's competitions. Associations affiliated with FIFA may send teams to participate in the tournament. There were no age restrictions on women's teams, while men's teams were restricted to under-24 players (born on or after 1 January 1997) with a maximum of three overage players allowed.
+Chatbot: Two events were contested: a men's and women's competitions. Associations affiliated with FIFA may send teams to participate in the tournament. There were no age restrictions on women's teams, while men's teams were restricted to under-24 players (born on or after 1 January 1997) with a maximum of three overage players allowed.
 User: What new discoveries from James Webb Space telescope can I tell my 9 year old about?
-{{ chatbot_name }}:
+Chatbot:
 
 # output
 - The James Webb Space Telescope has provided us with some of the most detailed images of distant galaxies, helping us understand how galaxies are formed and evolve.
@@ -122,7 +122,7 @@ User: What new discoveries from James Webb Space telescope can I tell my 9 year 
 
 # input
 User: How are you doing today?
-{{ chatbot_name }}:
+Chatbot:
 
 # output
 None
@@ -131,9 +131,9 @@ None
 
 # input
 User: I really liked the House of the Dragon.
-{{ chatbot_name }}: Yeah! It was an American fantasy drama television series created by George R. R. Martin and Ryan Condal for HBO.
+Chatbot: Yeah! It was an American fantasy drama television series created by George R. R. Martin and Ryan Condal for HBO.
 User: What do you think is the best TV drama of 2022?
-{{ chatbot_name }}:
+Chatbot:
 
 # output
 - "The Crown" won the Golden Globe for Best Television Series - Drama in 2022.
@@ -148,9 +148,9 @@ User: What do you think is the best TV drama of 2022?
 
 # input
 User: Tell me about michelle yeoh.
-{{ chatbot_name }}: Michelle Yeoh is a Malaysian actress, philanthropist, and fashion influencer. She rose to fame in the 1990s after starring in a series of Hong Kong action films. Most recently, she has starred in the movie "Everything Everywhere All at Once".
+Chatbot: Michelle Yeoh is a Malaysian actress, philanthropist, and fashion influencer. She rose to fame in the 1990s after starring in a series of Hong Kong action films. Most recently, she has starred in the movie "Everything Everywhere All at Once".
 User: Do you know about everything everywhere all at once?
-{{ chatbot_name }}:
+Chatbot:
 
 # output
 - "Everything Everywhere All at Once" is a 2022 American absurdist comedy-drama film.
@@ -163,9 +163,5 @@ User: Do you know about everything everywhere all at once?
 
 {# The history of the conversation so far. User starts first. Only the last three turns are given, because longer conversations confuse the LLM, and are not needed for fact-checking. #}
 # input
-{% for dlg_turn in dlg[-1:] %}
-    User: {{ dlg_turn.user_utterance }}
-    {{ chatbot_name }}: {{ dlg_turn.agent_utterance }}
-{% endfor %}
-User: {{ new_user_utterance }}
-{{ chatbot_name }}:
+{{ dlg.history(num_turns=1) }}
+Chatbot:
