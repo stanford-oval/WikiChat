@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="./public/logo_light.png" width="120px" alt="WikiChat Logo" style="display: block; margin: 0 auto;" />
+    <img src="./public/img/logo_light.png" width="120px" alt="WikiChat Logo" style="display: block; margin: 0 auto;" />
     <h1 align="center">
         <b>WikiChat</b>
         <br>
