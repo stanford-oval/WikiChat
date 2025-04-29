@@ -16,7 +16,7 @@
 </p>
 <p align="center">
     <!-- <a href="https://stanford.edu" target="_blank">
-        <img src="./public/stanford.png" width="140px" alt="Stanford University" />
+        <img src="./public/img/stanford.png" width="140px" alt="Stanford University" />
     </a> -->
 </p>
 <p align="center">
@@ -72,7 +72,7 @@ WikiChat uses Wikipedia and the following 7-stage pipeline to makes sure its res
 
 
 <p align="center">
-    <img src="./public/pipeline.svg" width="700px" alt="WikiChat Pipeline" />
+    <img src="./public/img/pipeline.svg" width="700px" alt="WikiChat Pipeline" />
 </p>
 
 Check out our paper for more details:
