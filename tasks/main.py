@@ -141,6 +141,71 @@ def demo(
     c.run(command, pty=True)
 
 
+@task(pre=[load_api_keys, start_redis])
+def persuabot(
+    c,
+    engine=CHATBOT_DEFAULT_CONFIG["engine"],
+    query_post_reranking_num=CHATBOT_DEFAULT_CONFIG["query_post_reranking_num"],
+    do_reranking=CHATBOT_DEFAULT_CONFIG["do_reranking"],
+    query_pre_reranking_num=CHATBOT_DEFAULT_CONFIG["query_pre_reranking_num"],
+    claim_post_reranking_num=CHATBOT_DEFAULT_CONFIG["claim_post_reranking_num"],
+    claim_pre_reranking_num=CHATBOT_DEFAULT_CONFIG["claim_pre_reranking_num"],
+    corpus_id=CHATBOT_DEFAULT_CONFIG["corpus_id"],
+    persuasion_domain="general",
+    target_goal="have a helpful and persuasive conversation",
+    do_fact_checking=True,
+    do_strategy_decomposition=True,
+    debug=False,
+):
+    """
+    Start PersuaBot, a persuasive chatbot with fact-checking and strategy maintenance.
+
+    PersuaBot is based on the paper "Zero-shot Persuasive Chatbots with LLM-Generated
+    Strategies and Information Retrieval" (Furumai et al., 2024).
+
+    Parameters:
+    - c: Context from invoke task.
+    - engine: specifies the AI model to use.
+    - query_pre_reranking_num: Number of documents to be fed to the re-ranker.
+    - do_reranking: Whether to do reranking for retrieved documents.
+    - query_post_reranking_num: Number of documents to retrieve.
+    - claim_pre_reranking_num: Number of evidences to be fed to the re-ranker for each claim.
+    - claim_post_reranking_num: Number of evidences to consider for each sub-claim.
+    - corpus_id: The ID of the corpus to use.
+    - persuasion_domain: Domain for persuasion (e.g., 'donation', 'health', 'recommendation').
+    - target_goal: The specific persuasion goal.
+    - do_fact_checking: Whether to perform fact-checking on generated content.
+    - do_strategy_decomposition: Whether to decompose response into strategy sections.
+    - debug: Show strategy breakdown for each response.
+    """
+
+    pipeline_flags = (
+        f"--engine {engine} "
+        f"--query_post_reranking_num {query_post_reranking_num} "
+        f"--query_pre_reranking_num {query_pre_reranking_num} "
+        f"--claim_post_reranking_num {claim_post_reranking_num} "
+        f"--claim_pre_reranking_num {claim_pre_reranking_num} "
+        f'--corpus_id "{corpus_id}" '
+        f'--persuasion_domain "{persuasion_domain}" '
+        f'--target_goal "{target_goal}" '
+    )
+
+    boolean_pipeline_arguments = {
+        "do_reranking": do_reranking,
+        "do_fact_checking": do_fact_checking,
+        "do_strategy_decomposition": do_strategy_decomposition,
+        "debug": debug,
+    }
+
+    for arg, enabled in boolean_pipeline_arguments.items():
+        if enabled:
+            pipeline_flags += f"--{arg} "
+
+    command = f"python -m command_line_persuabot {pipeline_flags}"
+
+    c.run(command, pty=True)
+
+
 @task
 def format_code(c):
     """Format code using black and isort, excluding folders that start with a dot"""

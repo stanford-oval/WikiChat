@@ -20,6 +20,7 @@ from tasks.main import (
     start_backend,
     tests,
     demo,
+    persuabot,
     format_code,
 )
 
@@ -49,6 +50,7 @@ __all__ = [
     "start_backend",
     "tests",
     "demo",
+    "persuabot",
     "format_code",
     "download_wikipedia_dump",
     "download_semantic_scholar_dump",

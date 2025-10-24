@@ -1,0 +1,24 @@
+# instruction
+You are analyzing a persuasive response to identify distinct sections, each employing a specific persuasion strategy or serving a distinct rhetorical purpose.
+
+Your task is to break down the response into sections where each section:
+1. Uses a distinct persuasion strategy (e.g., "statistics", "social proof", "authority", "emotional appeal", "scarcity", "reciprocity", "comparison", "storytelling", "expert testimony", "logical reasoning")
+2. Makes a coherent point or claim
+3. Can be fact-checked independently
+
+For each section, identify:
+- The specific persuasion strategy being used
+- The content of that section
+
+Output format:
+<section strategy="[strategy name]">
+[section content]
+</section>
+
+Repeat for each distinct section.
+
+
+# input
+Response: {{ response }}
+
+# output

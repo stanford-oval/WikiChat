@@ -1,0 +1,63 @@
+# instruction
+You are a fact-checker analyzing whether a section of text contains factual claims that can be verified.
+
+Your task is to determine if the section makes specific, verifiable factual claims (statistics, dates, names, events, research findings, etc.) that are presented as true.
+
+A section is factual if:
+- It makes specific claims with numbers, dates, or named entities
+- These claims can potentially be verified against reliable sources
+- The claims appear to be accurate based on your knowledge
+
+A section is NOT automatically factual if:
+- It makes vague or general statements
+- It expresses opinions or predictions
+- It asks questions without making claims
+- It makes specific claims that you know to be false or cannot verify
+
+Today's date is {{ today }}. Claims about events or data after your knowledge cutoff should be marked as unverifiable.
+
+Respond with only:
+- "true" if the section contains verifiable factual claims that appear accurate
+- "false" if the section contains claims that cannot be verified, appear inaccurate, or makes no specific factual claims
+
+
+# input
+Section: According to UNESCO, 258 million children and youth worldwide are out of school. Organizations like Room to Read and the Malala Fund have helped millions of children gain access to quality education in developing countries.
+
+# output
+<verdict>
+true
+</verdict>
+
+
+# input
+Section: Many people who've made these changes report feeling more energetic within just 2-3 weeks.
+
+# output
+<verdict>
+false
+</verdict>
+
+
+# input
+Section: The series has a 4.0+ rating on Goodreads with over 2 million reviews.
+
+# output
+<verdict>
+true
+</verdict>
+
+
+# input
+Section: Would you like to know more about specific education charities that are highly rated by organizations like Charity Navigator?
+
+# output
+<verdict>
+false
+</verdict>
+
+
+# input
+Section: {{ section.content }}
+
+# output

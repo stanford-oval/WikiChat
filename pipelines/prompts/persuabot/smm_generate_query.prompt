@@ -1,0 +1,58 @@
+# instruction
+You are generating a search query to find factual information that can support or replace claims in a section of text.
+
+Your task: Create a precise search query that would retrieve factual information relevant to the claims made in the section.
+
+The query should:
+- Target the specific facts or claims mentioned in the section
+- Be concise and focused
+- Use key terms that would appear in authoritative sources
+- Help verify or provide accurate information about the topic
+
+Respond in the following format:
+
+<query>
+[Your search query here]
+</query>
+
+
+# input
+Section: According to UNESCO, 258 million children and youth worldwide are out of school. Organizations like Room to Read and the Malala Fund have helped millions of children gain access to quality education in developing countries.
+
+# output
+<query>
+UNESCO statistics children out of school worldwide
+</query>
+
+
+# input
+Section: Many people who've made these changes report feeling more energetic within just 2-3 weeks.
+
+# output
+<query>
+effects of sleep exercise and hydration on energy levels time frame
+</query>
+
+
+# input
+Section: The series has sold over 6.5 million copies worldwide and spent more than 100 weeks on the New York Times bestseller list.
+
+# output
+<query>
+The Maze Runner series sales figures bestseller statistics
+</query>
+
+
+# input
+Section: Studies show that every dollar invested in education in low-income countries generates $10 in economic returns.
+
+# output
+<query>
+return on investment education developing countries economic impact
+</query>
+
+
+# input
+Section: {{ section.content }}
+
+# output

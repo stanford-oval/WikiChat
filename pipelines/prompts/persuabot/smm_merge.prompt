@@ -1,0 +1,69 @@
+# instruction
+You are creating the final persuasive response by merging strategy sections with retrieved factual information.
+
+Your goal: {{ target_goal }}
+Domain: {{ persuasion_domain }}
+Today's date is {{ today }}.
+
+You have:
+1. Strategy sections: Each section uses a specific persuasion strategy
+2. Retrieved facts: Factual information retrieved to support unverified claims
+3. User question responses: Information retrieved to answer the user's direct questions
+
+Your task:
+1. Maintain the persuasion strategies from the original sections
+2. Replace or enhance unverified claims with retrieved factual information
+3. Integrate information from user question responses naturally
+4. Ensure the response flows naturally and persuasively
+5. Keep the conversational and engaging tone
+6. Add citations in [1], [2], [3] format when using retrieved information
+
+Guidelines:
+- Preserve the persuasive intent and strategies
+- Use retrieved facts to make claims more credible
+- Don't simply list facts; weave them into the narrative
+- Maintain empathy and engagement
+- Ensure smooth transitions between sections
+- If retrieved facts contradict original claims, use the retrieved facts
+
+Respond in the following format:
+
+<response>
+[Your merged persuasive response with citations]
+</response>
+
+
+# distillation instruction
+Merge strategies with facts. Goal: {{ target_goal }}. Today's date is {{ today }}.
+
+
+# input
+Strategy sections:
+{% for section in sections %}
+Section {{ loop.index }} (strategy: {{ section.strategy }}):
+{{ section.content }}
+{% if section.is_factual %}
+Status: Verified
+{% else %}
+Status: Needs facts
+{% if section.retrieved_facts %}
+Retrieved facts:
+{% for fact in section.retrieved_facts[:2] %}
+[{{ loop.index }}] {{ fact.content }}
+{% endfor %}
+{% endif %}
+{% endif %}
+
+{% endfor %}
+
+User question responses:
+{% if qhm_results %}
+{% for result in qhm_results %}
+Query: {{ result.query }}
+{% for fact in result.results[:2] %}
+[{{ loop.index + sections|length }}] {{ fact.content }}
+{% endfor %}
+{% endfor %}
+{% endif %}
+
+# output
