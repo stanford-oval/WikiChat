@@ -120,7 +120,7 @@ Installing WikiChat involves the following steps:
 1. Install dependencies
 1. Configure the LLM of your choice. WikiChat supports over 100 LLMs, including models from OpenAI, Azure, Anthropic, Mistral, HuggingFace, Together.ai, and Groq.
 1. Select an information retrieval source. This can be any HTTP endpoint that conforms to the interface defined in `retrieval/retriever_server.py`. We provide instructions and scripts for the following options:
-    1. Use our free, rate-limited API for Wikipedia in 10 languages.
+    1. Use our free, rate-limited API for Wikipedia in 25 languages.
     1. Download and host our provided Wikipedia index yourself.
     1. Create and run a new custom index from your own documents.
 1. Run WikiChat with your desired configuration.
@@ -223,7 +223,7 @@ inv index-wikipedia-dump --workdir ./workdir --language ku
 ```json
 {"id": "integer",  "document_title": "string", "section_title": "string", "content": "string", "block_type": "string", "language": "string", "last_edit_date": "string (optional)", "url": "string (optional)", "num_tokens": "integer (optional)", "block_metadata": "dict (optional)"}
 ```
-`content` should be the chunked text of your documents. We recommend chunking to less than 500 tokens of the embedding model's tokenizer. See [this](https://python.langchain.com/docs/concepts/text_splitters/) for an overview on chunking methods.
+`content` should be the chunked text of your documents. We recommend chunking to less than 500 tokens of the embedding model's tokenizer. See [this](https://docs.langchain.com/oss/python/integrations/splitters) for an overview on chunking methods.
 `block_type` and `language` are only used to provide filtering on search results. If you do not need them, you can simply set them to `block_type=text` and `language=en`.
 The script will feed `document_title` > `section_title` and `content` to the embedding model to create embedding vectors.
 
@@ -316,7 +316,7 @@ Note that we do not provide any guarantees about this endpoint, and it is not su
 
 
 # Wikipedia Preprocessing
-We publicly release [preprocessed Wikipedia in 10 languages](https://huggingface.co/datasets/stanford-oval/wikipedia).
+We publicly release [preprocessed Wikipedia in 25 languages](https://huggingface.co/datasets/stanford-oval/wikipedia).
 
 # Other Commands
 
