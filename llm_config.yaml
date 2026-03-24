@@ -79,7 +79,7 @@ llm_endpoints:
 
   # Example of models by Mistral
   # See more models at https://docs.mistral.ai/platform/endpoints/
-  - api_base: https://api.mistral.ai/v1 
+  - api_base: https://api.mistral.ai/v1
     api_key: MISTRAL_API_KEY
     engine_map:
       mistral-large: mistral/mistral-large-latest
@@ -87,6 +87,16 @@ llm_endpoints:
       mistral-small: mistral/mistral-small-latest
       mistral-7b-instruct: mistral/open-mistral-7b
       mixtral-8-7b-instruct: mistral/open-mixtral-8x7b
+
+  # Example of MiniMax models
+  # MiniMax provides an OpenAI-compatible API. See more at https://platform.minimaxi.com/
+  - api_base: https://api.minimax.io/v1
+    api_key: MINIMAX_API_KEY
+    engine_map:
+      minimax-m27: openai/MiniMax-M2.7
+      minimax-m27-highspeed: openai/MiniMax-M2.7-highspeed
+      minimax-m25: openai/MiniMax-M2.5
+      minimax-m25-highspeed: openai/MiniMax-M2.5-highspeed
 
   # Local **distilled** models served via HuggingFace's text-generation-inference (https://github.com/huggingface/text-generation-inference/)
   # This endpoint expects the model to have been fine-tuned with a specific data format generated from this repository.

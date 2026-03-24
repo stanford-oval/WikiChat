@@ -118,7 +118,7 @@ Sina J. Semnani, Violet Z. Yao*, Heidi C. Zhang*, and Monica S. Lam. 2023. [Wiki
 Installing WikiChat involves the following steps:
 
 1. Install dependencies
-1. Configure the LLM of your choice. WikiChat supports over 100 LLMs, including models from OpenAI, Azure, Anthropic, Mistral, HuggingFace, Together.ai, and Groq.
+1. Configure the LLM of your choice. WikiChat supports over 100 LLMs, including models from OpenAI, Azure, Anthropic, Mistral, HuggingFace, Together.ai, Groq, and [MiniMax](https://platform.minimaxi.com/).
 1. Select an information retrieval source. This can be any HTTP endpoint that conforms to the interface defined in `retrieval/retriever_server.py`. We provide instructions and scripts for the following options:
     1. Use our free, rate-limited API for Wikipedia in 25 languages.
     1. Download and host our provided Wikipedia index yourself.
@@ -184,7 +184,7 @@ These commands are implemented in the `tasks/` folder.
 
 ## Configure the LLM of Your Choice
 
-WikiChat is compatible with various LLMs, including models from OpenAI, Azure, Anthropic, Mistral, Together.ai, and Groq.
+WikiChat is compatible with various LLMs, including models from OpenAI, Azure, Anthropic, Mistral, Together.ai, Groq, and [MiniMax](https://platform.minimaxi.com/).
 You can also use WikiChat with many locally hosted models via HuggingFace.
 
 To configure your LLM:
@@ -199,6 +199,7 @@ For example, if you're using OpenAI models via openai.com and Mistral endpoints,
 # Changes to this file are ignored by git, so you can safely store your keys here during development.
 OPENAI_API_KEY=[Your OpenAI API key from https://platform.openai.com/api-keys]
 MISTRAL_API_KEY=[Your Mistral API key from https://console.mistral.ai/api-keys/]
+MINIMAX_API_KEY=[Your MiniMax API key from https://platform.minimaxi.com/]
 ```
 
 Note that locally hosted models do NOT need an API key, but you need to provide an OpenAI-compatible endpoint in `api_base`. The code has been tested with [🤗 Text Generation Inference](https://github.com/huggingface/text-generation-inference/) endpoints, but you can try other similar endpoints like [vLLM](https://github.com/vllm-project/vllm), [SGLang](https://github.com/sgl-project/sglang), etc.
