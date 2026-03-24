@@ -50,7 +50,7 @@ async def start():
             Select(
                 id="model",
                 label="Model",
-                values=["gpt-4o-mini", "gpt-4o"],
+                values=["gpt-4o-mini", "gpt-4o", "minimax-m27", "minimax-m27-highspeed"],
                 initial_index=0,
                 description="Select the large language model to use.",
             ),
