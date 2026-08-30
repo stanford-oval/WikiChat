@@ -102,6 +102,7 @@ def demo(
     claim_post_reranking_num=CHATBOT_DEFAULT_CONFIG["claim_post_reranking_num"],
     claim_pre_reranking_num=CHATBOT_DEFAULT_CONFIG["claim_pre_reranking_num"],
     corpus_id=CHATBOT_DEFAULT_CONFIG["corpus_id"],
+    retriever_endpoint=CHATBOT_DEFAULT_CONFIG["retriever_endpoint"],
 ):
     """
     Start a chatbot with the specified configurations, to interact with using the terminal.
@@ -116,6 +117,7 @@ def demo(
     - claim_pre_reranking_num: Number of evidences to be fed to the re-ranker for each claim.
     - claim_post_reranking_num: Number of evidences to consider for each sub-claim, after reranking is done.
     - corpus_id: The ID of the corpus to use.
+    - retriever_endpoint: The HTTP endpoint used for retrieval.
     """
 
     pipeline_flags = (
@@ -125,6 +127,7 @@ def demo(
         f"--claim_post_reranking_num {claim_post_reranking_num} "
         f"--claim_pre_reranking_num {claim_pre_reranking_num} "
         f'--corpus_id "{corpus_id}" '
+        f'--retriever_endpoint "{retriever_endpoint}" '
     )
 
     boolean_pipeline_arguments = {
