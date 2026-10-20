@@ -1,5 +1,6 @@
 import re
-from typing import Optional
+from typing import Literal, Optional
+from uuid import uuid4
 
 import tiktoken
 from pydantic import BaseModel, Field
@@ -80,6 +81,8 @@ class ChatbotConfig(BaseModel):
     """A configuration class for setting up a chatbot with various parameters."""
 
     engine: str = Field(..., description="The LLM engine to use.")
+    search_provider: Literal["retriever", "parallel"] = "retriever"
+    parallel_timeout: float = Field(default=30, gt=0, allow_inf_nan=False)
     do_refine: bool = Field(..., description="Whether to refine the final response.")
     llm_corpus_description: str = Field(
         ...,
@@ -113,6 +116,7 @@ class DialogueState(BaseModel):
 
     config: ChatbotConfig
     turns: list[DialogueTurn]
+    search_session_id: str = Field(default_factory=lambda: str(uuid4()))
 
     @property
     def current_turn(self) -> DialogueTurn:

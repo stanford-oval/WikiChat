@@ -36,6 +36,18 @@ def add_pipeline_arguments(parser):
 
     # Retrieval parameters
     parser.add_argument(
+        "--search_provider",
+        choices=["retriever", "parallel"],
+        default="retriever",
+        help="Use the configured corpus retriever (default) or opt into Parallel web search.",
+    )
+    parser.add_argument(
+        "--parallel_timeout",
+        type=float,
+        default=30,
+        help="Total timeout in seconds for a Parallel retrieval stage (default: 30).",
+    )
+    parser.add_argument(
         "--do_reranking",
         action="store_true",
         default=CHATBOT_DEFAULT_CONFIG["do_reranking"],
@@ -68,7 +80,10 @@ def add_pipeline_arguments(parser):
 
 
 def check_pipeline_arguments(args):
-    if args.do_reranking:
+    if (
+        args.do_reranking
+        and getattr(args, "search_provider", "retriever") == "retriever"
+    ):
         if (
             args.query_pre_reranking_num is None
             or args.query_pre_reranking_num < args.query_post_reranking_num
@@ -84,7 +99,11 @@ def check_pipeline_arguments(args):
             raise ValueError(
                 "When evidence reranking is enabled, you need to specify a `--claim_pre_reranking_num` >= `--claim_post_reranking_num`"
             )
-    if args.retriever_endpoint is None:
+    if getattr(args, "search_provider", "retriever") == "parallel":
+        # The endpoint is retained in configuration, but used only by retriever.
+        if args.retriever_endpoint is None:
+            args.retriever_endpoint = CHATBOT_DEFAULT_CONFIG["retriever_endpoint"]
+    elif args.retriever_endpoint is None:
         corpus_object = corpus_id_to_corpus_object(args.corpus_id)
         args.retriever_endpoint = corpus_object.overwritten_parameters[
             "retriever_endpoint"

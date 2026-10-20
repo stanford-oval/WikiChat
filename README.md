@@ -48,6 +48,7 @@ https://github.com/user-attachments/assets/3ac856ba-682c-4aed-9271-ce2f6a27cd5e
       - [To index custom documents](#to-index-custom-documents)
       - [To use an Azure AI deployment of the embedding model instead of a local one](#to-use-an-azure-ai-deployment-of-the-embedding-model-instead-of-a-local-one)
       - [To upload a Qdrant index to 🤗 Hub](#to-upload-a-qdrant-index-to--hub)
+    - [Option 3: Search the web with Parallel](#option-3-search-the-web-with-parallel)
   - [Run WikiChat in Terminal](#run-wikichat-in-terminal)
   - [[Optional] Deploy WikiChat for Multi-user Access](#optional-deploy-wikichat-for-multi-user-access)
     - [Set up Cosmos DB](#set-up-cosmos-db)
@@ -119,10 +120,11 @@ Installing WikiChat involves the following steps:
 
 1. Install dependencies
 1. Configure the LLM of your choice. WikiChat supports over 100 LLMs, including models from OpenAI, Azure, Anthropic, Mistral, HuggingFace, Together.ai, and Groq.
-1. Select an information retrieval source. This can be any HTTP endpoint that conforms to the interface defined in `retrieval/retriever_server.py`. We provide instructions and scripts for the following options:
+1. Select an information retrieval source. The default corpus retriever can be any HTTP endpoint that conforms to the interface defined in `retrieval/retriever_server.py`. We provide instructions and scripts for the following options:
     1. Use our free, rate-limited API for Wikipedia in 25 languages.
     1. Download and host our provided Wikipedia index yourself.
     1. Create and run a new custom index from your own documents.
+    1. Opt into Parallel Search MCP for public web retrieval.
 1. Run WikiChat with your desired configuration.
 1. [Optional] Deploy WikiChat for multi-user access. We provide code to deploy a simple front-end and backend, as well as instructions to connect to an Azure Cosmos DB database for storing conversations.
 
@@ -280,6 +282,39 @@ python retrieval/upload_folder_to_hf_hub.py --folder_path <path to the output fo
 ```
 
 
+
+### Option 3: Search the web with Parallel
+
+[Parallel Search MCP](https://docs.parallel.ai/integrations/mcp/search-mcp) provides
+free public web search using Fast mode, with no account or API key required.
+Install its optional client inside your activated WikiChat environment:
+
+```bash
+python -m pip install -r requirements-parallel.txt
+python -m command_line_chatbot --engine gpt-4o --search_provider parallel
+```
+
+The optional requirements match WikiChat's locked Pydantic version and bound the
+MCP client and SSE dependency for compatibility with Chainlit 1.3.
+
+This selects web retrieval for both search queries and claim verification. The
+existing filtering, drafting and citation stages consume the returned excerpts.
+A query consisting of a single HTTP(S) URL uses page fetching instead. Web
+content is sent to your configured LLM for processing, just like corpus results.
+
+Wikipedia remains the default. Use `--search_provider retriever` to use your
+configured corpus and `--retriever_endpoint`; Parallel does not use that endpoint
+or fall back to it on failure. Parallel uses its own relevance ordering, so
+`--do_reranking` and the pre-reranking counts do not apply. The query and claim
+post-reranking counts still limit results; a count of zero disables that stage's
+retrieval. `--parallel_timeout` sets the total time limit in seconds per retrieval
+stage (default: 30). The free service is rate-limited; retrieval errors follow the
+same pipeline behavior as corpus retrieval. Existing LLM configuration is still
+required.
+
+To use this provider in a custom chatbot configuration, set `search_provider` to
+`parallel` in the arguments passed to `create_chain`. A new chain creates a fresh
+search session ID; follow-up turns in that dialogue reuse it.
 
 ## Run WikiChat in Terminal
 
