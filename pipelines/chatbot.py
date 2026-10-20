@@ -10,6 +10,7 @@ from corpora import corpus_id_to_corpus_object
 from utils.logging import logger
 from pipelines.dialogue_state import ChatbotConfig, DialogueState
 from retrieval.retriever_api import retrieve_via_api
+from retrieval.parallel_search import retrieve_via_parallel
 
 register_prompt_constants({"chatbot_name": "WikiChat"})
 
@@ -43,12 +44,11 @@ async def search_stage(state):
     config = state.config
     if query:
         try:
-            search_result = retrieve_via_api(
+            search_result = await retrieve_for_dialogue(
+                state,
                 state.current_turn.search_query,
-                retriever_endpoint=config.retriever_endpoint,
-                do_reranking=config.do_reranking,
-                pre_reranking_num=config.query_pre_reranking_num,
-                post_reranking_num=config.query_post_reranking_num,
+                config.query_pre_reranking_num,
+                config.query_post_reranking_num,
             )
             assert len(search_result) == len(query)
         except Exception as e:
@@ -78,15 +78,32 @@ async def llm_claim_search_stage(state):
     queries = state.current_turn.llm_claims
     config = state.config
     if queries:
-        search_result = retrieve_via_api(
-            queries=queries,
-            retriever_endpoint=config.retriever_endpoint,
-            do_reranking=config.do_reranking,
-            pre_reranking_num=config.claim_pre_reranking_num,
-            post_reranking_num=config.claim_post_reranking_num,
+        search_result = await retrieve_for_dialogue(
+            state,
+            queries,
+            config.claim_pre_reranking_num,
+            config.claim_post_reranking_num,
         )
         assert len(search_result) == len(queries)
         state.current_turn.llm_claim_search_results = search_result
+
+
+async def retrieve_for_dialogue(state, queries, pre_reranking_num, post_reranking_num):
+    config = state.config
+    if config.search_provider == "parallel":
+        return await retrieve_via_parallel(
+            queries,
+            post_reranking_num=post_reranking_num,
+            session_id=state.search_session_id,
+            timeout=config.parallel_timeout,
+        )
+    return retrieve_via_api(
+        queries=queries,
+        retriever_endpoint=config.retriever_endpoint,
+        do_reranking=config.do_reranking,
+        pre_reranking_num=pre_reranking_num,
+        post_reranking_num=post_reranking_num,
+    )
 
 
 @chain
@@ -169,13 +186,18 @@ async def refine_stage(state):
 
 
 def create_chain(args) -> tuple[CompiledStateGraph, DialogueState]:
-    llm_corpus_description = corpus_id_to_corpus_object(
-        args.corpus_id
-    ).llm_corpus_description
+    search_provider = getattr(args, "search_provider", "retriever")
+    llm_corpus_description = (
+        "the public web"
+        if search_provider == "parallel"
+        else corpus_id_to_corpus_object(args.corpus_id).llm_corpus_description
+    )
     initial_state = DialogueState(
         turns=[],
         config=ChatbotConfig(
             engine=args.engine,
+            search_provider=search_provider,
+            parallel_timeout=getattr(args, "parallel_timeout", 30),
             do_refine=args.do_refine,
             llm_corpus_description=llm_corpus_description,
             retriever_endpoint=args.retriever_endpoint,

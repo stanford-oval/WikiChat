@@ -1,0 +1,2 @@
+# Optional client for --search_provider parallel; install inside the WikiChat environment.
+mcp>=1.26,<2
