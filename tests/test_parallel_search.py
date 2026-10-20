@@ -26,6 +26,8 @@ from pipelines.pipeline_arguments import (
 from retrieval import parallel_search
 from tasks.defaults import CHATBOT_DEFAULT_CONFIG
 
+pytest.importorskip("mcp")
+
 
 def make_chain(provider="parallel", **overrides):
     parser = argparse.ArgumentParser()
@@ -134,6 +136,8 @@ def server(monkeypatch):
                     ],
                 )
                 payload = {"results": rows}
+                if "errors" in control:
+                    payload["errors"] = control["errors"]
                 result = {"content": [{"type": "text", "text": json.dumps(payload)}]}
                 if control["structured"]:
                     result["structuredContent"] = payload
@@ -280,8 +284,13 @@ async def test_quota_error_and_retry_keep_dialogue_identity(server, model, monke
     control["mode"] = "quota"
     _, state = make_chain()
     state.turns.append(
-        DialogueTurn(search_query=["Austen"], llm_claims=["Austen first book"])
+        DialogueTurn(
+            search_query=["Austen", "Later objective"],
+            llm_claims=["Austen first book", "Later claim"],
+        )
     )
+    messages = []
+    monkeypatch.setattr(chatbot.logger, "error", messages.append)
 
     def unexpected(**kwargs):
         pytest.fail("No implicit provider fallback is allowed")
@@ -290,14 +299,43 @@ async def test_quota_error_and_retry_keep_dialogue_identity(server, model, monke
     # Retain the existing behavior: query search logs failures; claim search raises.
     await chatbot.search_stage.ainvoke(state)
     assert state.current_turn.search_results == []
-    with pytest.raises(Exception, match="Parallel retrieval failed|TaskGroup"):
+    assert "Free anonymous quota exceeded" in messages[0]
+    assert len(tool_calls(requests)) == 1  # No further objectives after a tool error.
+    with pytest.raises(RuntimeError, match="Free anonymous quota exceeded"):
         await chatbot.llm_claim_search_stage.ainvoke(state)
+    assert len(tool_calls(requests)) == 2
     control["mode"] = "ok"
     await chatbot.search_stage.ainvoke(state)
     assert state.current_turn.search_results[0].results
     assert {c["arguments"]["session_id"] for c in tool_calls(requests)} == {
         state.search_session_id
     }
+
+
+@pytest.mark.asyncio
+async def test_failed_url_fetch_is_reported_through_claim_stage(server, monkeypatch):
+    requests, control = server
+    control["rows"] = []
+    control["errors"] = [
+        {
+            "url": "https://example.org/missing",
+            "error_type": "http_error",
+            "http_status_code": 404,
+        }
+    ]
+    _, state = make_chain()
+    state.turns.append(
+        DialogueTurn(llm_claims=["https://example.org/missing", "Later claim"])
+    )
+
+    def unexpected(**kwargs):
+        pytest.fail("A failed page fetch must not change provider")
+
+    monkeypatch.setattr(chatbot, "retrieve_via_api", unexpected)
+    with pytest.raises(RuntimeError, match="Parallel page fetching failed"):
+        await chatbot.llm_claim_search_stage.ainvoke(state)
+    assert state.current_turn.llm_claim_search_results == []
+    assert len(tool_calls(requests)) == 1
 
 
 @pytest.mark.asyncio
