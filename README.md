@@ -294,6 +294,9 @@ python -m pip install -r requirements-parallel.txt
 python -m command_line_chatbot --engine gpt-4o --search_provider parallel
 ```
 
+The optional requirements bound the MCP client and its shared dependencies for
+compatibility with Chainlit 1.3, including selecting Pydantic below 2.10.
+
 This selects web retrieval for both search queries and claim verification. The
 existing filtering, drafting and citation stages consume the returned excerpts.
 A query consisting of a single HTTP(S) URL uses page fetching instead. Web
