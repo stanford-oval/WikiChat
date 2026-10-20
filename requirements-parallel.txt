@@ -1,2 +1,6 @@
 # Optional client for --search_provider parallel; install inside the WikiChat environment.
-mcp>=1.26,<2
+# Newer MCP releases require Uvicorn versions incompatible with Chainlit 1.3.
+mcp>=1.10.1,<1.13
+# Keep the SDK compatible with WikiChat's shared ASGI and Pydantic stack.
+sse-starlette>=1.6.1,<3
+pydantic>=2.8,<2.10

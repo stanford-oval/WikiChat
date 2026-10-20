@@ -88,9 +88,8 @@ async def retrieve_via_parallel(
 
     # Keep the SDK optional: existing retriever installations need no new packages.
     try:
-        import httpx
         from mcp import ClientSession
-        from mcp.client.streamable_http import streamable_http_client
+        from mcp.client.streamable_http import streamablehttp_client
     except ImportError as error:
         raise RuntimeError(
             "Parallel retrieval requires: pip install -r requirements-parallel.txt"
@@ -99,33 +98,31 @@ async def retrieve_via_parallel(
     async with asyncio.timeout(timeout):
         results = []
         failure = None
-        async with httpx.AsyncClient(
-            headers={"User-Agent": USER_AGENT}, timeout=timeout
-        ) as client:
-            async with streamable_http_client(MCP_URL, http_client=client) as (
-                read,
-                write,
-                _,
-            ):
-                async with ClientSession(read, write) as session:
-                    await session.initialize()
-                    for query in queries:
-                        if _is_web_url(query):
-                            name = "web_fetch"
-                            arguments = {"urls": [query], "session_id": session_id}
-                        else:
-                            name = "web_search"
-                            arguments = {
-                                "objective": query,
-                                "search_queries": [query],
-                                "session_id": session_id,
-                            }
-                        response = await session.call_tool(name, arguments)
-                        try:
-                            results.append(_read_results(response, post_reranking_num))
-                        except (RuntimeError, ValueError) as error:
-                            failure = error
-                            break
+        async with streamablehttp_client(
+            MCP_URL,
+            headers={"User-Agent": USER_AGENT},
+            timeout=timeout,
+            sse_read_timeout=timeout,
+        ) as (read, write, _):
+            async with ClientSession(read, write) as session:
+                await session.initialize()
+                for query in queries:
+                    if _is_web_url(query):
+                        name = "web_fetch"
+                        arguments = {"urls": [query], "session_id": session_id}
+                    else:
+                        name = "web_search"
+                        arguments = {
+                            "objective": query,
+                            "search_queries": [query],
+                            "session_id": session_id,
+                        }
+                    response = await session.call_tool(name, arguments)
+                    try:
+                        results.append(_read_results(response, post_reranking_num))
+                    except (RuntimeError, ValueError) as error:
+                        failure = error
+                        break
         # Raise after SDK task groups close normally so callers receive the
         # actionable tool/parse error, rather than a generic ExceptionGroup.
         if failure is not None:
